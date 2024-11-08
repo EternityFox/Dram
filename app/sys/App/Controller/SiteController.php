@@ -1,0 +1,964 @@
+<?php declare(strict_types=1);
+
+namespace App\Controller;
+
+//require "vendor/autoload.php";
+
+use App\Model\Currency;
+use App\Model\Exchanger;
+use App\Rateam;
+use Core\Controller,
+    App\App,
+    App\Widget\MainTable,
+    App\Widget\BestExchangers,
+    App\Widget\IntlCourses,
+    App\Widget\Converter;
+use Core\Widget;
+//use PHPHtmlParser\Dom;
+
+class SiteController extends Controller
+{
+    /**
+     * @param string|null $course
+     * @param string|null $type
+     *
+     * @return array
+     */
+    protected function actionIndex(
+        ?string $course = null, ?string $type = null
+    )
+    {
+        $query = App::db()->query("SELECT * FROM settings");
+        $settings = $query->fetch();
+
+        $menu['top'] = include_once(__DIR__ . '/../../../storage/menu/top.php');
+        $menuLeft = include_once(__DIR__ . '/../../../storage/menu/left.php');
+
+        $menu['left']['hidden'] = $menuLeft['hidden'];
+
+        unset($menuLeft['hidden']);
+
+        $menu['left']['basic'] = $menuLeft;
+
+        return [
+            'site/index',
+            [
+                'mainTable' => new MainTable($course, $type),
+                'bestExchangers' => new BestExchangers,
+                'intlCourses' => new IntlCourses($settings),
+                'converter' => new Converter('cash', 'buy', 'direct', 'USD', 'AMD', $settings),
+                'settings' => $settings,
+                'menu' => $menu,
+            ]
+        ];
+    }
+
+    protected function actionBank($id)
+    {
+        $query = App::db()->query("SELECT * FROM settings");
+        $settings = $query->fetch();
+
+        $menu['top'] = include_once(__DIR__ . '/../../../storage/menu/top.php');
+        $menuLeft = include_once(__DIR__ . '/../../../storage/menu/left.php');
+
+        $menu['left']['hidden'] = $menuLeft['hidden'];
+
+        unset($menuLeft['hidden']);
+
+        $menu['left']['basic'] = $menuLeft;
+
+        $bankInfo = unserialize(file_get_contents(__DIR__ . '/../../../storage/bank_info_pure.txt'));
+        if (empty($bankInfo[$id]))
+            return $this->actionNotFound();
+
+        return [
+            'site/bank',
+            [
+                'settings' => $settings,
+                'menu' => $menu,
+                'bankInfo' => $bankInfo[$id],
+                'model' => App::exchanger()->get(10)
+            ]
+        ];
+    }
+
+    protected function actionExchanger($id)
+    {
+        $query = App::db()->query("SELECT * FROM settings");
+        $settings = $query->fetch();
+
+        $menu['top'] = include_once(__DIR__ . '/../../../storage/menu/top.php');
+        $menuLeft = include_once(__DIR__ . '/../../../storage/menu/left.php');
+
+        $menu['left']['hidden'] = $menuLeft['hidden'];
+
+        unset($menuLeft['hidden']);
+
+        $menu['left']['basic'] = $menuLeft;
+
+        $bankInfo = unserialize(file_get_contents(__DIR__ . '/../../../storage/exchanger_info_pure.txt'));
+        if (empty($bankInfo[$id]))
+            return $this->actionNotFound();
+
+        return [
+            'site/exchanger',
+            [
+                'settings' => $settings,
+                'menu' => $menu,
+                'bankInfo' => $bankInfo[$id],
+            ]
+        ];
+    }
+
+    protected function staticWidgetPage(Widget $widget, $settings)
+    {
+//        $query = App::db()->query("SELECT * FROM settings");
+//        $settings = $query->fetch();
+
+        $menu['top'] = include_once(__DIR__ . '/../../../storage/menu/top.php');
+        $menuLeft = include_once(__DIR__ . '/../../../storage/menu/left.php');
+
+        $menu['left']['hidden'] = $menuLeft['hidden'];
+
+        unset($menuLeft['hidden']);
+
+        $menu['left']['basic'] = $menuLeft;
+
+        return [
+            'site/static_widget',
+            [
+                'settings' => $settings,
+                'menu' => $menu,
+                'widget' => $widget,
+            ]
+        ];
+    }
+
+    protected function actionConverter()
+    {
+        $query = App::db()->query("SELECT * FROM settings");
+        $settings = $query->fetch();
+
+        return $this->staticWidgetPage(new Converter('cash', 'buy', 'direct', 'USD', 'AMD', $settings), $settings);
+    }
+
+    protected function actionCharts()
+    {
+        $query = App::db()->query("SELECT * FROM settings");
+        $settings = $query->fetch();
+
+        return $this->staticWidgetPage(new IntlCourses($settings), $settings);
+    }
+
+    protected function staticPage(string $pageName)
+    {
+        $query = App::db()->query("SELECT * FROM settings");
+        $settings = $query->fetch();
+
+        $menu['top'] = include_once(__DIR__ . '/../../../storage/menu/top.php');
+        $menuLeft = include_once(__DIR__ . '/../../../storage/menu/left.php');
+
+        $menu['left']['hidden'] = $menuLeft['hidden'];
+
+        unset($menuLeft['hidden']);
+
+        $menu['left']['basic'] = $menuLeft;
+
+        $content = unserialize(file_get_contents(__DIR__ . '/../../../storage/static/' . $pageName . '.txt'));
+
+        return [
+            'site/static',
+            [
+                'settings' => $settings,
+                'menu' => $menu,
+                'content' => $content,
+            ]
+        ];
+    }
+
+    protected function actionAbout()
+    {
+
+        return $this->staticPage('about');
+    }
+
+    protected function actionFaq()
+    {
+
+        return $this->staticPage('faq');
+    }
+
+    protected function actionContacts()
+    {
+
+        return $this->staticPage('contacts');
+    }
+
+    protected function actionAdvertising()
+    {
+
+        return $this->staticPage('advertising');
+    }
+
+    protected function actionNotFound()
+    {
+        $query = App::db()->query("SELECT * FROM settings");
+        $settings = $query->fetch();
+
+        $menu['top'] = include_once(__DIR__ . '/../../../storage/menu/top.php');
+        $menuLeft = include_once(__DIR__ . '/../../../storage/menu/left.php');
+
+        $menu['left']['hidden'] = $menuLeft['hidden'];
+
+        if (is_array($menuLeft))
+            unset($menuLeft['hidden']);
+
+        $menu['left']['basic'] = $menuLeft;
+
+//        $content = unserialize(file_get_contents(__DIR__ . '/../../../storage/static/' . $pageName . '.txt'));
+
+        return [
+            'site/404',
+            [
+                'settings' => $settings,
+                'menu' => $menu,
+//                'content' => $content,
+            ]
+        ];
+    }
+
+    /**
+     * @param string $course
+     * @param string $type
+     */
+    protected function actionTable(string $course, string $type)
+    {
+        $widget = new MainTable($course, $type);
+
+        header('Content-Type: application/json');
+        echo json_encode(['table' => $widget->renderTable(true)]);
+    }
+
+    /**
+     * @param int $num
+     * @param string $symbol
+     * @param string|null $course
+     * @param string|null $type
+     */
+    public function actionChangeSymbol(
+        int $num, string $symbol, ?string $course = null, ?string $type = null
+    )
+    {
+        $widget = new MainTable($course, $type);
+
+        $symbol = strtoupper($symbol);
+        $request = App::request();
+
+        if (0 > $num || 3 < $num)
+            $num = 0;
+
+        if (App::currency()->has($symbol)) {
+            $symbols = $widget->activeSymbols;
+            if (false !== ($key = array_search($symbol, $symbols))) {
+                $symbols[$num] = $symbol;
+                $symbols[$key] = '';
+                foreach ($widget->config('baseSymbols') as $name) {
+                    if (in_array($name, $symbols))
+                        continue;
+                    $symbols[$key] = $name;
+                    break;
+                }
+            }
+            else {
+                $symbols[$num] = $symbol;
+            }
+            $symbols = $widget->activeSymbols = array_values($symbols);
+            $request->setCookie('tableSymbols', implode(',', $symbols));
+        }
+
+        ob_start();
+
+        header('Content-Type: application/json');
+        echo json_encode([
+            'symbolPanel' => $widget->renderSymbolPanel(true),
+            'table' => $widget->renderTable(true)
+        ]);
+    }
+
+    protected function actionChart(string $symbol)
+    {
+        $labels = $data = [];
+        if (($curr = App::currency()->get($symbol))
+            || ($curr = App::otherCurrency()->get(rawurldecode($symbol)))
+        ) {
+            $start = (new \DateTime('now 00:00:00 -7 day'))->getTimestamp();
+            $sql = 'SELECT * FROM course'
+                . " WHERE cid = {$curr['id']} AND date_at > {$start}"
+                . ' ORDER BY date_at DESC';
+            $query = App::db()->query($sql);
+            while ($res = $query->fetch()) {
+                $data[date('Y.m.d', (int) $res['date_at'])][] = $res['price'];
+            }
+            $data = array_reverse($data);
+            foreach ($data as $key => $val) {
+                $data[$key] = array_sum($val) / count($val);
+            }
+        } elseif (($curr = App::crypto()->get($symbol))
+            || ($curr = App::metall()->get($symbol))
+        ) {
+            $sql = 'SELECT * FROM course'
+                . " WHERE cid = {$curr['id']}"
+                . ' ORDER BY date_at DESC LIMIT 0, 24';
+            $query = App::db()->query($sql);
+            while ($res = $query->fetch()) {
+                $data[date('H:i', (int) $res['date_at'])] = $res['price'];
+            }
+            $data = array_reverse($data);
+        }
+
+        header('Content-Type: application/json');
+        echo json_encode([
+            'symbol' => $curr['symbol'],
+            'labels' => array_keys($data),
+            'data' => array_values($data),
+        ]);
+    }
+
+    protected function actionConverterAjax(string $type, string $fromCurrency, string $toCurrency)
+    {
+        $query = App::db()->query("SELECT * FROM settings");
+        $settings = $query->fetch();
+
+        $tableCurrency = ('AMD' == $fromCurrency ? $toCurrency : $fromCurrency);
+
+        $transaction = ('AMD' == $fromCurrency ? 'sell' : 'buy');
+        $tableType = (('AMD' != $fromCurrency && 'AMD' != $toCurrency) ? 'cross' : 'direct');
+
+        $converter = new Converter($type, $transaction, $tableType, $fromCurrency, $toCurrency, $settings, $tableCurrency);
+
+//        if ('AMD' != $fromCurrency && 'AMD' != $toCurrency) {
+//            foreach ($converter->banksSorted[$fromCurrency] as $key => $item) {
+//                $converter->banksSorted[$fromCurrency][$key]['price'] = round($item['price'] / $converter->converter[$toCurrency]['price'], 2);
+//            }
+//
+//            foreach ($converter->exchangersSorted[$fromCurrency] as $key => $item) {
+//                $converter->exchangersSorted[$fromCurrency][$key]['price'] = round($item['price'] / $converter->converter[$toCurrency]['price'], 2);
+//            }
+//
+//            foreach ($converter->banksAndExchangersSorted[$fromCurrency] as $key => $item) {
+//                $converter->banksAndExchangersSorted[$fromCurrency][$key]['price'] = round($item['price'] / $converter->converter[$toCurrency]['price'], 2);
+//            }
+//        }
+
+        header('Content-Type: application/json');
+        echo json_encode([
+//            'converter' => $converter->converter,
+//            'banksSorted' => $converter->banksSorted,
+//            'exchangersSorted' => $converter->exchangersSorted,
+//            'banksAndExchangersSorted' => $converter->banksAndExchangersSorted,
+            'data' => $converter->renderTable(),
+        ]);
+    }
+
+    protected function actionBigParseBank()
+    {
+        echo <<<HTML
+            <h1 style="text-align: center;">BigParseBank</h1>
+HTML;
+
+        $query = App::db()->query("SELECT * FROM settings");
+        $settings = $query->fetch();
+
+        $menu['top'] = include_once(__DIR__ . '/../../../storage/menu/top.php');
+        $menuLeft = include_once(__DIR__ . '/../../../storage/menu/left.php');
+
+        $menu['left']['hidden'] = $menuLeft['hidden'];
+
+        unset($menuLeft['hidden']);
+
+        $menu['left']['basic'] = $menuLeft;
+
+//        $rateam = new Rateam;
+//
+//        $symbolPack = ['USD', 'EUR', 'RUR', 'GBP'];
+//        $pack = implode(',', $symbolPack);
+//
+//        $rateam->loadPage('banks/cash', $pack);
+//
+//        $exList = $rateam->takeNamesAndUrls();
+//
+////        echo "<pre style='margin-left: 60px;'>";
+////        print_r(count($exList));
+////        echo "</pre>";
+////
+////        echo "<pre style='margin-left: 60px;'>";
+////        print_r($exList);
+////        echo "</pre>";
+//
+//        $dom = new Dom;
+//        foreach ($exList as $raid => $item) {
+////            $raid = 'c4a69322-c3c6-46c0-8edd-1b10cb90d100';
+////            $item['url'] = $exList[$raid]['url'];
+//            $dom->loadFromUrl($item['url']);
+////            $html = $dom->outerHtml;
+//
+//            $el = $dom->find('table.bankpagebankcontact')[0];
+//
+////            echo "<pre style='margin-left: 60px;'>";
+////            print_r($el->outerHtml);
+////            echo "</pre>";
+//
+//            $lines = $el->find('tr');
+//
+////            $res = [];
+//
+////        foreach ($lines as $line) {
+////            echo "<pre style='margin-left: 60px;'>";
+////            print_r($line->find('td')[0]->outerHtml);
+////            echo "</pre>";
+////            $res[$line->find('th')[0]->outerHtml] = $line->find('td')[0]->outerHtml;
+////        }
+//
+//            $data = [
+//                'head_office' => $lines[0]->find('td')[0]->outerHtml,
+//                'phone' => $lines[1]->find('td')[0]->outerHtml,
+//                'fax' => $lines[2]->find('td')[0]->outerHtml,
+//                'url' => $lines[4]->find('td')[0]->outerHtml,
+//            ];
+//
+//            $branchs = $dom->find('table#search_rb')[0];
+////            echo "<pre style='margin-left: 60px;'>";
+////            print_r($branchs->outerHtml);
+////            echo "</pre>";
+//
+//            $branchList = $branchs->find('tr');
+//
+////        echo "<pre style='margin-left: 60px;'>";
+////        print_r(count($branchList));
+////        echo "</pre>";
+//
+//            $branchData = [];
+//
+//            $i = 0;
+//            foreach ($branchList as $branchItem) {
+//                $i++;
+//
+//                if (1 == $i) continue;
+//
+//                $td = $branchItem->find('td');
+//
+////                echo "<pre style='margin-left: 60px;'>";
+////                print_r($branchItem);
+////                echo "</pre>";
+//
+//                $branchData[] = [
+//                    'name' => $td[1]->find('a')[0]->innerHtml,
+//                    'address' => str_replace('<br />', ' ',$td[2]->find('a')[0]->innerHtml),
+//                    'phone' => $td[3]->find('a')[0]->innerHtml,
+//                ];
+//            }
+//
+////            echo "<pre style='margin-left: 60px;'>";
+////            print_r($branchData);
+////            echo "</pre>";
+//
+//            $data['baranches'] = $branchData;
+//
+//            $exList[$raid] = array_merge($exList[$raid], $data);
+//
+////            echo "<pre style='margin-left: 60px;'>";
+////            print_r($data);
+////            echo "</pre>";
+//        }
+//
+//            echo "<pre style='margin-left: 60px;'>";
+//            print_r($exList);
+//            echo "</pre>";
+//
+//        file_put_contents(__DIR__ . '/../../../storage/2023_10_09_bank_info.txt', serialize($exList));
+//        die(__FILE__ . ': ' . __LINE__);
+        $exList = unserialize(file_get_contents(__DIR__ . '/../../../storage/2023_10_09_bank_info.txt'));
+//        echo "<pre style='margin-left: 60px;'>";
+//        print_r($exList);
+//        echo "</pre>";
+
+        $sql = 'SELECT id, raid FROM exchanger';
+        $query = App::db()->query($sql);
+
+        $bankData = [];
+
+        while ($res = $query->fetch()) {
+//            $data[date('Y.m.d', (int) $res['date_at'])][] = $res['price'];
+            $bankData[$res['raid']] = $res['id'];
+//            echo "<pre style='margin-left: 60px;'>";
+//            print_r($res);
+//            echo "</pre>";
+        }
+//        echo "<pre style='margin-left: 60px;'>";
+//        print_r($bankData);
+//        echo "</pre>";
+
+        $bankInfoPure = [];
+
+        foreach ($exList as $raid => $item) {
+            $item['head_office'] = trim(str_replace(['<td> ', ' </td>'], ' ', $item['head_office']));
+            $item['phone'] = trim(str_replace(['<td> ', ' </td>'], ' ', $item['phone']));
+            $item['fax'] = trim(str_replace(['<td> ', ' </td>'], ' ', $item['fax']));
+            $item['url'] = trim(str_replace(['<td> ', ' </td>'], ' ', $item['url']));
+            $item['raid'] = $raid;
+
+//            $item['name'] = ['ru' => $item['name'], 'en' => $item['name'], 'am' => $item['name']];
+            $item['url'] = ['ru' => $item['url'], 'en' => $item['url'], 'am' => $item['url']];
+            $item['head_office'] = ['ru' => $item['head_office'], 'en' => $item['head_office'], 'am' => $item['head_office']];
+            $item['phone'] = ['ru' => $item['phone'], 'en' => $item['phone'], 'am' => $item['phone']];
+            $item['fax'] = ['ru' => $item['fax'], 'en' => $item['fax'], 'am' => $item['fax']];
+
+            foreach ($item['baranches'] as $key => $branch) {
+                $item['baranches'][$key] = [
+                    'name' => ['ru' => $branch['name'], 'en' => $branch['name'], 'am' => $branch['name']],
+                    'address' => ['ru' => $branch['address'], 'en' => $branch['address'], 'am' => $branch['address']],
+                    'phone' => ['ru' => $branch['phone'], 'en' => $branch['phone'], 'am' => $branch['phone']],
+                ];
+            }
+
+            $bankInfoPure[$bankData[$raid]] = $item;
+        }
+
+//        echo "<pre style='margin-left: 60px;'>";
+//        print_r($bankInfoPure);
+//        echo "</pre>";
+
+        $exListOld = unserialize(file_get_contents(__DIR__ . '/../../../storage/bank_info.txt'));
+
+        $bankInfoPureOld = [];
+
+        foreach ($exListOld as $raid => $item) {
+//            echo "<pre style='margin-left: 60px;'>";
+//            print_r($raid);
+//            echo "</pre>";
+            if (!isset($bankData[$raid])) {
+//                $bankNotSetted[] = $raid;
+                continue;
+            }
+
+            $item['head_office'] = trim(str_replace(['<td> ', ' </td>'], ' ', $item['head_office']));
+            $item['phone'] = trim(str_replace(['<td> ', ' </td>'], ' ', $item['phone']));
+            $item['fax'] = trim(str_replace(['<td> ', ' </td>'], ' ', $item['fax']));
+            $item['url'] = trim(str_replace(['<td> ', ' </td>'], ' ', $item['url']));
+            $item['raid'] = $raid;
+
+//            $item['name'] = ['ru' => $item['name'], 'en' => $item['name'], 'am' => $item['name']];
+            $item['url'] = ['ru' => $item['url'], 'en' => $item['url'], 'am' => $item['url']];
+            $item['head_office'] = ['ru' => $item['head_office'], 'en' => $item['head_office'], 'am' => $item['head_office']];
+            $item['phone'] = ['ru' => $item['phone'], 'en' => $item['phone'], 'am' => $item['phone']];
+            $item['fax'] = ['ru' => $item['fax'], 'en' => $item['fax'], 'am' => $item['fax']];
+
+            foreach ($item['baranches'] as $key => $branch) {
+                $item['baranches'][$key] = [
+                    'name' => ['ru' => $branch['name'], 'en' => $branch['name'], 'am' => $branch['name']],
+                    'address' => ['ru' => $branch['address'], 'en' => $branch['address'], 'am' => $branch['address']],
+                    'phone' => ['ru' => $branch['phone'], 'en' => $branch['phone'], 'am' => $branch['phone']],
+                ];
+            }
+
+            $bankInfoPureOld[$bankData[$raid]] = $item;
+        }
+
+//        echo "<pre>";
+//        print_r($bankInfoPure[2]);
+//        echo "</pre>";
+
+//        echo "<pre>";
+//        print_r(array_keys($bankInfoPureOld));
+//        echo "</pre>";
+//
+//        echo "<pre>";
+//        print_r(array_keys($bankInfoPure));
+//        echo "</pre>";
+
+        $newBankIds = [];
+        foreach (array_keys($bankInfoPure) as $bankId) {
+            if (!in_array($bankId, array_keys($bankInfoPureOld))) {
+                $newBankIds[] = $bankId;
+            }
+        }
+        asort($newBankIds);
+
+//        echo "<pre>";
+//        print_r($newBankIds);
+//        echo "</pre>";
+
+//        echo "<pre>";
+//        print_r($bankNotSetted);
+//        echo "</pre>";
+
+//        die(__FILE__ . ': ' . __LINE__);
+
+//        foreach ($newBankIds as $newBankId) {
+//            $bankInfoPureOld[$newBankId] = $bankInfoPure[$newBankId];
+//        }
+        $bankIdUpdates = [2];
+        foreach ($bankIdUpdates as $bankIdUpdate) {
+            $bankInfoPureOld[$bankIdUpdate] = $bankInfoPure[$bankIdUpdate];
+        }
+
+//        file_put_contents(__DIR__ . '/../../../storage/bank_info_pure.txt', serialize($bankInfoPureOld));
+        die(__FILE__ . ': ' . __LINE__);
+
+        return [
+            'site/big_parse',
+            [
+                'settings' => $settings,
+                'menu' => $menu,
+            ]
+        ];
+    }
+
+    protected function actionBigParseExchanger()
+    {
+        echo <<<HTML
+            <h1 style="text-align: center;">BigParseExchanger</h1>
+HTML;
+
+        $query = App::db()->query("SELECT * FROM settings");
+        $settings = $query->fetch();
+
+        $menu['top'] = include_once(__DIR__ . '/../../../storage/menu/top.php');
+        $menuLeft = include_once(__DIR__ . '/../../../storage/menu/left.php');
+
+        $menu['left']['hidden'] = $menuLeft['hidden'];
+
+        unset($menuLeft['hidden']);
+
+        $menu['left']['basic'] = $menuLeft;
+
+//        $rateam = new Rateam;
+//
+//        $symbolPack = ['USD', 'EUR', 'RUR', 'GBP'];
+//        $pack = implode(',', $symbolPack);
+//
+//        $rateam->loadPage('exchange-points/cash/retail', $pack);
+//
+//        $exList = $rateam->takeNamesAndUrls();
+//
+////        echo "<pre style='margin-left: 60px;'>";
+////        print_r(count($exList));
+////        echo "</pre>";
+////
+////        echo "<pre style='margin-left: 60px;'>";
+////        print_r($exList);
+////        echo "</pre>";
+//
+//        $dom = new Dom;
+//        foreach ($exList as $raid => $item) {
+////            $raid = '2cb6fa8f-2d6f-421f-b9d7-373e94505185';
+////            $item['url'] = $exList[$raid]['url'];
+//            $dom->loadFromUrl($item['url']);
+////            $html = $dom->outerHtml;
+//
+//            $el = $dom->find('table.bankpagebankcontact')[0];
+//
+////            echo "<pre style='margin-left: 60px;'>";
+////            print_r($el->outerHtml);
+////            echo "</pre>";
+//
+//            $lines = $el->find('tr');
+//
+////            $res = [];
+//
+//            foreach ($lines as $line) {
+////            echo "<pre style='margin-left: 60px;'>";
+////            print_r($line->find('th')[0]->outerHtml . ': ' . $line->find('td')[0]->outerHtml);
+////            echo "</pre>";
+//                $res[$line->find('th')[0]->outerHtml] = $line->find('td')[0]->outerHtml;
+//            }
+//
+//            $data = [
+//                'head_office' => str_replace('<br />', ' ', $lines[0]->find('td')[0]->outerHtml),
+//                'phone' => $lines[1]->find('td')[0]->outerHtml,
+//                'fax' => $lines[3]->find('td')[0]->outerHtml,
+//                'url' => $lines[5]->find('td')[0]->outerHtml,
+//            ];
+//
+//            $branchs = $dom->find('table#search_rb')[0];
+////            echo "<pre style='margin-left: 60px;'>";
+////            print_r($branchs->outerHtml);
+////            echo "</pre>";
+//
+//            $branchList = $branchs->find('tr');
+//
+////        echo "<pre style='margin-left: 60px;'>";
+////        print_r(count($branchList));
+////        echo "</pre>";
+//
+//            $branchData = [];
+//
+//            $i = 0;
+//            foreach ($branchList as $branchItem) {
+//                $i++;
+//
+//                if (1 == $i) continue;
+//
+//                $td = $branchItem->find('td');
+//
+////                echo "<pre style='margin-left: 60px;'>";
+////                print_r($branchItem);
+////                echo "</pre>";
+//
+//                $branchData[] = [
+//                    'name' => str_replace('<br />', ' ', $td[1]->find('a')[0]->innerHtml),
+//                    'address' => str_replace('<br />', ' ',$td[2]->find('a')[0]->innerHtml),
+//                    'phone' => $td[3]->find('a')[0]->innerHtml,
+//                ];
+//            }
+//
+////            echo "<pre style='margin-left: 60px;'>";
+////            print_r($branchData);
+////            echo "</pre>";
+//
+//            $data['baranches'] = $branchData;
+//
+//            $exList[$raid] = array_merge($exList[$raid], $data);
+//
+////            echo "<pre style='margin-left: 60px;'>";
+////            print_r($data);
+////            echo "</pre>";
+//        }
+////
+////            echo "<pre style='margin-left: 60px;'>";
+////            print_r($exList);
+////            echo "</pre>";
+////
+//        file_put_contents(__DIR__ . '/../../../storage/2023_10_09_exchanger_info.txt', serialize($exList));
+//        die(__FILE__ . ': ' . __LINE__);
+        $exList = unserialize(file_get_contents(__DIR__ . '/../../../storage/2023_10_09_exchanger_info.txt'));
+//        echo "<pre style='margin-left: 60px;'>";
+//        print_r($exList);
+//        echo "</pre>";
+
+        $sql = 'SELECT id, raid FROM exchanger';
+        $query = App::db()->query($sql);
+
+        $bankData = [];
+
+        while ($res = $query->fetch()) {
+//            $data[date('Y.m.d', (int) $res['date_at'])][] = $res['price'];
+            $bankData[$res['raid']] = $res['id'];
+//            echo "<pre style='margin-left: 60px;'>";
+//            print_r($res);
+//            echo "</pre>";
+        }
+//        echo "<pre style='margin-left: 60px;'>";
+//        print_r($bankData);
+//        echo "</pre>";
+
+        $bankInfoPure = [];
+//        $bankNotSetted = [];
+
+        foreach ($exList as $raid => $item) {
+//            echo "<pre style='margin-left: 60px;'>";
+//            print_r($raid);
+//            echo "</pre>";
+            if (!isset($bankData[$raid])) {
+//                $bankNotSetted[] = $raid;
+                continue;
+            }
+
+            $item['head_office'] = trim(str_replace(['<td> ', ' </td>'], ' ', $item['head_office']));
+            $item['phone'] = trim(str_replace(['<td> ', ' </td>'], ' ', $item['phone']));
+            $item['fax'] = trim(str_replace(['<td> ', ' </td>'], ' ', $item['fax']));
+            $item['url'] = trim(str_replace(['<td> ', ' </td>'], ' ', $item['url']));
+            $item['raid'] = $raid;
+
+//            $item['name'] = ['ru' => $item['name'], 'en' => $item['name'], 'am' => $item['name']];
+            $item['url'] = ['ru' => $item['url'], 'en' => $item['url'], 'am' => $item['url']];
+            $item['head_office'] = ['ru' => $item['head_office'], 'en' => $item['head_office'], 'am' => $item['head_office']];
+            $item['phone'] = ['ru' => $item['phone'], 'en' => $item['phone'], 'am' => $item['phone']];
+            $item['fax'] = ['ru' => $item['fax'], 'en' => $item['fax'], 'am' => $item['fax']];
+
+            foreach ($item['baranches'] as $key => $branch) {
+                $item['baranches'][$key] = [
+                    'name' => ['ru' => $branch['name'], 'en' => $branch['name'], 'am' => $branch['name']],
+                    'address' => ['ru' => $branch['address'], 'en' => $branch['address'], 'am' => $branch['address']],
+                    'phone' => ['ru' => $branch['phone'], 'en' => $branch['phone'], 'am' => $branch['phone']],
+                ];
+            }
+
+            $bankInfoPure[$bankData[$raid]] = $item;
+        }
+
+//        echo "<pre style='margin-left: 60px;'>";
+//        print_r($bankInfoPure);
+//        echo "</pre>";
+
+        $exListOld = unserialize(file_get_contents(__DIR__ . '/../../../storage/exchanger_info.txt'));
+
+        $bankInfoPureOld = [];
+
+        foreach ($exListOld as $raid => $item) {
+//            echo "<pre style='margin-left: 60px;'>";
+//            print_r($raid);
+//            echo "</pre>";
+            if (!isset($bankData[$raid])) {
+//                $bankNotSetted[] = $raid;
+                continue;
+            }
+
+            $item['head_office'] = trim(str_replace(['<td> ', ' </td>'], ' ', $item['head_office']));
+            $item['phone'] = trim(str_replace(['<td> ', ' </td>'], ' ', $item['phone']));
+            $item['fax'] = trim(str_replace(['<td> ', ' </td>'], ' ', $item['fax']));
+            $item['url'] = trim(str_replace(['<td> ', ' </td>'], ' ', $item['url']));
+            $item['raid'] = $raid;
+
+//            $item['name'] = ['ru' => $item['name'], 'en' => $item['name'], 'am' => $item['name']];
+            $item['url'] = ['ru' => $item['url'], 'en' => $item['url'], 'am' => $item['url']];
+            $item['head_office'] = ['ru' => $item['head_office'], 'en' => $item['head_office'], 'am' => $item['head_office']];
+            $item['phone'] = ['ru' => $item['phone'], 'en' => $item['phone'], 'am' => $item['phone']];
+            $item['fax'] = ['ru' => $item['fax'], 'en' => $item['fax'], 'am' => $item['fax']];
+
+            foreach ($item['baranches'] as $key => $branch) {
+                $item['baranches'][$key] = [
+                    'name' => ['ru' => $branch['name'], 'en' => $branch['name'], 'am' => $branch['name']],
+                    'address' => ['ru' => $branch['address'], 'en' => $branch['address'], 'am' => $branch['address']],
+                    'phone' => ['ru' => $branch['phone'], 'en' => $branch['phone'], 'am' => $branch['phone']],
+                ];
+            }
+
+            $bankInfoPureOld[$bankData[$raid]] = $item;
+        }
+
+//        echo "<pre>";
+//        print_r($bankInfoPure);
+//        echo "</pre>";
+
+//        echo "<pre>";
+//        print_r(array_keys($bankInfoPureOld));
+//        echo "</pre>";
+//
+//        echo "<pre>";
+//        print_r(array_keys($bankInfoPure));
+//        echo "</pre>";
+
+//        $newExchIds = [];
+//        foreach (array_keys($bankInfoPure) as $bankId) {
+//            if (!in_array($bankId, array_keys($bankInfoPureOld))) {
+//                $newExchIds[] = $bankId;
+//            }
+//        }
+//        asort($newExchIds);
+//
+//        echo "<pre>";
+//        print_r($newExchIds);
+//        echo "</pre>";
+
+//        echo "<pre>";
+//        print_r($bankNotSetted);
+//        echo "</pre>";
+
+//        die(__FILE__ . ': ' . __LINE__);
+
+//        foreach ($newExchIds as $newExchId) {
+//            $bankInfoPureOld[$newExchId] = $bankInfoPure[$newExchId];
+//        }
+
+//        file_put_contents(__DIR__ . '/../../../storage/2023_10_09_exchanger_info_pure.txt', serialize($bankInfoPureOld));
+        die(__FILE__ . ': ' . __LINE__);
+
+        return [
+            'site/big_parse',
+            [
+                'settings' => $settings,
+                'menu' => $menu,
+            ]
+        ];
+    }
+
+    protected function actionFixExchanger()
+    {
+//        echo <<<HTML
+//            <h1 style="text-align: center;">BigParseExchanger</h1>
+//HTML;
+//
+//        $query = App::db()->query("SELECT * FROM settings");
+//        $settings = $query->fetch();
+//
+//        $menu['top'] = include_once(__DIR__ . '/../../../storage/menu/top.php');
+//        $menuLeft = include_once(__DIR__ . '/../../../storage/menu/left.php');
+//
+//        $menu['left']['hidden'] = $menuLeft['hidden'];
+//
+//        unset($menuLeft['hidden']);
+//
+//        $menu['left']['basic'] = $menuLeft;
+//
+//        return [
+//            'site/big_parse',
+//            [
+//                'settings' => $settings,
+//                'menu' => $menu,
+//            ]
+//        ];
+//        $exchangerInfoOld = unserialize(file_get_contents(__DIR__ . '/../../../storage/exchanger_info.txt'));
+//
+//        echo "<pre>";
+//        print_r($exchangerInfoOld);
+//        echo "</pre>";
+
+        $exchangerInfo = unserialize(file_get_contents(__DIR__ . '/../../../storage/exchanger_info_pure.txt'));
+
+        $exchangerInfoKeys = array_keys($exchangerInfo);
+        sort($exchangerInfoKeys);
+
+        echo "<pre>";
+        print_r($exchangerInfoKeys);
+        echo "</pre>";
+
+        $removeSec = App::config("widget>MainTable>removeSec");
+        $removeTime = (time() - $removeSec);
+
+        $exchangersAndBanks = App::createHdbk(
+            Exchanger::class, 'id', '*', null, ['upd_cash' => 'DESC']
+        );
+
+//        echo "<pre>";
+//        print_r($exchangersAndBanks);
+//        echo "</pre>";
+
+        $exchangersFullInfo = [];
+        $exchangers = [];
+
+        foreach ($exchangersAndBanks as $exch) {
+            if ($exch->is_bank) {
+                continue;
+            }/* elseif ($exch->upd_cash < $removeTime) {
+                continue;
+            }*/
+
+            $exchangers[] = $exch->id;
+            $exchangersFullInfo[] = $exch;
+        }
+        
+        echo "<pre>";
+        print_r($exchangersFullInfo);
+        echo "</pre>";
+
+//        $exchangersKeys = array_keys($exchangers);
+        sort($exchangers);
+
+        echo "<pre>";
+        print_r($exchangers);
+        echo "</pre>";
+
+        $newExchangers = [];
+        foreach ($exchangers as $exchangerId) {
+            if (array_search($exchangerId, $exchangerInfoKeys)) {
+                continue;
+            }
+            $newExchangers[] = $exchangerId;
+        }
+
+        echo "<pre>";
+        print_r($newExchangers);
+        echo "</pre>";
+    }
+}
