@@ -63,7 +63,7 @@ class Tradingview
                 CURLOPT_RETURNTRANSFER => true,
                 CURLOPT_HEADER => false,
                 CURLOPT_USERAGENT => 'Mozilla/5.0 (Windows NT 6.1; Win64; x64; '
-                                     . 'rv:92.0) Gecko/20100101 Firefox/92.0',
+                    . 'rv:92.0) Gecko/20100101 Firefox/92.0',
                 CURLOPT_HTTPHEADER => static::$headers
             ]
         );
@@ -112,7 +112,7 @@ class Tradingview
             $price = explode('<span', $row->find('td')[2]->innerHtml);
             $img = $firstTd->find('img')[0];
             $data[$shortName] = [
-                'price' => $price[0],
+                'price' => str_replace(',', '', $price[0]),
                 'name' => $firstTd->find('sup')[0]->innerHtml,
                 'image' => $img ? $img->getAttribute('src') : null,
             ];

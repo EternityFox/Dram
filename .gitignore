@@ -1,3 +1,9 @@
 dram.am_2023.29.01_20-21.tar.gz
 /vendor
 app/storage/
+.htaccess
+app/storage/error.log
+app/storage/db.sqlite
+app/storage/cron.log
+app/storage/cron_courses.log
+.idea/

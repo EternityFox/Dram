@@ -3,6 +3,7 @@
 /**
  * Процесс парсинга обменников и курсов валют с сайта https://rate.am
  */
+
 use App\App,
     App\Model\Currency,
     App\Model\Exchanger,
@@ -66,7 +67,7 @@ function saveLog()
     fclose($fh);
 }
 
-set_exception_handler(function(Throwable $e) {
+set_exception_handler(function (Throwable $e) {
     $error = get_class($e) . ': ' . $e->getMessage();
     error_log($error, 0);
 
@@ -87,230 +88,236 @@ $rateam = new Rateam;
 $new_exchangers = $new_images = [];
 
 //foreach ($symbolPack as $pack) {
-    $activeSymbols = [];
-    foreach ($symbolPack as $pack) {
-        foreach ($pack as $i => $symbol) {
-            $amt = ($symbolAmt[$symbol] ?? '1');
-            $pack[$i] = "{$amt} {$symbol}";
-            $activeSymbols[($symbolAliases[$symbol] ?? $symbol)] = [
-                'id' => $symbols->get(
-                    ($symbolAliases[$symbol] ?? $symbol)
-                )['id'],
-                'amt' => $amt
-            ];
-        }
+$activeSymbols = [];
+foreach ($symbolPack as $pack) {
+    foreach ($pack as $i => $symbol) {
+        $amt = ($symbolAmt[$symbol] ?? '1');
+        $pack[$i] = "{$amt} {$symbol}";
+        $activeSymbols[($symbolAliases[$symbol] ?? $symbol)] = [
+            'id' => $symbols->get(
+                ($symbolAliases[$symbol] ?? $symbol)
+            )['id'],
+            'amt' => $amt
+        ];
     }
-    $pack = implode(',', $pack);
-    $cids = array_column($activeSymbols, 'id');
+}
+$pack = implode(',', $pack);
+$cids = array_column($activeSymbols, 'id');
 
-    foreach ($pages as $path => $info) {
-        $ids = $new_ids = $rates = [];
+foreach ($pages as $path => $info) {
+    $ids = $new_ids = $rates = [];
 
-        echo "Страница: {$path} ({$pack})\r\n";
-        $page = $rateam->loadPage($path, $pack);
-        $exList = $rateam->takeList();
-        echo 'Обменников: ' . count($exList) . "\r\n";
+    echo "Страница: {$path} ({$pack})\r\n";
+    $page = $rateam->loadPage($path, $pack);
+    $exList = $rateam->takeList();
+    echo 'Обменников: ' . count($exList) . "\r\n";
 
-        // Перебор обменников
-        foreach ($exList as $raid => $data) {
-            if (!($local = $exchangers->findOne(['raid' => $raid])) || $local['name'] != $data['name']) {
-                if ($local)
-                    Exrcourse::delete('eid = ' . $local['id']);
+    // Перебор обменников
+    foreach ($exList as $raid => $data) {
+        if (!($local = $exchangers->findOne(['raid' => $raid])) || $local['name'] != $data['name']) {
+            if ($local) {
+                Exrcourse::delete('eid = ' . $local['id']);
                 Exchanger::delete('raid = "' . $raid . '"');
-                $local = new Exchanger([
-                    'id' => ++$last_ex_id,
-                    'name' => $data['name'],
-                    'branches' => $data['branches'],
-                    'is_bank' => $info['is_bank'],
-                    //$info['upd_field'] => $data['date'],
-                    'upd_cash' => $data['date'],
-                    'upd_noncash' => $data['date'],
-                    'upd_card' => $data['date'],
-                    'raid' => $raid
-                ]);
-                $exchangers->push($raid, $local);
-                $new_ids[$local->id] = $local->raid;
-                $new_exchangers[$local->id] = [$raid, $data['logo'], $local->name];
-            } else {
-                //$local[$info['upd_field']] = $data['date'];
-                $local['upd_cash'] = $data['date'];
-                $local['upd_noncash'] = $data['date'];
-                $local['upd_card'] = $data['date'];
             }
+            $local_name = $exchangers->findOne(['name' => $data['name']]);
+            if ($local_name) {
+                Exrcourse::delete('eid = ' . $local_name['id']);
+                Exchanger::delete('name = "' . $local_name['name'] . '"');
+            }
+            $local = new Exchanger([
+                'id' => ++$last_ex_id,
+                'name' => $data['name'],
+                'branches' => $data['branches'],
+                'is_bank' => $info['is_bank'],
+                //$info['upd_field'] => $data['date'],
+                'upd_cash' => $data['date'],
+                'upd_noncash' => $data['date'],
+                'upd_card' => $data['date'],
+                'raid' => $raid
+            ]);
+            $exchangers->push($raid, $local);
+            $new_ids[$local->id] = $local->raid;
+            $new_exchangers[$local->id] = [$raid, $data['logo'], $local->name];
+        } else {
+            //$local[$info['upd_field']] = $data['date'];
+            $local['upd_cash'] = $data['date'];
+            $local['upd_noncash'] = $data['date'];
+            $local['upd_card'] = $data['date'];
+        }
 
-            if (
-                $info['is_bank']
-                && (
-                    !file_exists(App::path("img/exchanger/{$raid}.svg"))
-                    || filemtime(App::path("img/exchanger/{$raid}.svg")) < (time() - 86400 * 3)
+        if (
+            $info['is_bank']
+            && (
+                !file_exists(App::path("img/exchanger/{$raid}.svg"))
+                || filemtime(App::path("img/exchanger/{$raid}.svg")) < (time() - 86400 * 3)
             )) {
-                $new_images[$raid] = $data['logo'];
-            }
+            $new_images[$raid] = $data['logo'];
+        }
 
-            /*if (!$info['is_bank']) {
-                $local['upd_noncash'] = $data['date'];*/
+        /*if (!$info['is_bank']) {
+            $local['upd_noncash'] = $data['date'];*/
 
-            $ids[$local->raid] = $local->id;
+        $ids[$local->raid] = $local->id;
 
-            // Перебор курсов
-            foreach ($data['rates'] as $symbol => $rate) {
-                $s = $symbol;
-                if (isset($symbolAliases[$symbol]))
-                    $symbol = $symbolAliases[$symbol];
+        // Перебор курсов
+        foreach ($data['rates'] as $symbol => $rate) {
+            $s = $symbol;
+            if (isset($symbolAliases[$symbol]))
+                $symbol = $symbolAliases[$symbol];
 
-                if (!isset($activeSymbols[$symbol]))
-                    continue;
+            if (!isset($activeSymbols[$symbol]))
+                continue;
 
-                $symbol = $activeSymbols[$symbol];
-                if ($info['is_bank']) {
-                    if (isset($rate['CASH']) && !empty($rate['CASH']['buy'])
-                        && !empty($rate['CASH']['sell'])) {
-                        $id = Exrcourse::generateId(
-                            $local['id'], $symbol['id'], Exrcourse::TYPE_CASH
-                        );
-                        $rates[(string) $id] = [
-                            'id' => $id, 'eid' => $local['id'],
-                            'cid' => $symbol['id'],
-                            'type' => Exrcourse::TYPE_CASH,
-                            'buy' => ($rate['CASH']['buy'] / $symbol['amt']),
-                            'sell' => ($rate['CASH']['sell'] / $symbol['amt'])
-                        ];
-                    }
+            $symbol = $activeSymbols[$symbol];
+            if ($info['is_bank']) {
+                if (isset($rate['CASH']) && !empty($rate['CASH']['buy'])
+                    && !empty($rate['CASH']['sell'])) {
+                    $id = Exrcourse::generateId(
+                        $local['id'], $symbol['id'], Exrcourse::TYPE_CASH
+                    );
+                    $rates[(string)$id] = [
+                        'id' => $id, 'eid' => $local['id'],
+                        'cid' => $symbol['id'],
+                        'type' => Exrcourse::TYPE_CASH,
+                        'buy' => ($rate['CASH']['buy'] / $symbol['amt']),
+                        'sell' => ($rate['CASH']['sell'] / $symbol['amt'])
+                    ];
+                }
 
-                    if (isset($rate['CLEARING'])
-                        && !empty($rate['CLEARING']['buy'])
-                        && !empty($rate['CLEARING']['sell'])) {
-                        $id = Exrcourse::generateId(
-                            $local['id'], $symbol['id'], Exrcourse::TYPE_NONCASH
-                        );
-                        $rates[(string) $id] = [
-                            'id' => $id, 'eid' => $local['id'],
-                            'cid' => $symbol['id'],
-                            'type' => Exrcourse::TYPE_NONCASH,
-                            'buy' => ($rate['CLEARING']['buy']
-                                / $symbol['amt']),
-                            'sell' => ($rate['CLEARING']['sell']
-                                / $symbol['amt'])
-                        ];
-                    }
+                if (isset($rate['CLEARING'])
+                    && !empty($rate['CLEARING']['buy'])
+                    && !empty($rate['CLEARING']['sell'])) {
+                    $id = Exrcourse::generateId(
+                        $local['id'], $symbol['id'], Exrcourse::TYPE_NONCASH
+                    );
+                    $rates[(string)$id] = [
+                        'id' => $id, 'eid' => $local['id'],
+                        'cid' => $symbol['id'],
+                        'type' => Exrcourse::TYPE_NONCASH,
+                        'buy' => ($rate['CLEARING']['buy']
+                            / $symbol['amt']),
+                        'sell' => ($rate['CLEARING']['sell']
+                            / $symbol['amt'])
+                    ];
+                }
 
-                    if (isset($rate['CARDTRANSACTION'])
-                        && !empty($rate['CARDTRANSACTION']['buy'])
-                        && !empty($rate['CARDTRANSACTION']['sell'])) {
-                        $id = Exrcourse::generateId(
-                            $local['id'], $symbol['id'], Exrcourse::TYPE_CARD
-                        );
-                        $rates[(string) $id] = [
-                            'id' => $id, 'eid' => $local['id'],
-                            'cid' => $symbol['id'],
-                            'type' => Exrcourse::TYPE_CARD,
-                            'buy' => ($rate['CARDTRANSACTION']['buy']
-                                / $symbol['amt']),
-                            'sell' => ($rate['CARDTRANSACTION']['sell']
-                                / $symbol['amt'])
-                        ];
-                    }
-                } else {
-                    if (isset($rate['RETAIL'])
-                        && !empty($rate['RETAIL']['buy'])
-                        && !empty($rate['RETAIL']['sell'])) {
-                        $id = Exrcourse::generateId(
-                            $local['id'], $symbol['id'], Exrcourse::TYPE_CASH_NONCASH
-                        );
-                        $rates[(string) $id] = [
-                            'id' => $id, 'eid' => $local['id'],
-                            'cid' => $symbol['id'],
-                            'type' => Exrcourse::TYPE_CASH_NONCASH,
-                            'buy' => ($rate['RETAIL']['buy']
-                                / $symbol['amt']),
-                            'sell' => ($rate['RETAIL']['sell']
-                                / $symbol['amt']),
-                            'ws_buy' => ($rate['CORPORATE'] ? ($rate['CORPORATE']['buy'] / $symbol['amt']) : 'NULL'),
-                            'ws_sell' => ($rate['CORPORATE'] ? ($rate['CORPORATE']['sell'] / $symbol['amt']) : 'NULL')
-                        ];
-                    }
+                if (isset($rate['CARDTRANSACTION'])
+                    && !empty($rate['CARDTRANSACTION']['buy'])
+                    && !empty($rate['CARDTRANSACTION']['sell'])) {
+                    $id = Exrcourse::generateId(
+                        $local['id'], $symbol['id'], Exrcourse::TYPE_CARD
+                    );
+                    $rates[(string)$id] = [
+                        'id' => $id, 'eid' => $local['id'],
+                        'cid' => $symbol['id'],
+                        'type' => Exrcourse::TYPE_CARD,
+                        'buy' => ($rate['CARDTRANSACTION']['buy']
+                            / $symbol['amt']),
+                        'sell' => ($rate['CARDTRANSACTION']['sell']
+                            / $symbol['amt'])
+                    ];
+                }
+            } else {
+                if (isset($rate['RETAIL'])
+                    && !empty($rate['RETAIL']['buy'])
+                    && !empty($rate['RETAIL']['sell'])) {
+                    $id = Exrcourse::generateId(
+                        $local['id'], $symbol['id'], Exrcourse::TYPE_CASH_NONCASH
+                    );
+                    $rates[(string)$id] = [
+                        'id' => $id, 'eid' => $local['id'],
+                        'cid' => $symbol['id'],
+                        'type' => Exrcourse::TYPE_CASH_NONCASH,
+                        'buy' => ($rate['RETAIL']['buy']
+                            / $symbol['amt']),
+                        'sell' => ($rate['RETAIL']['sell']
+                            / $symbol['amt']),
+                        'ws_buy' => ($rate['CORPORATE'] ? ($rate['CORPORATE']['buy'] / $symbol['amt']) : 'NULL'),
+                        'ws_sell' => ($rate['CORPORATE'] ? ($rate['CORPORATE']['sell'] / $symbol['amt']) : 'NULL')
+                    ];
                 }
             }
+        }
 
-            /*foreach ($data['rates'] as $currNum => $rate) {
-                if (!$rate[0] && !$rate[1])
-                    continue;
+        /*foreach ($data['rates'] as $currNum => $rate) {
+            if (!$rate[0] && !$rate[1])
+                continue;
 
+            $symbol = $activeSymbols[$currNum];
+            $id = Exrcourse::generateId(
+                $local['id'], $symbol['id'], $info['type']
+            );
+            $rates[$id] = [
+                'id' => $id,
+                'eid' => $local['id'],
+                'cid' => $symbol['id'],
+                'type' => $info['type'],
+                'buy' => ($rate[0] / $symbol['amt']),
+                'sell' => ($rate[1] / $symbol['amt'])
+            ];
+        }*/
+    }
+
+    echo 'Новых обменников: ' . count($new_ids) . "\r\n";
+    echo 'Кол-во курсов: ' . count($rates) . "\r\n";
+
+    // Обновление курсов
+    Exrcourse::delete(
+        'eid IN(' . implode(', ', $ids) . ')'
+        . ' AND cid IN(' . implode(', ', $cids) . ')'
+    );
+
+    // Добавление новых обменников/обновление даты изменения курсов валют
+    $fields = [];
+    foreach ($ids as $raid => $id) {
+        $ex = $exchangers->findOne(['raid' => $raid]);
+        if (isset($new_ids[$id]))
+            $fields[] = $ex->fields();
+        else
+            $ex->save();
+    }
+
+    if ($fields)
+        Exchanger::insert(array_keys($fields[0]), $fields);
+
+    // Получение оптовых цен для обменников
+    /*
+    if (!$info['is_bank']) {
+        echo "Страница: {$ws_page}\r\n";
+
+        $rateam->loadPage($ws_page, $pack);
+        $exList = $rateam->takeList();
+        $cnt = 0;
+        foreach ($exList as $raid => $data) {
+            if (!($local = $exchangers->findOne(['raid' => $raid])))
+                continue;
+
+            foreach ($data['rates'] as $currNum => $rate) {
                 $symbol = $activeSymbols[$currNum];
                 $id = Exrcourse::generateId(
                     $local['id'], $symbol['id'], $info['type']
                 );
-                $rates[$id] = [
-                    'id' => $id,
-                    'eid' => $local['id'],
-                    'cid' => $symbol['id'],
-                    'type' => $info['type'],
-                    'buy' => ($rate[0] / $symbol['amt']),
-                    'sell' => ($rate[1] / $symbol['amt'])
-                ];
-            }*/
-        }
-
-        echo 'Новых обменников: ' . count($new_ids) . "\r\n";
-        echo 'Кол-во курсов: ' . count($rates) . "\r\n";
-
-        // Обновление курсов
-        Exrcourse::delete(
-            'eid IN(' . implode(', ', $ids) . ')'
-            . ' AND cid IN(' . implode(', ', $cids) . ')'
-        );
-
-        // Добавление новых обменников/обновление даты изменения курсов валют
-        $fields = [];
-        foreach ($ids as $raid => $id) {
-            $ex = $exchangers->findOne(['raid' => $raid]);
-            if (isset($new_ids[$id]))
-                $fields[] = $ex->fields();
-            else
-                $ex->save();
-        }
-
-        if ($fields)
-            Exchanger::insert(array_keys($fields[0]), $fields);
-
-        // Получение оптовых цен для обменников
-        /*
-        if (!$info['is_bank']) {
-            echo "Страница: {$ws_page}\r\n";
-
-            $rateam->loadPage($ws_page, $pack);
-            $exList = $rateam->takeList();
-            $cnt = 0;
-            foreach ($exList as $raid => $data) {
-                if (!($local = $exchangers->findOne(['raid' => $raid])))
+                if (empty($rates[$id]) || (!$rate[0] && !$rate[1]))
                     continue;
 
-                foreach ($data['rates'] as $currNum => $rate) {
-                    $symbol = $activeSymbols[$currNum];
-                    $id = Exrcourse::generateId(
-                        $local['id'], $symbol['id'], $info['type']
-                    );
-                    if (empty($rates[$id]) || (!$rate[0] && !$rate[1]))
-                        continue;
-
-                    $rates[$id] += [
-                        'ws_buy' => ($rate[0] / $symbol['amt']),
-                        'ws_sell' => ($rate[1] / $symbol['amt'])
-                    ];
-                    ++$cnt;
-                }
+                $rates[$id] += [
+                    'ws_buy' => ($rate[0] / $symbol['amt']),
+                    'ws_sell' => ($rate[1] / $symbol['amt'])
+                ];
+                ++$cnt;
             }
+        }
 
-            echo "Кол-во оптовых курсов: {$cnt}\r\n";
-        }*/
+        echo "Кол-во оптовых курсов: {$cnt}\r\n";
+    }*/
 
-        if (!empty($rates))
-            Exrcourse::insert(array_keys($rates[array_key_first($rates)]), $rates);
-    }
+    if (!empty($rates))
+        Exrcourse::insert(array_keys($rates[array_key_first($rates)]), $rates);
+}
 //}
 
 echo 'Затраченное время: '
-     . round((microtime(true) - App::STARTED_AT), 2) . " сек.\r\n";
+    . round((microtime(true) - App::STARTED_AT), 2) . " сек.\r\n";
 
 // Получение данных с банков
 echo 'Получение курсов с сайтов банков.' . "\r\n";
@@ -367,7 +374,7 @@ foreach ($bankList as $method => $raid) {
             $id = Exrcourse::generateId(
                 $exrid, $sid, $type
             );
-            $rates[(string) $id] = [
+            $rates[(string)$id] = [
                 'id' => $id,
                 'eid' => $exrid,
                 'cid' => $sid,
@@ -376,7 +383,7 @@ foreach ($bankList as $method => $raid) {
                 'sell' => $rate['sell']
             ];
         }
-    } catch(Throwable $e) {
+    } catch (Throwable $e) {
         echo $e->getMessage();
         continue;
     }
@@ -400,7 +407,7 @@ echo 'Затраченное время: '
     . round((microtime(true) - $bankStart), 2) . " сек.\r\n";
 
 echo 'Получение названий и логотипов для новых обменников: '
-     . count($new_exchangers) . "\r\n";
+    . count($new_exchangers) . "\r\n";
 
 // Получение названий новых обменников на разных языкам
 if ($new_exchangers) {
@@ -454,8 +461,8 @@ foreach ($new_images as $raid => $url) {
 }
 
 echo 'Общее время: '
-     . round((microtime(true) - App::STARTED_AT), 2) . " сек.\r\n";
+    . round((microtime(true) - App::STARTED_AT), 2) . " сек.\r\n";
 echo round((memory_get_peak_usage() / 1024), 2) . ' Kb. | '
-     . round((memory_get_peak_usage(true) / 1024), 2) . ' Kb.';
+    . round((memory_get_peak_usage(true) / 1024), 2) . ' Kb.';
 
 saveLog();
