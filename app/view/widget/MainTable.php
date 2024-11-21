@@ -3,10 +3,10 @@ $ctNames = ['direct' => 'Прямой', 'cross' => 'Кросс-курс'];
 $etNames = ['cash' => 'Наличный', 'noncash' => 'Безналичный', 'card' => 'По картам'];
 ?>
 <div class="table" id="table">
-<!--    <p class="table-title">-->
-<!--        --><?php //= $lang('Курсы валют') ?>
-<!--    </p>-->
-<!--    <div class="table-flex table-title">-->
+    <!--    <p class="table-title">-->
+    <!--        --><?php //= $lang('Курсы валют') ?>
+    <!--    </p>-->
+    <!--    <div class="table-flex table-title">-->
     <div class="row table-title">
         <div class="col-5">
             <?= $lang('Курсы валют') ?>
@@ -18,23 +18,6 @@ $etNames = ['cash' => 'Наличный', 'noncash' => 'Безналичный',
         </div>
     </div>
     <div class="table-flex">
-        <div class="table-list  scroll-slider  lg-hide">
-            <?php foreach ($symbols as $symbol): ?>
-                <div class="table-list-item<?= ($symbol->symbol === $activeSymbols[0]->symbol ? ' active' : '') ?>"
-                     data-symbol-change-mobile="<?= $symbol ?>">
-                    <div class="table-entry-item-inner-icon">
-                        <img src="img/currency/<?= $symbol->getImage() ?>" alt="">
-                    </div>
-                    <div class="table-entry-item-inner-text">
-                        <?= $symbol ?>
-                    </div>
-                    <div class="table-list-item-object">
-                        <img src="img/ok-circle.png" alt="">
-                    </div>
-                </div>
-            <?php endforeach ?>
-        </div>
-
         <div class="table-flex-item">
             <div class="table-point clue-mob d-lg-none" style="display: none;">
                 <div class="table-point-container">
@@ -42,14 +25,14 @@ $etNames = ['cash' => 'Наличный', 'noncash' => 'Безналичный',
                         <div class="clue-mob-close">
                             <img src="img/clue-close.png" alt="">
                         </div>
-<!--                        <a href="--><?php //= App::$url ?><!--/converter">-->
-                            <span>
+                        <!--                        <a href="--><?php //= App::$url ?><!--/converter">-->
+                        <span>
                                 <?= $lang('Конвертер') ?>
                             </span>
-                            <div class="clue-mob-link">
-                                <img src="img/clue-mob-link.png" alt="">
-                            </div>
-<!--                        </a>-->
+                        <div class="clue-mob-link">
+                            <img src="img/clue-mob-link.png" alt="">
+                        </div>
+                        <!--                        </a>-->
                     </div>
                 </div>
             </div>
@@ -123,9 +106,7 @@ $etNames = ['cash' => 'Наличный', 'noncash' => 'Безналичный',
                 <img src="img/point-white.png" alt="">
             </div>
         </div> -->
-
         <?php $widget->renderSymbolPanel() ?>
-
     </div>
     <div class="row table-text-row d-none">
         <div class="table-text-row-text">
