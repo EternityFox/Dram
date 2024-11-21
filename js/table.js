@@ -1,8 +1,8 @@
 let Table = {
 
     fontSizes: {
-        normal: [[4, 11], [6, 10], [8, 9], [10, 8]],
-        bold: [[5, 13], [6, 12], [7, 11], [8, 9]]
+        normal: [[4, 11], [6, 10], [7, 8], [10, 7]],
+        bold: [[5, 13], [6, 12], [6, 10], [7, 7]]
     },
     symbolColumns: [['four', 'five'], ['six', 'seven'], ['eight', 'nine'], ['ten', 'eleven']],
     inverseSorting: ['four', 'six', 'eight', 'ten'],
