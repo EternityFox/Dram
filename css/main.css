@@ -1729,7 +1729,7 @@ section {
     .table-item.nine,
     .table-item.ten,
     .table-item.eleven {
-        min-width: 32px;
+        min-width: 44px;
     }
 
     .table-entry-item {
@@ -1742,7 +1742,6 @@ section {
 
     .scrollable-course.table-entry {
         justify-content: flex-start;
-        gap: 2rem;
     }
 
     .header-search {
@@ -1792,12 +1791,12 @@ section {
 
     .scrollable-row {
         width: 40%;
-        gap: 1.5rem;
     }
 
     .scrollable-row.scrollable-course {
         width: 100%;
-        margin-left: 20px;
+        margin-left: 10px;
+        gap: 1.2rem;
     }
 
     .table-flex-item:last-child {
