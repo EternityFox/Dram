@@ -1,4 +1,3 @@
-
 let Table = {
 
     fontSizes: {
@@ -21,7 +20,7 @@ let Table = {
             return $('#wholeSale').is(':checked');
         },
 
-        openTypeList: function(e) {
+        openTypeList: function (e) {
             let container = $(this).closest('.table-point-container');
 
             if ($(e.target).closest('.custom-control').length)
@@ -32,7 +31,7 @@ let Table = {
             container.find('.table-point-item-list').slideToggle(300);
             e.preventDefault();
         },
-        changeType: function(e) {
+        changeType: function (e) {
             let container = $(this).closest('.table-point-container');
             if (Table.disabled)
                 return;
@@ -46,16 +45,16 @@ let Table = {
             e.preventDefault();
             e.stopPropagation();
         },
-        changeWholeSale: function() {
-            setTimeout(function(){
+        changeWholeSale: function () {
+            setTimeout(function () {
                 Table.findBestCourses();
                 Table.calculate();
             }, 400);
 
-            $('#table .table-all').find('[data-reverse]').each(function(){
+            $('#table .table-all').find('[data-reverse]').each(function () {
                 let elem = $(this), price1, price2;
                 if (0 < elem.attr('data-reverse') && elem.attr('data-reverse') != elem.text()) {
-                    elem.fadeOut(100, function(){
+                    elem.fadeOut(100, function () {
                         let price1 = elem.text(),
                             price2 = elem.attr('data-price');
                         elem.text(elem.attr('data-reverse'));
@@ -68,7 +67,7 @@ let Table = {
             });
         },
 
-        getEventList: function() {
+        getEventList: function () {
             return {
                 '.table-point-container': {click: this.openTypeList},
                 '.table-point-item-list-item[data-type]': {click: this.changeType},
@@ -80,13 +79,22 @@ let Table = {
     symbolPanel: {
         container: $('#tableSymbolList'),
 
-        openSymbolList: function() {
+        openSymbolList: function () {
             let container = $(this);
-
             container.toggleClass('active');
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            container.find('.table-entry-list').css('top', `${container.offset().top - scrollTop + 24}px`);
+            if ($(window).width() > 769)
+                container.find('.table-entry-list').css('left', `${container.offset().left + 40}px`);
             container.find('.table-entry-list').slideToggle(300);
+            $(window).scroll(function () {
+                if (container.hasClass('active')) {
+                    container.removeClass('active');
+                    container.find('.table-entry-list').slideUp();
+                }
+            });
         },
-        changeSymbol: function(e) {
+        changeSymbol: function (e) {
             if (Table.disabled)
                 return;
 
@@ -96,7 +104,7 @@ let Table = {
             );
             e.preventDefault();
         },
-        changeSymbolMobile: function() {
+        changeSymbolMobile: function () {
             if (Table.disabled)
                 return;
 
@@ -109,13 +117,13 @@ let Table = {
             );
         },
         amount: {
-            focus: function() {
+            focus: function () {
                 let elem = $(this);
 
                 if ('1' === elem.val())
                     elem.val('');
             },
-            focusout: function() {
+            focusout: function () {
                 let elem = $(this);
 
                 if (elem.val() === "" || 0 > elem.val()) {
@@ -123,7 +131,7 @@ let Table = {
                     Table.calculate(elem.data('symbol-num'), elem.val());
                 }
             },
-            keydown: function(e) {
+            keydown: function (e) {
                 let val = $(this).val();
 
                 if (e.key.length === 1 && e.key.match(/[^0-9'".]/))
@@ -131,10 +139,10 @@ let Table = {
                 else if (!val && !e.key.match(/[^'".]/))
                     return false;
             },
-            input: function() {
+            input: function () {
                 let elem = $(this);
 
-                if(elem.val().length > 8)
+                if (elem.val().length > 8)
                     elem.val(elem.val().substring(0, 8));
 
                 Table.calculate(
@@ -145,7 +153,7 @@ let Table = {
             }
         },
 
-        getEventList: function() {
+        getEventList: function () {
             return {
                 '.table-entry-item-inner': {click: this.openSymbolList},
                 '[data-symbol-change]': {click: this.changeSymbol},
@@ -155,7 +163,7 @@ let Table = {
         }
     },
 
-    scroll: function(elem = undefined) {
+    scroll: function (elem = undefined) {
         if (!elem)
             elem = $('#table');
 
@@ -164,7 +172,7 @@ let Table = {
         }, 700);
     },
 
-    load: function(url = undefined) {
+    load: function (url = undefined) {
         if (!url) {
             url = '/ajax/' + this.menu.courseType + '/' + this.menu.exchangeType;
             history.pushState(
@@ -176,7 +184,7 @@ let Table = {
 
         $.ajax({
             url: url
-        }).done(function(response) {
+        }).done(function (response) {
             let container, nulled;
 
             Table.scroll();
@@ -195,38 +203,38 @@ let Table = {
                 + '</div>'
             );
             nulled = $('#removeMe');
-            container.fadeOut(700, function() {
+            container.fadeOut(700, function () {
                 container.remove();
                 nulled.after(response.table);
                 container = $('#table .table-all');
-                container.fadeOut(100, function(){
+                container.fadeOut(100, function () {
                     container.toggle(700);
                 });
                 handleElemContent(container);
                 Table.init();
             });
-            nulled.show(700, function(){
-                nulled.toggle(600, function(){
+            nulled.show(700, function () {
+                nulled.toggle(600, function () {
                     nulled.remove();
                 });
             });
         });
     },
 
-    findBestCourses: function() {
+    findBestCourses: function () {
         let columns = [],
             tbls = $('#table .table-all-item'),
             tbl, price, best, inverse, one, two;
 
         this.symbolColumns.forEach(clmns => columns.push(clmns[0], clmns[1]));
 
-        tbls.each(function(){
+        tbls.each(function () {
             tbl = $(this);
 
-            $.each(columns, function(i, column){
+            $.each(columns, function (i, column) {
                 inverse = (-1 !== Table.inverseSorting.indexOf(column));
 
-                tbl.find('.' + column).each(function(){
+                tbl.find('.' + column).each(function () {
                     if (!(price = $(this).find('p').attr('data-price'))
                         || !(price = parseFloat(price))
                     )
@@ -261,22 +269,34 @@ let Table = {
         }
     },
 
-    addBestCourses: function() {
-        $('#table .table-all-item').each(function(i){
+    addBestCourses: function () {
+        $('#table .table-all-item').each(function (i) {
             let tbl = $(this), columns = [];
             if (0 === i)
                 return;
 
             Table.symbolColumns.forEach(clmns => columns.push(clmns[0], clmns[1]));
-            $.each(columns, function(i, column){
+            $.each(columns, function (i, column) {
                 tbl.find('.' + column + ' .bold').first().text(
                     tbl.find('.' + column + ' .bold').last().text()
                 );
             });
         });
+        const scrollableRows = document.querySelectorAll('.scrollable-row');
+
+        scrollableRows.forEach(row => {
+            row.addEventListener('scroll', (e) => {
+                const scrollLeft = e.target.scrollLeft;
+                scrollableRows.forEach(r => {
+                    if (r !== e.target) {
+                        r.scrollLeft = scrollLeft;
+                    }
+                });
+            });
+        });
     },
 
-    calculate: function(num = undefined, amt = undefined) {
+    calculate: function (num = undefined, amt = undefined) {
         let fs = ('cross' === this.menu.courseType ? 4 : 2),
             sizes, elem, val, size;
 
@@ -289,8 +309,8 @@ let Table = {
             return;
         }
 
-        $.each(this.symbolColumns[num], function(i, column){
-            $('.' + column).each(function(){
+        $.each(this.symbolColumns[num], function (i, column) {
+            $('.' + column).each(function () {
                 if ($(this).hasClass('blue'))
                     return;
 
@@ -303,7 +323,7 @@ let Table = {
                 size = elem.text().length;
                 sizes = elem.hasClass('bold')
                     ? Table.fontSizes.bold : Table.fontSizes.normal;
-                $.each(sizes, function (i, val){
+                $.each(sizes, function (i, val) {
                     if (size <= val[0]) {
                         elem.css('fontSize', val[1] + 'px');
                         return false;
@@ -315,7 +335,7 @@ let Table = {
         Table.addBestCourses();
     },
 
-    sort: function(column, inverse = undefined) {
+    sort: function (column, inverse = undefined) {
         let tables = $('#table .table-all-item'), num, container;
 
         if (undefined === inverse)
@@ -323,10 +343,10 @@ let Table = {
         if (Table.sortedBy === column + inverse)
             return;
 
-        tables.each(function(i, tbl){
-            $(tbl).find('.' + column).filter(function(i){
+        tables.each(function (i, tbl) {
+            $(tbl).find('.' + column).filter(function (i) {
                 return (0 !== i);
-            }).sortElements(function(a, b){
+            }).sortElements(function (a, b) {
                 if (!parseFloat($.text([a])))
                     return 1;
                 else if (!parseFloat($.text([b])))
@@ -334,12 +354,12 @@ let Table = {
                 return parseFloat($.text([a])) > parseFloat($.text([b]))
                     ? inverse ? -1 : 1
                     : inverse ? 1 : -1;
-            }, function(){
+            }, function () {
                 return this.parentNode;
             });
 
             num = 1;
-            $(tbl).find('.one .table-item-number').each(function(){
+            $(tbl).find('.one .table-item-number').each(function () {
                 $(this).text(num);
                 ++num;
             });
@@ -347,7 +367,7 @@ let Table = {
 
         container = $('#table [data-sort=' + column + ']');
         $('#table [data-sort]').not(container).find('.table-item-arrow-sort')
-            .each(function() {
+            .each(function () {
                 let th = $(this).closest('[data-sort]'),
                     p = th.find('p');
 
@@ -375,7 +395,7 @@ let Table = {
             container.addClass('active');
     },
 
-    sortClick: function() {
+    sortClick: function () {
         let container = $(this),
             column = container.data('sort'),
             inverse = (-1 !== Table.inverseSorting.indexOf(column));
@@ -390,7 +410,7 @@ let Table = {
             Table.sort(column, !inverse);
     },
 
-    toggleSubTable: function() {
+    toggleSubTable: function () {
         let row = $(this);
 
         row.toggleClass('active');
@@ -398,10 +418,10 @@ let Table = {
             .not(row.closest('.table-row')).toggleClass('active');
     },
 
-    init: function() {
+    init: function () {
         Table.sortedBy = 'zerofalse';
 
-        setTimeout(function() {
+        setTimeout(function () {
             $('.table-all-item').each(function () {
                 $(this).find(':first').addClass('table-bg');
             });
@@ -419,7 +439,7 @@ let Table = {
         }
 
         $('.table-item').hover(
-            function() {
+            function () {
                 let tableRow = $('.table-row').length,
                     tableIndex = $(this).index();
                 for (let i = 0; i < tableRow; i++) {
@@ -436,7 +456,7 @@ let Table = {
                     .addClass('table-item-hover-object');
 
             },
-            function() {
+            function () {
                 let tableRow = $('.table-row').length,
                     tableIndex = $(this).index();
                 for (let i = 0; i < tableRow; i++) {
@@ -456,12 +476,12 @@ let Table = {
             '#table [data-sort]': {click: Table.sortClick}
         });
 
-        setTimeout(function() {
+        setTimeout(function () {
             Table.disabled = false;
         }, 700);
     },
 
-    getEventList: function() {
+    getEventList: function () {
         return Object.assign(
             this.menu.getEventList(),
             this.symbolPanel.getEventList(),
@@ -471,10 +491,10 @@ let Table = {
 
 };
 
-$(document).ready(function() {
+$(document).ready(function () {
     bindEventList(Table.getEventList());
 
-    $(document).click(function(e) {
+    $(document).click(function (e) {
         let container;
 
         if (!$(e.target).closest('.custom-control').length) {
@@ -507,12 +527,12 @@ $(document).ready(function() {
         });
     }
 
-    $('.clue-mob-close').click(function(){
-        $(this).closest('.clue-mob').fadeOut(200, function(){
+    $('.clue-mob-close').click(function () {
+        $(this).closest('.clue-mob').fadeOut(200, function () {
             $('.clue-mob').next('div').removeClass('d-none');
         });
     });
-    setTimeout(function() {
+    setTimeout(function () {
         $('.clue-mob-close').click();
     }, 3000);
 
