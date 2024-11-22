@@ -1,4 +1,4 @@
-<div class="table-flex-item table-flex-course" id="symbolPanel">
+<div class="table-flex-item table-flex-course scrollable-row" id="symbolPanel">
     <div class="table-entry scrollable-row scrollable-course">
         <?php foreach ($activeSymbols as $i => $symbol): ?>
             <div class="table-entry-item">
