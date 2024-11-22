@@ -1,6 +1,7 @@
 <?php declare(strict_types=1);
 
 namespace App;
+
 use Core\App as BaseApp,
     Core\Lang,
     Core\Viewer,
@@ -42,7 +43,7 @@ class App extends BaseApp
      * Языки сайта
      * @var array<string, string>
      */
-    static public array $languages = [];
+    static public array $languages = ['am'];
     /**
      * @var array<string, string>
      */
@@ -104,7 +105,7 @@ class App extends BaseApp
         } elseif (!($lang = $request->getCookie('lang'))
             || !isset(static::$languages[$lang])
         ) {
-            $languages = acceptLangs($request->getHeader('accept-language'));
+            $languages = ['am'] + acceptLangs($request->getHeader('accept-language'));
             foreach ($languages as $lng) {
                 if (isset(static::$languages[$lng])) {
                     $lang = $lng;
@@ -116,8 +117,8 @@ class App extends BaseApp
                 $lang = array_key_first(static::$languages);
         }
 
-        Lang::$defaultLang = 'ru';
-        Lang::$defaultDir = static::path('lang/ru');
+        Lang::$defaultLang = 'am';
+        Lang::$defaultDir = static::path('lang/am');
 
         return new Lang(
             static::path("lang/{$lang}"), $lang,

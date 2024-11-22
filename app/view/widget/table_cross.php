@@ -16,53 +16,55 @@ $showHeaders = true;
                     <?= (1 == $tableNum ? '<span style="padding: 1px 6px;border-radius:10px;background:#c00;color:#fff;margin-left:5px;font-size:11px;font-family:Arial;">new</span>' : '') ?>
                 </div>
             </div>
-            <div class="table-item two">
-                <?= ($showHeaders ? '<img src="img/place.png" alt="">' : '') ?>
-            </div>
-            <div class="table-item three">
-                <p class="table-item-text<?= ($showHeaders ? ' blue' : '') ?>">
-                    <?= ($showHeaders ? $lang('Дата') : '') ?>
-                </p>
-            </div>
-            <div class="table-item four"<?= ($showHeaders ? ' data-sort="four"' : '') ?>>
-                <p class="table-item-text <?= ($showHeaders ? 'blue' : 'bold') ?>">
-                    <?= ($showHeaders ? "{$crossSymbols[0][0]}/{$crossSymbols[0][1]}" : '') ?>
-                </p>
-            </div>
-            <div class="table-item five"<?= ($showHeaders ? ' data-sort="five"' : '') ?>>
-                <p class="table-item-text <?= ($showHeaders ? 'blue' : 'bold') ?>">
-                    <?= ($showHeaders ? "{$crossSymbols[1][0]}/{$crossSymbols[1][1]}" : '') ?>
-                </p>
-            </div>
-            <div class="table-item six"<?= ($showHeaders ? ' data-sort="six"' : '') ?>>
-                <p class="table-item-text <?= ($showHeaders ? 'blue' : 'bold') ?>">
-                    <?= ($showHeaders ? "{$crossSymbols[2][0]}/{$crossSymbols[2][1]}" : '') ?>
-                </p>
-            </div>
-            <div class="table-item seven"<?= ($showHeaders ? ' data-sort="seven"' : '') ?>>
-                <p class="table-item-text <?= ($showHeaders ? 'blue' : 'bold') ?>">
-                    <?= ($showHeaders ? "{$crossSymbols[3][0]}/{$crossSymbols[3][1]}" : '') ?>
-                </p>
-            </div>
-            <div class="table-item eight"<?= ($showHeaders ? ' data-sort="eight"' : '') ?>>
-                <p class="table-item-text <?= ($showHeaders ? 'blue' : 'bold') ?>">
-                    <?= ($showHeaders ? "{$crossSymbols[4][0]}/{$crossSymbols[4][1]}" : '') ?>
-                </p>
-            </div>
-            <div class="table-item nine"<?= ($showHeaders ? ' data-sort="nine"' : '') ?>>
-                <p class="table-item-text <?= ($showHeaders ? 'blue' : 'bold') ?>">
-                    <?= ($showHeaders ? "{$crossSymbols[5][0]}/{$crossSymbols[5][1]}" : '') ?>
-                </p>
-            </div>
-            <div class="table-item ten"<?= ($showHeaders ? ' data-sort="ten"' : '') ?>>
-                <p class="table-item-text <?= ($showHeaders ? 'blue' : 'bold') ?>">
-                    <?= ($showHeaders ? "{$crossSymbols[6][0]}/{$crossSymbols[6][1]}" : '') ?>
-                </p>
-            </div>
-            <div class="table-item eleven"<?= ($showHeaders ? ' data-sort="eleven"' : '') ?>>
-                <p class="table-item-text <?= ($showHeaders ? 'blue' : 'bold') ?>">
-                    <?= ($showHeaders ? "{$crossSymbols[7][0]}/{$crossSymbols[7][1]}" : '') ?>
-                </p>
+            <div class="scrollable-row">
+                <div class="table-item two">
+                    <?= ($showHeaders ? '<img src="img/place.png" alt="">' : '') ?>
+                </div>
+                <div class="table-item three">
+                    <p class="table-item-text<?= ($showHeaders ? ' blue' : '') ?>">
+                        <?= ($showHeaders ? $lang('Дата') : '') ?>
+                    </p>
+                </div>
+                <div class="table-item four"<?= ($showHeaders ? ' data-sort="four"' : '') ?>>
+                    <p class="table-item-text <?= ($showHeaders ? 'blue' : 'bold') ?>">
+                        <?= ($showHeaders ? "{$crossSymbols[0][0]}/{$crossSymbols[0][1]}" : '') ?>
+                    </p>
+                </div>
+                <div class="table-item five"<?= ($showHeaders ? ' data-sort="five"' : '') ?>>
+                    <p class="table-item-text <?= ($showHeaders ? 'blue' : 'bold') ?>">
+                        <?= ($showHeaders ? "{$crossSymbols[1][0]}/{$crossSymbols[1][1]}" : '') ?>
+                    </p>
+                </div>
+                <div class="table-item six"<?= ($showHeaders ? ' data-sort="six"' : '') ?>>
+                    <p class="table-item-text <?= ($showHeaders ? 'blue' : 'bold') ?>">
+                        <?= ($showHeaders ? "{$crossSymbols[2][0]}/{$crossSymbols[2][1]}" : '') ?>
+                    </p>
+                </div>
+                <div class="table-item seven"<?= ($showHeaders ? ' data-sort="seven"' : '') ?>>
+                    <p class="table-item-text <?= ($showHeaders ? 'blue' : 'bold') ?>">
+                        <?= ($showHeaders ? "{$crossSymbols[3][0]}/{$crossSymbols[3][1]}" : '') ?>
+                    </p>
+                </div>
+                <div class="table-item eight"<?= ($showHeaders ? ' data-sort="eight"' : '') ?>>
+                    <p class="table-item-text <?= ($showHeaders ? 'blue' : 'bold') ?>">
+                        <?= ($showHeaders ? "{$crossSymbols[4][0]}/{$crossSymbols[4][1]}" : '') ?>
+                    </p>
+                </div>
+                <div class="table-item nine"<?= ($showHeaders ? ' data-sort="nine"' : '') ?>>
+                    <p class="table-item-text <?= ($showHeaders ? 'blue' : 'bold') ?>">
+                        <?= ($showHeaders ? "{$crossSymbols[5][0]}/{$crossSymbols[5][1]}" : '') ?>
+                    </p>
+                </div>
+                <div class="table-item ten"<?= ($showHeaders ? ' data-sort="ten"' : '') ?>>
+                    <p class="table-item-text <?= ($showHeaders ? 'blue' : 'bold') ?>">
+                        <?= ($showHeaders ? "{$crossSymbols[6][0]}/{$crossSymbols[6][1]}" : '') ?>
+                    </p>
+                </div>
+                <div class="table-item eleven"<?= ($showHeaders ? ' data-sort="eleven"' : '') ?>>
+                    <p class="table-item-text <?= ($showHeaders ? 'blue' : 'bold') ?>">
+                        <?= ($showHeaders ? "{$crossSymbols[7][0]}/{$crossSymbols[7][1]}" : '') ?>
+                    </p>
+                </div>
             </div>
             <div class="zero d-none"></div>
             <?php $showHeaders = false ?>
@@ -88,6 +90,7 @@ $showHeaders = true;
                 : '<a href="/exchanger/' . $exch['id'] . '" data-maxlen="15">' . $lang("exchanger>{$exch['name']}") . '</a>') ?>
         </div>
     </div>
+    <div class="scrollable-row">
     <div class="table-item two">
         <div class="table-item-slogan">
             <?= $exch['branches'] ?>
@@ -112,7 +115,7 @@ $showHeaders = true;
         </div>
         <?php ++$num ?>
     <?php endforeach ?>
-
+    </div>
         <div class="zero d-none"><?= $i ?></div>
     </div>
     <?php endforeach ?>

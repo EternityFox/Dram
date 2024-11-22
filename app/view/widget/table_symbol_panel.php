@@ -6,9 +6,6 @@
                     <span class="table-entry-item-input-placeholder"></span>
                     <input type="number" value="1"
                            data-symbol-num="<?= $i ?>" id="ursuminput" <?php if (0 === $i) { echo 'class="hovered-input"'; }; ?>>
-                    <div class="table-entry-item-input-clear d-none">
-                        <img src="img/clear.svg" alt="">
-                    </div>
                 </div>
                 <div class="table-entry-item-inner">
                     <div class="table-entry-item-inner-icon">
