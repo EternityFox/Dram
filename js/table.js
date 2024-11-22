@@ -144,12 +144,11 @@ let Table = {
 
                 if (elem.val().length > 8)
                     elem.val(elem.val().substring(0, 8));
-
                 Table.calculate(
                     elem.data('symbol-num'),
                     (!elem.val() ? 1 : elem.val())
                 );
-                Table.sort(Table.inverseSorting[elem.data('symbol-num')]);
+                //Table.sort(Table.inverseSorting[elem.data('symbol-num')]);
             }
         },
 
