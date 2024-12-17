@@ -162,4 +162,7 @@ return [
     '88 Супермаркет Нор-Норк' => '88 Supermarket Nor-Norq',
     'MG Массив' => 'MG Massive',
     '88 Супермаркет Саят-Нова' => '88 Supermarket Sayat-Nova',
+    'Ардшининвестбанк' => 'Ardshininvestbank',
+    'ԴԱՎԹԱՇԵՆ 31/7' => 'ԴԱՎԹԱՇԵՆ 31/7',
+    'КАСЯНА 8' => 'KASYAN 8',
 ];
