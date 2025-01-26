@@ -1094,6 +1094,7 @@ section {
     overflow-scrolling: touch !important;
     flex-wrap: nowrap;
     gap: 40px;
+    margin-top: 24px;
 }
 .nav-icons .nav-icon{
     display: flex;

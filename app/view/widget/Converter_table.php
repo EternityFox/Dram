@@ -55,6 +55,7 @@
         </div>
         <?php $num = 0; ?>
         <?php foreach ($banksAndExchangersSorted[$tableCurrency] as $data) : ?>
+
             <?php $num++; ?>
             <div class="exchange-table-item">
                 <div class="exchange-table-item-number">
