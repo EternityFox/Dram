@@ -239,7 +239,7 @@ class App extends BaseApp
         $table = [];
         $query = $model::select($fields, $filter, $sort, $limit);
         while ($res = $query->fetch()) {
-if($res['id'] == 121) continue;
+            if($res['id'] == 121) continue;
             $key = $res[$index];
 
             if (0 === $type)
@@ -249,7 +249,6 @@ if($res['id'] == 121) continue;
 
             $table[$key] = $res;
         }
-
         return new Hdbk($table, ($type ? null : 'fields'));
     }
 

@@ -2,9 +2,139 @@
     <div class="container">
         <h1>Панель управления</h1>
 
-        <form action="" method="POST" class="mt-4">
+        <form action="" method="POST" class="mt-4" enctype="multipart/form-data">
+
+            <?php $i = 0; ?>
 
             <div class="card admin-banners toggle">
+                <h5 class="card-header">Меню навигации</h5>
+                <div class="card-body" style="display: none;">
+                    <?php foreach ($navigations as $nav): ?>
+                        <?php ++$i ?>
+                        <div class="card admin-banners toggle<?= ($i === 1 ? '' : ' mt-4') ?>">
+                            <h5 class="card-header"><?= "Меню № " . $i ?></h5>
+                            <div class="card-body" style="display: none;">
+                                <?php if (!empty($nav['image'])): ?>
+                                    <!-- Отображаем текущее изображение, если оно существует -->
+                                    <div>
+                                        <img src="/img/<?= $nav['image'] ?>" alt="Изображение" width="32" />
+                                    </div>
+                                <?php endif; ?>
+                                <div class="form-group">
+                                    <label>Изображение:</label>
+                                    <input type="file" class="form-control" name="nav-image[<?= $i ?>]">
+                                    <input type="hidden" name="nav-text[<?= $i ?>]" value="<?= $nav['image'] ?>">
+                                </div>
+                                <div class="form-group">
+                                    <label>Ссылка:</label>
+                                    <input type="text" class="form-control" name="nav-link[<?= $i ?>]" value="<?= $nav['link'] ?>">
+                                </div>
+
+                                <div class="form-group">
+                                    <ul class="nav nav-tabs" style="border-bottom: none;">
+                                        <li class="nav-item head">
+                                            <div class="nav-link tabs active" data-target="#navigation_title_ru_<?= $i ?>">Ру</div>
+                                        </li>
+                                        <li class="nav-item head">
+                                            <div class="nav-link tabs" data-target="#navigation_title_en_<?= $i ?>">EN</div>
+                                        </li>
+                                        <li class="nav-item head">
+                                            <div class="nav-link tabs" data-target="#navigation_title_am_<?= $i ?>">Հա</div>
+                                        </li>
+                                    </ul>
+                                    <textarea id="navigation_title_ru_<?= $i ?>" class="form-control collapse show"
+                                              name="nav-title[<?= $i ?>][ru]" rows="3"><?= $nav['title_ru'] ?></textarea>
+                                    <textarea id="navigation_title_en_<?= $i ?>" class="form-control collapse"
+                                              name="nav-title[<?= $i ?>][en]" rows="3"><?= $nav['title_en'] ?></textarea>
+                                    <textarea id="navigation_title_am_<?= $i ?>" class="form-control collapse"
+                                              name="nav-title[<?= $i ?>][am]" rows="3"><?= $nav['title_am'] ?></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                    <div id="new-menu-container"></div>
+                    <div class="d-flex justify-content-start mt-3">
+                        <button type="button" class="btn btn-success" id="add-new-menu-btn">Добавить новое меню</button>
+                    </div>
+                </div>
+                <script>
+                    // Номер для нового меню
+                    let newMenuCount = <?= $i ?>;
+
+                    document.getElementById('add-new-menu-btn').addEventListener('click', function () {
+                        newMenuCount++;
+                        const newMenuHTML = `
+        <div class="card admin-banners toggle mt-3">
+            <h5 class="card-header">Меню № ${newMenuCount}</h5>
+            <div class="card-body">
+                <div class="form-group">
+                    <label>Изображение:</label>
+                    <input type="file" class="form-control" name="nav-image[${newMenuCount}]">
+                </div>
+                <div class="form-group">
+                    <label>Ссылка:</label>
+                    <input type="text" class="form-control" name="nav-link[${newMenuCount}]" value="/">
+                 </div>
+                <div class="form-group">
+                    <ul class="nav nav-tabs" style="border-bottom: none;" id="tabs-${newMenuCount}">
+                        <li class="nav-item head">
+                            <div class="nav-link tabs active" data-target="#navigation_title_ru_${newMenuCount}">Ру</div>
+                        </li>
+                        <li class="nav-item head">
+                            <div class="nav-link tabs" data-target="#navigation_title_en_${newMenuCount}">EN</div>
+                        </li>
+                        <li class="nav-item head">
+                            <div class="nav-link tabs" data-target="#navigation_title_am_${newMenuCount}">Հա</div>
+                        </li>
+                    </ul>
+                    <textarea id="navigation_title_ru_${newMenuCount}" class="form-control collapse show" name="nav-title[${newMenuCount}][ru]" rows="3"></textarea>
+                    <textarea id="navigation_title_en_${newMenuCount}" class="form-control collapse" name="nav-title[${newMenuCount}][en]" rows="3"></textarea>
+                    <textarea id="navigation_title_am_${newMenuCount}" class="form-control collapse" name="nav-title[${newMenuCount}][am]" rows="3"></textarea>
+                </div>
+            </div>
+        </div>
+    `;
+
+                        // Добавляем новое меню в контейнер
+                        document.getElementById('new-menu-container').insertAdjacentHTML('beforeend', newMenuHTML);
+
+                        // Инициализация новых кнопок переключения языков
+                        initLanguageTabs(newMenuCount);
+                    });
+
+                    // Функция для инициализации переключателей языков для нового меню
+                    function initLanguageTabs(menuIndex) {
+                        // Обработчик для новых табов
+                        const tabsContainer = document.querySelector(`#tabs-${menuIndex}`);
+
+                        tabsContainer.addEventListener('click', function (e) {
+                            if (e.target.classList.contains('tabs')) {
+                                // Убираем активность с других вкладок
+                                const activeTabs = tabsContainer.querySelectorAll('.tabs');
+                                activeTabs.forEach(tab => tab.classList.remove('active'));
+
+                                // Добавляем активность на кликнутую вкладку
+                                e.target.classList.add('active');
+
+                                // Скрываем все текстовые поля
+                                const textareas = tabsContainer.parentElement.querySelectorAll('.form-control');
+                                textareas.forEach(textarea => textarea.classList.remove('show'));
+
+                                // Показываем нужное текстовое поле по data-target
+                                const target = e.target.getAttribute('data-target');
+                                document.querySelector(target).classList.add('show');
+                            }
+                        });
+                    }
+
+                    // Инициализация табов для уже существующих меню
+                    document.querySelectorAll('.nav-tabs').forEach((tabs, index) => {
+                        initLanguageTabs(index + 1);
+                    });
+                </script>
+            </div>
+
+            <div class="card admin-banners toggle mt-4">
                 <h5 class="card-header">Баннеры</h5>
                 <div class="card-body" style="display: none;">
                     <div class="card admin-banners toggle">
@@ -400,11 +530,14 @@
                                         <div class="nav-link tabs" data-target="#contacts_title_am">Հա</div>
                                     </li>
                                 </ul>
-                                <textarea id="contacts_title_ru" class="form-control collapse show" name="contacts[title][ru]"
+                                <textarea id="contacts_title_ru" class="form-control collapse show"
+                                          name="contacts[title][ru]"
                                           rows="3"><?= $settings['contacts']['title']['ru'] ?></textarea>
-                                <textarea id="contacts_title_en" class="form-control collapse" name="contacts[title][en]"
+                                <textarea id="contacts_title_en" class="form-control collapse"
+                                          name="contacts[title][en]"
                                           rows="3"><?= $settings['contacts']['title']['en'] ?></textarea>
-                                <textarea id="contacts_title_am" class="form-control collapse" name="contacts[title][am]"
+                                <textarea id="contacts_title_am" class="form-control collapse"
+                                          name="contacts[title][am]"
                                           rows="3"><?= $settings['contacts']['title']['am'] ?></textarea>
                             </div>
                             <div class="form-group">
@@ -420,7 +553,8 @@
                                         <div class="nav-link tabs" data-target="#contacts_text_am">Հա</div>
                                     </li>
                                 </ul>
-                                <textarea id="contacts_text_ru" class="form-control collapse show" name="contacts[text][ru]"
+                                <textarea id="contacts_text_ru" class="form-control collapse show"
+                                          name="contacts[text][ru]"
                                           rows="3"><?= $settings['contacts']['text']['ru'] ?></textarea>
                                 <textarea id="contacts_text_en" class="form-control collapse" name="contacts[text][en]"
                                           rows="3"><?= $settings['contacts']['text']['en'] ?></textarea>
@@ -450,11 +584,14 @@
                                         <div class="nav-link tabs" data-target="#advertising_title_am">Հա</div>
                                     </li>
                                 </ul>
-                                <textarea id="advertising_title_ru" class="form-control collapse show" name="advertising[title][ru]"
+                                <textarea id="advertising_title_ru" class="form-control collapse show"
+                                          name="advertising[title][ru]"
                                           rows="3"><?= $settings['advertising']['title']['ru'] ?></textarea>
-                                <textarea id="advertising_title_en" class="form-control collapse" name="advertising[title][en]"
+                                <textarea id="advertising_title_en" class="form-control collapse"
+                                          name="advertising[title][en]"
                                           rows="3"><?= $settings['advertising']['title']['en'] ?></textarea>
-                                <textarea id="advertising_title_am" class="form-control collapse" name="advertising[title][am]"
+                                <textarea id="advertising_title_am" class="form-control collapse"
+                                          name="advertising[title][am]"
                                           rows="3"><?= $settings['advertising']['title']['am'] ?></textarea>
                             </div>
                             <div class="form-group">
@@ -470,11 +607,14 @@
                                         <div class="nav-link tabs" data-target="#advertising_text_am">Հա</div>
                                     </li>
                                 </ul>
-                                <textarea id="advertising_text_ru" class="form-control collapse show" name="advertising[text][ru]"
+                                <textarea id="advertising_text_ru" class="form-control collapse show"
+                                          name="advertising[text][ru]"
                                           rows="3"><?= $settings['advertising']['text']['ru'] ?></textarea>
-                                <textarea id="advertising_text_en" class="form-control collapse" name="advertising[text][en]"
+                                <textarea id="advertising_text_en" class="form-control collapse"
+                                          name="advertising[text][en]"
                                           rows="3"><?= $settings['advertising']['text']['en'] ?></textarea>
-                                <textarea id="advertising_text_am" class="form-control collapse" name="advertising[text][am]"
+                                <textarea id="advertising_text_am" class="form-control collapse"
+                                          name="advertising[text][am]"
                                           rows="3"><?= $settings['advertising']['text']['am'] ?></textarea>
                             </div>
                             <div class="d-flex justify-content-end">
@@ -526,9 +666,9 @@
                 <h5 class="card-header">Банки</h5>
                 <div class="card-body" style="display: none;">
                     <?php
-//                        echo "<pre>";
-//                        print_r($settings['banks']);
-//                        echo "</pre>";
+                    //                        echo "<pre>";
+                    //                        print_r($settings['banks']);
+                    //                        echo "</pre>";
                     ?>
                     <?php $num = 1; ?>
                     <?php foreach ($settings['banks'] as $id => $bank): ?>
@@ -546,9 +686,9 @@
                 <h5 class="card-header">Обменники</h5>
                 <div class="card-body" style="display: none;">
                     <?php
-//                        echo "<pre>";
-//                        print_r($settings['banks']);
-//                        echo "</pre>";
+                    //                        echo "<pre>";
+                    //                        print_r($settings['banks']);
+                    //                        echo "</pre>";
                     ?>
                     <?php $num = 1; ?>
                     <?php foreach ($settings['exchangers'] as $id => $bank): ?>

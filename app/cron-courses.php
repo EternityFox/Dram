@@ -118,6 +118,5 @@ if (($content = file_get_contents(
         $courses[] = [('USD' === $match[1] ? 186 : 187), $item, App::TIME];
     }
 }
-
 if ($courses)
     Course::insert(['cid', 'price', 'date_at'], $courses);
