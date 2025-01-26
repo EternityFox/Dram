@@ -85,14 +85,12 @@ class MainTable extends Widget
         $months = App::lang()->params('month') ?? [];
         $table = [0 => [], 1 => []];
         $tableRefs = [];
-
         $exchangers = App::createHdbk(
             Exchanger::class, 'id', '*', null, ['upd_cash' => 'DESC']
         );
 
         $maxRefreshTime = 0;
         $dates = [];
-
         foreach ($exchangers as $exch) {
             if ($exch->is_bank)
                 $to = 0;
@@ -200,6 +198,7 @@ class MainTable extends Widget
     protected function createSymbols(): array
     {
         $symbols = [];
+        $isMobile = preg_match('/(iphone|ipod|android|blackberry|windows phone|mobile|opera mini|mini|mobi)/i', $_SERVER['HTTP_USER_AGENT']);
 
         if (($cookie = App::request()->getCookie('tableSymbols'))) {
             $cookie = array_unique(explode(',', $cookie));
@@ -209,19 +208,25 @@ class MainTable extends Widget
                 }
             }
         }
-
-        if (4 !== count($symbols)) {
+        if (!$isMobile && 4 !== count($symbols)) {
             foreach ($this->config('baseSymbols') as $name) {
                 if (!in_array($name, $symbols)) {
                     $symbols[] = $name;
-                    if (4 === count($symbols))
+                    if (4 === count($symbols)) {
                         break;
+                    }
+                }
+            }
+        } elseif ($isMobile) {
+            foreach ($this->config('allSymbols') as $name) {
+                if (!in_array($name, $symbols)) {
+                    $symbols[] = $name;
                 }
             }
         }
-
         return $symbols;
     }
+
 
     /**
      * @return array

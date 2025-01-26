@@ -106,7 +106,6 @@ $etNames = ['cash' => 'Наличный', 'noncash' => 'Безналичный',
                 <img src="img/point-white.png" alt="">
             </div>
         </div> -->
-        <?php $widget->renderSymbolPanel() ?>
     </div>
     <div class="row table-text-row d-none">
         <div class="table-text-row-text">

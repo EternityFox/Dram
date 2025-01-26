@@ -1,17 +1,5 @@
 $(document).ready(function() {
     try {
-        const scrollableRows = document.querySelectorAll('.scrollable-row');
-
-        scrollableRows.forEach(row => {
-            row.addEventListener('scroll', (e) => {
-                const scrollLeft = e.target.scrollLeft;
-                scrollableRows.forEach(r => {
-                    if (r !== e.target) {
-                        r.scrollLeft = scrollLeft;
-                    }
-                });
-            });
-        });
         $('.toggle .card-header').each(function() {
             $(this).click(function() {
                 $(this).next().toggle();

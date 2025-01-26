@@ -39,7 +39,7 @@ class SiteController extends Controller
         unset($menuLeft['hidden']);
 
         $menu['left']['basic'] = $menuLeft;
-
+        $navigations = App::db()->query("SELECT * FROM navigation")->fetchAll();
         return [
             'site/index',
             [
@@ -49,6 +49,7 @@ class SiteController extends Controller
                 'converter' => new Converter('cash', 'buy', 'direct', 'USD', 'AMD', $settings),
                 'settings' => $settings,
                 'menu' => $menu,
+                'navigations' => $navigations,
             ]
         ];
     }

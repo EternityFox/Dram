@@ -26,6 +26,21 @@ class AdminController extends Controller
             return false;
         }
 
+        $checkTable = App::db()->query("SELECT name FROM sqlite_master WHERE type='table' AND name='navigation'")->fetch();
+        if (!$checkTable) {
+            // Если таблица не существует, создаём её
+            App::db()->query("
+        CREATE TABLE navigation (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            link TEXT NOT NULL,
+            title_ru TEXT NOT NULL,
+            title_en TEXT NOT NULL,
+            title_am TEXT NOT NULL,
+            image TEXT NOT NULL
+        )
+    ");
+        }
+
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             App::db()->query(
                 "UPDATE settings
@@ -64,6 +79,82 @@ class AdminController extends Controller
             file_put_contents(__DIR__ . '/../../../storage/menu/top.php', $_POST['menu']['top']);
             file_put_contents(__DIR__ . '/../../../storage/menu/left.php', $_POST['menu']['left']);
 
+            $menuData = [];
+            $navImages = $_FILES['nav-image'];
+            $navTexts = $_POST['nav-text'];
+            $navLinks = $_POST['nav-link'];
+
+            file_put_contents(__DIR__ . '/../../../storage/lang/am/navigation.php', "<?php
+
+return [");
+            file_put_contents(__DIR__ . '/../../../storage/lang/en/navigation.php', "<?php
+
+return [");
+            file_put_contents(__DIR__ . '/../../../storage/lang/ru/navigation.php', "<?php
+
+return [");
+            foreach ($_POST['nav-title'] as $menuId => $titles) {
+                file_put_contents(__DIR__ . '/../../../storage/lang/am/navigation.php', '"nav-' . $menuId . '" => "' . $titles['am'] . '",', FILE_APPEND);
+                file_put_contents(__DIR__ . '/../../../storage/lang/en/navigation.php', '"nav-' . $menuId . '" => "' . $titles['en'] . '",', FILE_APPEND);
+                file_put_contents(__DIR__ . '/../../../storage/lang/ru/navigation.php', '"nav-' . $menuId . '" => "' . $titles['ru'] . '",', FILE_APPEND);
+                if (isset($navImages['name'][$menuId]) && !empty($navImages['name'][$menuId])) {
+                    $imageName = 'nav-icon/' . $navImages['name'][$menuId];
+                    $imageTmp = $navImages['tmp_name'][$menuId];
+                    $imagePath = __DIR__ . '/../../../../img/' . $imageName;
+                    move_uploaded_file($imageTmp, $imagePath);
+                } else {
+                    $imageName = $navTexts[$menuId];
+                }
+                if (substr($navLinks[$menuId], 0, 1) === '/') {
+                    $navLink = $navLinks[$menuId];
+                }else{
+                    $navLink =  '/' . $navLinks[$menuId];
+                }
+                $menuData[] = [
+                    'id' => $menuId,
+                    'nav_link' => $navLink,
+                    'title_ru' => $titles['ru'],
+                    'title_en' => $titles['en'],
+                    'title_am' => $titles['am'],
+                    'image' => $imageName,
+                ];
+            }
+            file_put_contents(__DIR__ . '/../../../storage/lang/am/navigation.php', "];", FILE_APPEND);
+            file_put_contents(__DIR__ . '/../../../storage/lang/en/navigation.php', "];", FILE_APPEND);
+            file_put_contents(__DIR__ . '/../../../storage/lang/ru/navigation.php', "];", FILE_APPEND);
+            foreach ($menuData as $menuItem) {
+                $stmt = App::db()->prepare("SELECT * FROM navigation WHERE id = ?");
+                $stmt->execute([$menuItem['id']]);
+                $existing = $stmt->fetch();
+
+                if ($existing) {
+                    $stmt = App::db()->prepare(
+                        "UPDATE navigation SET link = ?, title_ru = ?, title_en = ?, title_am = ?, image = ? WHERE id = ?"
+                    );
+                    $stmt->execute([
+                        $menuItem['nav_link'],
+                        $menuItem['title_ru'],
+                        $menuItem['title_en'],
+                        $menuItem['title_am'],
+                        $menuItem['image'],
+                        $menuItem['id']
+                    ]);
+                } else {
+                    $stmt = App::db()->prepare(
+                        "INSERT INTO navigation (id, link ,title_ru, title_en, title_am, image) VALUES (?, ?, ?, ?, ?, ?)"
+                    );
+                    $stmt->execute([
+                        $menuItem['id'],
+                        $menuItem['nav_link'],
+                        $menuItem['title_ru'],
+                        $menuItem['title_en'],
+                        $menuItem['title_am'],
+                        $menuItem['image']
+                    ]);
+                }
+            }
+
+
             header('Location: /admin/');
             return true;
         }
@@ -92,11 +183,12 @@ class AdminController extends Controller
         unset($menuLeft['hidden']);
 
         $menu['left']['basic'] = $menuLeft;
-        
+        $navigations = App::db()->query("SELECT * FROM navigation")->fetchAll();
         return [
             'site/admin',
             [
                 'settings' => $settings,
+                'navigations' => $navigations,
                 'menu' => $menu,
             ]
         ];
