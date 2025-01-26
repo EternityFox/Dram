@@ -1,8 +1,8 @@
 let Table = {
 
     fontSizes: {
-        normal: [[4, 11], [6, 10], [7, 8], [10, 7]],
-        bold: [[5, 13], [6, 12], [6, 10], [7, 7]]
+        normal: [[4, 12], [6, 11], [7, 9], [10, 8]],
+        bold: [[5, 14], [6, 13], [6, 11], [7, 8]]
     },
     symbolColumns: [['four', 'five'], ['six', 'seven'], ['eight', 'nine'], ['ten', 'eleven']],
     inverseSorting: ['four', 'six', 'eight', 'ten'],
@@ -80,12 +80,13 @@ let Table = {
         container: $('#tableSymbolList'),
 
         openSymbolList: function () {
+
             let container = $(this);
             container.toggleClass('active');
             const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-            container.find('.table-entry-list').css('top', `${container.offset().top - scrollTop + 24}px`);
+            container.find('.table-entry-list').css('top', `${container.offset().top - scrollTop + 40}px`);
             if ($(window).width() > 769)
-                container.find('.table-entry-list').css('left', `${container.offset().left + 40}px`);
+                container.find('.table-entry-list').css('left', `${container.offset().left + 50}px`);
             container.find('.table-entry-list').slideToggle(300);
             $(window).scroll(function () {
                 if (container.hasClass('active')) {
@@ -192,7 +193,6 @@ let Table = {
                 nulled = container.prev();
                 container.remove();
                 nulled.after(response.symbolPanel);
-                bindEventList(Table.symbolPanel.getEventList());
             }
 
             container = $('#table .table-all');
@@ -210,6 +210,7 @@ let Table = {
                     container.toggle(700);
                 });
                 handleElemContent(container);
+                bindEventList(Table.symbolPanel.getEventList());
                 Table.init();
             });
             nulled.show(700, function () {
@@ -222,18 +223,18 @@ let Table = {
 
     findBestCourses: function () {
         let columns = [],
-            tbls = $('#table .table-all-item'),
-            tbl, price, best, inverse, one, two;
+            tblNames = $('#table .bank-info-all-item .bank-names-col'),
+            tblValues = $('#table .banks-info-wrap .banks-info .bank-value'),
+            price, best, inverse, one, two;
 
         this.symbolColumns.forEach(clmns => columns.push(clmns[0], clmns[1]));
 
-        tbls.each(function () {
-            tbl = $(this);
-
+        tblNames.each(function (index) {
+            let valueElements = tblValues.eq(index);
             $.each(columns, function (i, column) {
                 inverse = (-1 !== Table.inverseSorting.indexOf(column));
 
-                tbl.find('.' + column).each(function () {
+                valueElements.find('.' + column).each(function () {
                     if (!(price = $(this).find('p').attr('data-price'))
                         || !(price = parseFloat(price))
                     )
@@ -248,21 +249,21 @@ let Table = {
                 if (0 === best)
                     return;
 
-                tbl.find('.' + column + ' p[data-price]').removeClass('bold');
-                tbl.find('.' + column + ' [data-price="' + best + '"]')
+                valueElements.find('.' + column + ' p[data-price]').removeClass('bold');
+                valueElements.find('.' + column + ' [data-price="' + best + '"]')
                     .addClass('bold');
                 best = undefined;
             });
         });
 
-        if (3 === tbls.length) {
+        if (3 === tblNames.length) {
             $.each(columns, function (i, column) {
                 inverse = (-1 !== Table.inverseSorting.indexOf(column));
-                one = $(tbls[0]).find('.' + column + ' .bold').data('price');
-                two = $(tbls[1]).find('.' + column + ' .bold').last().text();
+                one = $(tblValues[0]).find('.' + column + ' .bold').data('price');
+                two = $(tblValues[1]).find('.' + column + ' .bold').last().text();
                 if (one != two && ((inverse && two > one) || (!inverse && two < one))) {
-                    $(tbls[0]).find('.' + column + ' .bold').removeClass('bold');
-                    $(tbls[1]).find('.' + column + ' p').first().css('color', '#000');
+                    $(tblValues[0]).find('.' + column + ' .bold').removeClass('bold');
+                    $(tblValues[1]).find('.' + column + ' p').first().css('color', '#000');
                 }
             });
         }
@@ -281,18 +282,31 @@ let Table = {
                 );
             });
         });
-        const scrollableRows = document.querySelectorAll('.scrollable-row');
+        const scrollSliders = document.querySelectorAll('.scrollable-row');
 
-        scrollableRows.forEach(row => {
-            row.addEventListener('scroll', (e) => {
-                const scrollLeft = e.target.scrollLeft;
-                scrollableRows.forEach(r => {
-                    if (r !== e.target) {
-                        r.scrollLeft = scrollLeft;
-                    }
-                });
+        let isSyncing = false;
+
+        function syncScroll(event) {
+            if (isSyncing) return;
+
+            const source = event.target;
+            const scrollLeft = source.scrollLeft;
+
+            isSyncing = true;
+
+            scrollSliders.forEach((slider) => {
+                if (slider !== source) {
+                    slider.scrollLeft = scrollLeft; // Устанавливаем напрямую
+                }
             });
+
+            isSyncing = false; // Сразу сбрасываем, чтобы не было задержек
+        }
+
+        scrollSliders.forEach((slider) => {
+            slider.addEventListener('scroll', syncScroll);
         });
+
     },
 
     calculate: function (num = undefined, amt = undefined) {
@@ -307,7 +321,6 @@ let Table = {
 
             return;
         }
-
         $.each(this.symbolColumns[num], function (i, column) {
             $('.' + column).each(function () {
                 if ($(this).hasClass('blue'))
@@ -335,26 +348,29 @@ let Table = {
     },
 
     sort: function (column, inverse = undefined) {
-        let tables = $('#table .table-all-item'), num, container;
+        let tblNames = $('#table .bank-info-all-item .bank-names-col'),
+            tblValues = $('#table .banks-info-wrap .banks-info .bank-value'),
+            num, container;
 
         if (undefined === inverse)
             inverse = (-1 !== Table.inverseSorting.indexOf(column));
         if (Table.sortedBy === column + inverse)
             return;
 
-        tables.each(function (i, tbl) {
-            $(tbl).find('.' + column).filter(function (i) {
-                return (0 !== i);
-            }).sortElements(function (a, b) {
-                if (!parseFloat($.text([a])))
-                    return 1;
-                else if (!parseFloat($.text([b])))
-                    return inverse ? -1 : -1;
-                return parseFloat($.text([a])) > parseFloat($.text([b]))
-                    ? inverse ? -1 : 1
-                    : inverse ? 1 : -1;
-            }, function () {
-                return this.parentNode;
+        tblNames.each(function (i, tbl) {
+            let valueElements = tblValues.eq(i);
+            valueElements.each(function () {
+                $(this).find('.' + column).sortElements(function (a, b) {
+                    if (!parseFloat($.text([a])))
+                        return 1;
+                    else if (!parseFloat($.text([b])))
+                        return inverse ? -1 : -1;
+                    return parseFloat($.text([a])) > parseFloat($.text([b]))
+                        ? inverse ? -1 : 1
+                        : inverse ? 1 : -1;
+                }, function () {
+                    return this.parentNode;
+                });
             });
 
             num = 1;
@@ -411,20 +427,21 @@ let Table = {
 
     toggleSubTable: function () {
         let row = $(this);
-
+        let index = row.closest('.bank-names-col').index();
         row.toggleClass('active');
-        row.closest('.table-all-item').find('.table-row')
-            .not(row.closest('.table-row')).toggleClass('active');
+        row.closest('.bank-names-col').find('.table-row').not(row.closest('.table-row')).toggleClass('active');
+        let bankValueContainer = $('#table .banks-info-wrap .bank-value').eq(index);
+        bankValueContainer.find('.table-row').not(bankValueContainer.find('.items-head')).toggleClass('active');
     },
 
     init: function () {
         Table.sortedBy = 'zerofalse';
 
-        setTimeout(function () {
+        /*setTimeout(function () {
             $('.table-all-item').each(function () {
                 $(this).find(':first').addClass('table-bg');
             });
-        }, 1000);
+        }, 1000);*/
 
         $('[data-symbol-num]').val('1');
 

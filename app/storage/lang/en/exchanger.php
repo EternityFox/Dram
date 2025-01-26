@@ -165,4 +165,10 @@ return [
     'Ардшининвестбанк' => 'Ardshininvestbank',
     'ԴԱՎԹԱՇԵՆ 31/7' => 'ԴԱՎԹԱՇԵՆ 31/7',
     'КАСЯНА 8' => 'KASYAN 8',
+    'BERKUT' => 'BERKUT',
+    'Мергелян Ереван Сити' => 'Mergelyan Yerevan City',
+    'Циран Маркет Абовян' => 'Tsiran Market Abovyan',
+    'Циран Маркет Эчмиадзин' => 'Tsiran Market Edjmiatsin',
+    'Анга oтель' => 'Anga Hotel',
+    'Чинар Метакс' => 'Chinar Metaks',
 ];

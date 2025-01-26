@@ -9,6 +9,19 @@
                     <div class="banner def-box banner-mobile">
                         <?= random_elem($settings['banner_head_mobile'], $settings['banner_head_mobile_2'],) ?>
                     </div>
+                    <?php if (isset($navigations) && !empty($navigations)): ?>
+                        <div class="nav-icons">
+                            <?php foreach ($navigations as $navigation): ?>
+                                <a href="<?= $navigation['link'] ?>">
+                                    <div class="nav-icon<?= (explode('?', $_SERVER['REQUEST_URI'])[0] === $navigation['link'] ? ' active' : '') ?>">
+                                        <img src="img/<?= $navigation['image'] ?>"
+                                             alt="<?= $navigation["title_" . $lang->getLang()] ?>">
+                                        <span class="nav-icon-text"><?= $navigation["title_" . $lang->getLang()] ?></span>
+                                    </div>
+                                </a>
+                            <?php endforeach ?>
+                        </div>
+                    <?php endif; ?>
 
                     <?= $mainTable->render() ?>
 
@@ -173,7 +186,10 @@
                             <?= $lang('Мы в соц сетях') ?>
                         </p>
                         <div class="soc-block-row">
-                            <iframe src="https://www.facebook.com/plugins/like.php?href=https%3A%2F%2Fwww.facebook.com%2Fwww.dram.am&width=20&layout&action&size&share=true&height=35&appId" width="180" height="20" style="border:none;overflow:hidden" scrolling="no" frameborder="0" allowfullscreen="true" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
+                            <iframe src="https://www.facebook.com/plugins/like.php?href=https%3A%2F%2Fwww.facebook.com%2Fwww.dram.am&width=20&layout&action&size&share=true&height=35&appId"
+                                    width="180" height="20" style="border:none;overflow:hidden" scrolling="no"
+                                    frameborder="0" allowfullscreen="true"
+                                    allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
                             <!--<a href="#" class="soc-block-row-item">
                                 <img src="img/facebook.png" alt="">
                             </a>
