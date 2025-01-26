@@ -1,6 +1,5 @@
 <?php
 declare(strict_types=1);
-
 namespace App\Controller;
 
 use Core\Controller,
@@ -84,24 +83,12 @@ class AdminController extends Controller
             $navTexts = $_POST['nav-text'];
             $navLinks = $_POST['nav-link'];
 
-            file_put_contents(__DIR__ . '/../../../storage/lang/am/navigation.php', "<?php
-
-return [");
-            file_put_contents(__DIR__ . '/../../../storage/lang/en/navigation.php', "<?php
-
-return [");
-            file_put_contents(__DIR__ . '/../../../storage/lang/ru/navigation.php', "<?php
-
-return [");
             foreach ($_POST['nav-title'] as $menuId => $titles) {
-                file_put_contents(__DIR__ . '/../../../storage/lang/am/navigation.php', '"nav-' . $menuId . '" => "' . $titles['am'] . '",', FILE_APPEND);
-                file_put_contents(__DIR__ . '/../../../storage/lang/en/navigation.php', '"nav-' . $menuId . '" => "' . $titles['en'] . '",', FILE_APPEND);
-                file_put_contents(__DIR__ . '/../../../storage/lang/ru/navigation.php', '"nav-' . $menuId . '" => "' . $titles['ru'] . '",', FILE_APPEND);
                 if (isset($navImages['name'][$menuId]) && !empty($navImages['name'][$menuId])) {
                     $imageName = 'nav-icon/' . $navImages['name'][$menuId];
                     $imageTmp = $navImages['tmp_name'][$menuId];
                     $imagePath = __DIR__ . '/../../../../img/' . $imageName;
-                    move_uploaded_file($imageTmp, $imagePath);
+	                    move_uploaded_file($imageTmp, $imagePath);
                 } else {
                     $imageName = $navTexts[$menuId];
                 }
@@ -119,9 +106,6 @@ return [");
                     'image' => $imageName,
                 ];
             }
-            file_put_contents(__DIR__ . '/../../../storage/lang/am/navigation.php', "];", FILE_APPEND);
-            file_put_contents(__DIR__ . '/../../../storage/lang/en/navigation.php', "];", FILE_APPEND);
-            file_put_contents(__DIR__ . '/../../../storage/lang/ru/navigation.php', "];", FILE_APPEND);
             foreach ($menuData as $menuItem) {
                 $stmt = App::db()->prepare("SELECT * FROM navigation WHERE id = ?");
                 $stmt->execute([$menuItem['id']]);
