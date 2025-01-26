@@ -71,7 +71,8 @@ $showHeaders = true;
         </div>
 
         <?php $i = 0; foreach ($data as $exch): ?>
-	<div class="table-row<?= (0 === $tableNum || 1 === $tableNum ? ' active"'
+        
+<div class="table-row<?= (0 === $tableNum || 1 === $tableNum ? ' active"'
             : (2 === $tableNum ? '" style="opacity: .6" data-outdated="1"' : '"')) ?>>
                 <div class="table-item one">
         <div class="table-item-number">

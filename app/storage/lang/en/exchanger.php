@@ -171,4 +171,7 @@ return [
     'Анга oтель' => 'Anga Hotel',
     'Циран Маркет Эчмиадзин' => 'Tsiran Market Edjmiatsin',
     'Циран Маркет Абовян' => 'Tsiran Market Abovyan',
+    'ՀԱԹ Բ2 Նոր Զովք' => 'ՀԱԹ Բ2 Նոր Զովք',
+    'BERKUT' => 'BERKUT',
+    'Мергелян Ереван Сити' => 'Mergelyan Yerevan City',
 ];
