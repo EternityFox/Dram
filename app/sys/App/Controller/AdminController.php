@@ -88,7 +88,7 @@ class AdminController extends Controller
                     $imageName = 'nav-icon/' . $navImages['name'][$menuId];
                     $imageTmp = $navImages['tmp_name'][$menuId];
                     $imagePath = __DIR__ . '/../../../../img/' . $imageName;
-	                    move_uploaded_file($imageTmp, $imagePath);
+	                move_uploaded_file($imageTmp, $imagePath);
                 } else {
                     $imageName = $navTexts[$menuId];
                 }
