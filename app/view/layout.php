@@ -57,7 +57,7 @@
             </div>
             <div class="header-logo">
                 <a href="/" class="logo">
-                    <img src="img/Logo_large.png" alt="">
+                    <img src="img/Logo_new_large.png" alt="Логотип">
                 </a>
             </div>
             <div class="header-search">
@@ -70,16 +70,6 @@
                 </div>
             </div>
             <div class="header-place accordion">
-                <div class="header-place-header accordion-header">
-                    <div class="header-place-header-icon">
-                        <img src="img/place.png" alt="">
-                    </div>
-                    <div class="header-place-header-text">
-                        <p>
-                            <?= $lang('Ереван') ?>
-                        </p>
-                    </div>
-                </div>
                 <div class="header-place-content accordion-content">
                     <div class="accordion-close">
                         <img src="img/close-circle.svg" alt="">
@@ -166,43 +156,6 @@
                     </div>
                 </div>
             </div>
-            <div class="header-notif accordion">
-                <div class="header-notif-header accordion-header">
-                    <img src="img/notif.png" alt="">
-                    <div class="header-notif-header-object">1</div>
-                </div>
-                <div class="header-notif-content accordion-content">
-                    <div class="header-notif-block">
-                        <div class="header-notif-content-object">
-                            <img src="img/notif-bg.png" alt="">
-                        </div>
-                        <div class="header-notif-block-close accordion-close">
-                            <img src="img/notif-close.png" alt="">
-                        </div>
-                        <p class="header-notif-block-title">
-                            <?= $lang('Просмотр сайта') ?>
-                        </p>
-                        <div class="header-notif-block-inner">
-                            <div class="header-notif-block-inner-btn"  id="pc-version">
-                                    <span class="header-notif-block-inner-btn-icon">
-                                        <img src="img/pc-version.png" alt="">
-                                    </span>
-                                <span class="header-notif-block-inner-btn-text">
-                                        <?= $lang('Web версия') ?>
-                                    </span>
-                            </div>
-                            <div class="header-notif-block-inner-btn" id="mobile-version">
-                                    <span class="header-notif-block-inner-btn-icon">
-                                        <img src="img/mob-version.png" alt="">
-                                    </span>
-                                <span class="header-notif-block-inner-btn-text">
-                                        <?= $lang('Мобильная') ?>
-                                    </span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
             <div class="header-lang accordion">
                 <div class="header-lang-header accordion-header">
                     <img src="img/lang/<?= $lang ?>.png" alt="">
@@ -282,7 +235,7 @@
                 <div class="col-md-4 col-sm-6">
                     <div class="f-logo-block">
                         <a href="#" class="f-logo">
-                            <img src="img/Logo_large.png" alt="">
+                            <img src="img/Logo_new_large.png" alt="Логотип">
                         </a>
                     </div>
                 </div>
