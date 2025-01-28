@@ -3,12 +3,6 @@
         <div class="row">
             <div class="col-lg-9">
                 <div class="left-block">
-                    <div class="banner def-box banner-desktop">
-                        <?= random_elem($settings['banner_head'], $settings['banner_head_2'], $settings['banner_head_3']) ?>
-                    </div>
-                    <div class="banner def-box banner-mobile">
-                        <?= random_elem($settings['banner_head_mobile'], $settings['banner_head_mobile_2'],) ?>
-                    </div>
                     <?php if (isset($navigations) && !empty($navigations)): ?>
                         <div class="nav-icons">
                             <?php foreach ($navigations as $navigation): ?>
@@ -22,6 +16,12 @@
                             <?php endforeach ?>
                         </div>
                     <?php endif; ?>
+                    <div class="banner def-box banner-desktop">
+                        <?= random_elem($settings['banner_head'], $settings['banner_head_2'], $settings['banner_head_3']) ?>
+                    </div>
+                    <div class="banner def-box banner-mobile">
+                        <?= random_elem($settings['banner_head_mobile'], $settings['banner_head_mobile_2'],) ?>
+                    </div>
 
                     <?= $mainTable->render() ?>
 

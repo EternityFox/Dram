@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+
 namespace App\Controller;
 
 use Core\Controller,
@@ -88,14 +89,14 @@ class AdminController extends Controller
                     $imageName = 'nav-icon/' . $navImages['name'][$menuId];
                     $imageTmp = $navImages['tmp_name'][$menuId];
                     $imagePath = __DIR__ . '/../../../../img/' . $imageName;
-	                move_uploaded_file($imageTmp, $imagePath);
+                    move_uploaded_file($imageTmp, $imagePath);
                 } else {
                     $imageName = $navTexts[$menuId];
                 }
                 if (substr($navLinks[$menuId], 0, 1) === '/') {
                     $navLink = $navLinks[$menuId];
-                }else{
-                    $navLink =  '/' . $navLinks[$menuId];
+                } else {
+                    $navLink = '/' . $navLinks[$menuId];
                 }
                 $menuData[] = [
                     'id' => $menuId,
@@ -105,6 +106,19 @@ class AdminController extends Controller
                     'title_am' => $titles['am'],
                     'image' => $imageName,
                 ];
+            }
+            $existingMenus = App::db()->query("SELECT * FROM navigation")->fetchAll();
+            $existingMenuIds = array_column($existingMenus, 'id');
+            $menuIdsInRequest = array_column($menuData, 'id');
+            foreach ($existingMenus as $existingMenu) {
+                if (!in_array($existingMenu['id'], $menuIdsInRequest)) {
+                    $imagePath = __DIR__ . '/../../../../img/' . $existingMenu['image'];
+                    if (file_exists($imagePath) && is_file($imagePath)) {
+                        unlink($imagePath);
+                    }
+                    $stmt = App::db()->prepare("DELETE FROM navigation WHERE id = ?");
+                    $stmt->execute([$existingMenu['id']]);
+                }
             }
             foreach ($menuData as $menuItem) {
                 $stmt = App::db()->prepare("SELECT * FROM navigation WHERE id = ?");
