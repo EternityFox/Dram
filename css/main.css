@@ -1221,6 +1221,9 @@ section {
 .table-item-slogan a{
     color: #454545;
     font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .table-item.one .table-item-number {
