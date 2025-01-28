@@ -174,4 +174,5 @@ return [
     'ՀԱԹ Բ2 Նոր Զովք' => 'ՀԱԹ Բ2 Նոր Զովք',
     'BERKUT' => 'BERKUT',
     'Мергелян Ереван Сити' => 'Mergelyan Yerevan City',
+    'Эталон Супермаркет' => 'Etalon Supermarket',
 ];

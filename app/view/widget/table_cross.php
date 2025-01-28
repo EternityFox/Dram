@@ -5,7 +5,7 @@
 <div class="table-all d-flex flex-row">
     <div class="bank-info-all-item">
         <?php foreach ($table as $tableNum => $data): ?>
-            <div class="bank-names-col<?= (3 == $tableNum ?' gray-bank' :'') ?>">
+            <div class="bank-names-col<?= (2 == $tableNum ?' gray-bank' :'') ?>">
                 <div class="table-row active table-bg">
                     <div class="table-item one head active">
                         <div class="table-item-arrow">
@@ -113,7 +113,7 @@
         </div>
         <div class="banks-info scrollable-row">
             <?php foreach ($table as $tableNum => $data): ?>
-                <div class="bank-value<?= (3 == $tableNum ?' gray-bank' :'') ?>">
+                <div class="bank-value<?= (2 == $tableNum ?' gray-bank' :'') ?>">
                     <?php if ($tableNum != 0): ?>
                         <div class="table-row active items-head">
                             <?php foreach ($activeSymbols as $i => $symbol): ?>
