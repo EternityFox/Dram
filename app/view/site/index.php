@@ -207,28 +207,6 @@
                             </a>-->
                         </div>
                     </div>
-
-                    <div class="clue-container">
-                        <div class="clue">
-                            <div class="clue-inner">
-                                <a href="<?= App::$url ?>/converter">
-                                    <div class="clue-icon">
-                                        <img src="img/clue-icon.png" alt="">
-                                    </div>
-                                    <div class="clue-text">
-                                        <?= $lang('Конвертер') ?>
-                                    </div>
-                                </a>
-                            </div>
-                            <div class="clue-close">
-                                <img src="img/clue-close.png" alt="">
-                            </div>
-                            <a href="#" class="clue-link">
-                                <img src="img/clue-link.png" alt="">
-                            </a>
-                        </div>
-                    </div>
-
                     <div class="right-banner">
                         <div class="right-banner-item">
                             <?= random_elem($settings['banner_side1'], $settings['banner_side1_2'], $settings['banner_side1_3']) ?>
