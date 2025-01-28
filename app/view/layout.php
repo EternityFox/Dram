@@ -45,6 +45,7 @@
     <!-- Yandex.RTB -->
     <script>window.yaContextCb=window.yaContextCb||[]</script>
     <script src="https://yandex.ru/ads/system/context.js" async></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
 
 </head>
 
@@ -57,17 +58,8 @@
             </div>
             <div class="header-logo">
                 <a href="/" class="logo">
-                    <img src="img/Logo_new_large.png" alt="Логотип">
+                    <img src="img/logo.svg" alt="Логотип">
                 </a>
-            </div>
-            <div class="header-search">
-                <input type="text" placeholder="<?= $lang('Поиск') ?>">
-                <a href="#" class="header-search-btn">
-                    <img src="img/search.png" alt="">
-                </a>
-                <div class="header-search-arrow">
-                    <img src="img/look.png" alt="">
-                </div>
             </div>
             <div class="header-place accordion">
                 <div class="header-place-content accordion-content">
@@ -235,7 +227,7 @@
                 <div class="col-md-4 col-sm-6">
                     <div class="f-logo-block">
                         <a href="#" class="f-logo">
-                            <img src="img/Logo_new_large.png" alt="Логотип">
+                            <img src="img/logo.svg" alt="Логотип">
                         </a>
                     </div>
                 </div>

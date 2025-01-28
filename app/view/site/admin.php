@@ -1,71 +1,139 @@
 <section class="content">
     <div class="container">
         <h1>Панель управления</h1>
-
         <form action="" method="POST" class="mt-4" enctype="multipart/form-data">
-
             <?php $i = 0; ?>
-
             <div class="card admin-banners toggle">
                 <h5 class="card-header">Меню навигации</h5>
                 <div class="card-body" style="display: none;">
-                    <?php foreach ($navigations as $nav): ?>
-                        <?php ++$i ?>
-                        <div class="card admin-banners toggle<?= ($i === 1 ? '' : ' mt-4') ?>">
-                            <h5 class="card-header"><?= "Меню № " . $i ?></h5>
-                            <div class="card-body" style="display: none;">
-                                <?php if (!empty($nav['image'])): ?>
-                                    <!-- Отображаем текущее изображение, если оно существует -->
-                                    <div>
-                                        <img src="/img/<?= $nav['image'] ?>" alt="Изображение" width="32" />
+                    <div id="sortable-menu-container">
+                        <?php foreach ($navigations as $nav): ?>
+                            <?php ++$i ?>
+                            <div class="card admin-banners toggle" id="menu-<?= $i ?>"
+                                 data-menu-index="<?= $i ?>" draggable="true">
+                                <h5 class="card-header"><?= "Меню № " . $i ?>
+                                    <button type="button" class="btn btn-danger btn-sm float-right delete-menu-btn">
+                                        Удалить
+                                    </button>
+                                </h5>
+                                <div class="card-body" style="display: none;">
+                                    <?php if (!empty($nav['image'])): ?>
+                                        <div>
+                                            <img src="/img/<?= $nav['image'] ?>" alt="Изображение" width="32"/>
+                                        </div>
+                                    <?php endif; ?>
+                                    <div class="form-group">
+                                        <label>Изображение:</label>
+                                        <input type="file" class="form-control" name="nav-image[<?= $i ?>]">
+                                        <input type="hidden" name="nav-text[<?= $i ?>]" value="<?= $nav['image'] ?>">
                                     </div>
-                                <?php endif; ?>
-                                <div class="form-group">
-                                    <label>Изображение:</label>
-                                    <input type="file" class="form-control" name="nav-image[<?= $i ?>]">
-                                    <input type="hidden" name="nav-text[<?= $i ?>]" value="<?= $nav['image'] ?>">
-                                </div>
-                                <div class="form-group">
-                                    <label>Ссылка:</label>
-                                    <input type="text" class="form-control" name="nav-link[<?= $i ?>]" value="<?= $nav['link'] ?>">
-                                </div>
+                                    <div class="form-group">
+                                        <label>Ссылка:</label>
+                                        <input type="text" class="form-control" name="nav-link[<?= $i ?>]"
+                                               value="<?= $nav['link'] ?>">
+                                    </div>
 
-                                <div class="form-group">
-                                    <ul class="nav nav-tabs" style="border-bottom: none;">
-                                        <li class="nav-item head">
-                                            <div class="nav-link tabs active" data-target="#navigation_title_ru_<?= $i ?>">Ру</div>
-                                        </li>
-                                        <li class="nav-item head">
-                                            <div class="nav-link tabs" data-target="#navigation_title_en_<?= $i ?>">EN</div>
-                                        </li>
-                                        <li class="nav-item head">
-                                            <div class="nav-link tabs" data-target="#navigation_title_am_<?= $i ?>">Հա</div>
-                                        </li>
-                                    </ul>
-                                    <textarea id="navigation_title_ru_<?= $i ?>" class="form-control collapse show"
-                                              name="nav-title[<?= $i ?>][ru]" rows="3"><?= $nav['title_ru'] ?></textarea>
-                                    <textarea id="navigation_title_en_<?= $i ?>" class="form-control collapse"
-                                              name="nav-title[<?= $i ?>][en]" rows="3"><?= $nav['title_en'] ?></textarea>
-                                    <textarea id="navigation_title_am_<?= $i ?>" class="form-control collapse"
-                                              name="nav-title[<?= $i ?>][am]" rows="3"><?= $nav['title_am'] ?></textarea>
+                                    <div class="form-group">
+                                        <ul class="nav nav-tabs" style="border-bottom: none;">
+                                            <li class="nav-item head">
+                                                <div class="nav-link tabs active"
+                                                     data-target="#navigation_title_ru_<?= $i ?>">Ру
+                                                </div>
+                                            </li>
+                                            <li class="nav-item head">
+                                                <div class="nav-link tabs" data-target="#navigation_title_en_<?= $i ?>">
+                                                    EN
+                                                </div>
+                                            </li>
+                                            <li class="nav-item head">
+                                                <div class="nav-link tabs" data-target="#navigation_title_am_<?= $i ?>">
+                                                    Հա
+                                                </div>
+                                            </li>
+                                        </ul>
+                                        <textarea id="navigation_title_ru_<?= $i ?>" class="form-control collapse show"
+                                                  name="nav-title[<?= $i ?>][ru]"
+                                                  rows="3"><?= $nav['title_ru'] ?></textarea>
+                                        <textarea id="navigation_title_en_<?= $i ?>" class="form-control collapse"
+                                                  name="nav-title[<?= $i ?>][en]"
+                                                  rows="3"><?= $nav['title_en'] ?></textarea>
+                                        <textarea id="navigation_title_am_<?= $i ?>" class="form-control collapse"
+                                                  name="nav-title[<?= $i ?>][am]"
+                                                  rows="3"><?= $nav['title_am'] ?></textarea>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    <?php endforeach; ?>
+                        <?php endforeach; ?>
+                    </div>
+
                     <div id="new-menu-container"></div>
                     <div class="d-flex justify-content-start mt-3">
                         <button type="button" class="btn btn-success" id="add-new-menu-btn">Добавить новое меню</button>
                     </div>
                 </div>
                 <script>
-                    // Номер для нового меню
-                    let newMenuCount = <?= $i ?>;
+                    function clearMenu() {
+                        const remainingMenus = document.querySelectorAll('#sortable-menu-container .card.admin-banners');
+                        remainingMenus.forEach((menu, index) => {
+                            const newIndex = index + 1;
+                            menu.setAttribute('data-menu-index', newIndex);
+                            menu.id = `menu-${newIndex}`;
+                            const title = menu.querySelector('.card-header');
+                            title.innerHTML = `Меню № ${newIndex} <button type="button" class="btn btn-danger btn-sm float-right delete-menu-btn">Удалить</button>`;
+
+                            const inputs = menu.querySelectorAll('input, textarea');
+                            inputs.forEach(input => {
+                                const name = input.getAttribute('name');
+                                if (name) {
+                                    input.setAttribute('name', name.replace(/\[\d+\]/, `[${newIndex}]`));
+                                }
+                            });
+                        });
+                        updateDeleteHandlers();
+                    }
+
+                    function updateDeleteHandlers() {
+                        document.querySelectorAll('.delete-menu-btn').forEach(button => {
+                            button.removeEventListener('click', handleDeleteMenu);
+                            button.addEventListener('click', handleDeleteMenu);
+                        });
+                        document.querySelectorAll('.nav-tabs .nav-link').forEach(tab => {
+                            tab.addEventListener('shown.bs.tab', function (e) {
+                                const target = document.querySelector(e.target.getAttribute('href'));
+                                document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('show', 'active'));
+                                target.classList.add('show', 'active');
+                            });
+                        });
+                    }
+                    function initLanguageTabs(menuIndex) {
+                        const tabsContainer = document.querySelector(`#tabs-${menuIndex}`);
+
+                        tabsContainer.addEventListener('click', function (e) {
+                            if (e.target.classList.contains('tabs')) {
+                                const activeTabs = tabsContainer.querySelectorAll('.tabs');
+                                activeTabs.forEach(tab => tab.classList.remove('active'));
+                                e.target.classList.add('active');
+                                const textareas = tabsContainer.parentElement.querySelectorAll('.form-control');
+                                textareas.forEach(textarea => textarea.classList.remove('show'));
+                                const target = e.target.getAttribute('data-target');
+                                document.querySelector(target).classList.add('show');
+                            }
+                        });
+                    }
+
+                    function handleDeleteMenu() {
+                        const menuCard = this.closest('.card.admin-banners');
+                        menuCard.remove();
+                        clearMenu();
+                    }
 
                     document.getElementById('add-new-menu-btn').addEventListener('click', function () {
-                        newMenuCount++;
+                        const newMenuCount = document.querySelectorAll('#sortable-menu-container .card.admin-banners').length + 1;
                         const newMenuHTML = `
-        <div class="card admin-banners toggle mt-3">
-            <h5 class="card-header">Меню № ${newMenuCount}</h5>
+        <div class="card admin-banners toggle mt-3" id="menu-${newMenuCount}" data-menu-index="${newMenuCount}" draggable="true">
+            <h5 class="card-header">Меню № ${newMenuCount}
+                <button type="button" class="btn btn-danger btn-sm float-right delete-menu-btn">Удалить</button>
+            </h5>
             <div class="card-body">
                 <div class="form-group">
                     <label>Изображение:</label>
@@ -73,8 +141,8 @@
                 </div>
                 <div class="form-group">
                     <label>Ссылка:</label>
-                    <input type="text" class="form-control" name="nav-link[${newMenuCount}]" value="/">
-                 </div>
+                    <input type="text" class="form-control" name="nav-link[${newMenuCount}]" value="/"/>
+                </div>
                 <div class="form-group">
                     <ul class="nav nav-tabs" style="border-bottom: none;" id="tabs-${newMenuCount}">
                         <li class="nav-item head">
@@ -94,45 +162,20 @@
             </div>
         </div>
     `;
-
-                        // Добавляем новое меню в контейнер
-                        document.getElementById('new-menu-container').insertAdjacentHTML('beforeend', newMenuHTML);
-
-                        // Инициализация новых кнопок переключения языков
+                        document.getElementById('sortable-menu-container').insertAdjacentHTML('beforeend', newMenuHTML);
+                        clearMenu();
                         initLanguageTabs(newMenuCount);
                     });
 
-                    // Функция для инициализации переключателей языков для нового меню
-                    function initLanguageTabs(menuIndex) {
-                        // Обработчик для новых табов
-                        const tabsContainer = document.querySelector(`#tabs-${menuIndex}`);
-
-                        tabsContainer.addEventListener('click', function (e) {
-                            if (e.target.classList.contains('tabs')) {
-                                // Убираем активность с других вкладок
-                                const activeTabs = tabsContainer.querySelectorAll('.tabs');
-                                activeTabs.forEach(tab => tab.classList.remove('active'));
-
-                                // Добавляем активность на кликнутую вкладку
-                                e.target.classList.add('active');
-
-                                // Скрываем все текстовые поля
-                                const textareas = tabsContainer.parentElement.querySelectorAll('.form-control');
-                                textareas.forEach(textarea => textarea.classList.remove('show'));
-
-                                // Показываем нужное текстовое поле по data-target
-                                const target = e.target.getAttribute('data-target');
-                                document.querySelector(target).classList.add('show');
-                            }
-                        });
-                    }
-
-                    // Инициализация табов для уже существующих меню
-                    document.querySelectorAll('.nav-tabs').forEach((tabs, index) => {
-                        initLanguageTabs(index + 1);
+                    new Sortable(document.getElementById('sortable-menu-container'), {
+                        onEnd: function () {
+                            clearMenu();
+                        }
                     });
+                    updateDeleteHandlers();
                 </script>
             </div>
+
 
             <div class="card admin-banners toggle mt-4">
                 <h5 class="card-header">Баннеры</h5>

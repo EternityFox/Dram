@@ -229,7 +229,6 @@ section {
     padding: 2.5px 20px;
     font-family: 'Open Sans', sans-serif;
     position: relative;
-    box-shadow: 0px 0px 4px rgba(0, 0, 0, 0.15);
     z-index: 20;
 }
 
@@ -243,7 +242,7 @@ section {
 }
 
 .header-logo {
-    margin: 0 22px 0 29px;
+    margin-left: 120px;
 }
 
 .logo {
@@ -742,6 +741,12 @@ section {
 .table-list-item.active .table-list-item-object {
     display: block;
 }
+#sortable-menu-container .admin-banners{
+    margin-top: 1.5rem;
+}
+#sortable-menu-container .admin-banners[data-menu-index="1"]{
+    margin-top: 0;
+}
 
 .table-flex {
     display: flex;
@@ -763,7 +768,6 @@ section {
     background: #fbfbfb;
 }
 .bank-value.gray-bank{
-    min-width: 1500px;
     border-top-right-radius: 16px;
     padding-top: 1px;
     margin-top: -1px;
@@ -1108,7 +1112,7 @@ section {
     overflow-scrolling: touch !important;
     flex-wrap: nowrap;
     gap: 40px;
-    margin-top: 24px;
+    margin: 20px 0;
 }
 .nav-icons .nav-icon{
     display: flex;
@@ -2201,6 +2205,9 @@ section {
 }
 
 @media screen and (max-width: 768px) {
+    .bank-value.gray-bank {
+        min-width: 1500px;
+    }
     .header-row{
         justify-content: space-between;
     }
