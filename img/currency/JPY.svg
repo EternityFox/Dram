@@ -1,23 +1,57 @@
-<svg id="mini-jpy" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14">
-  <circle id="Эллипс_1162" data-name="Эллипс 1162" cx="7" cy="7" r="7" fill="#f0f0f0"/>
-  <path id="Контур_2081" data-name="Контур 2081" d="M166.957,169.392a2.457,2.457,0,0,0,4.87,0,2.435,2.435,0,0,0-4.87,0Z" transform="translate(-162.392 -162.392)" fill="#d80027"/>
-  <path id="Контур_2082" data-name="Контур 2082" d="M166.957,256a2.435,2.435,0,1,0,4.87,0" transform="translate(-162.392 -249)" fill="#0052b4"/>
-  <rect id="Прямоугольник_488" data-name="Прямоугольник 488" width="0.913" height="0.609" transform="translate(3.987 9.582) rotate(-135)"/>
-  <rect id="Прямоугольник_489" data-name="Прямоугольник 489" width="0.913" height="0.609" transform="translate(5.063 10.659) rotate(-135)"/>
-  <rect id="Прямоугольник_490" data-name="Прямоугольник 490" width="0.913" height="0.609" transform="translate(2.696 10.873) rotate(-135)"/>
-  <rect id="Прямоугольник_491" data-name="Прямоугольник 491" width="0.913" height="0.609" transform="translate(3.772 11.95) rotate(-135)"/>
-  <rect id="Прямоугольник_492" data-name="Прямоугольник 492" width="0.913" height="0.609" transform="translate(3.342 10.228) rotate(-135)"/>
-  <rect id="Прямоугольник_493" data-name="Прямоугольник 493" width="0.913" height="0.609" transform="translate(4.417 11.304) rotate(-135)"/>
-  <rect id="Прямоугольник_494" data-name="Прямоугольник 494" width="2.435" height="0.609" transform="translate(2.696 4.417) rotate(-45)"/>
-  <rect id="Прямоугольник_495" data-name="Прямоугольник 495" width="0.913" height="0.609" transform="translate(4.417 3.987) rotate(-45)"/>
-  <rect id="Прямоугольник_496" data-name="Прямоугольник 496" width="0.913" height="0.609" transform="translate(3.341 5.063) rotate(-45)"/>
-  <rect id="Прямоугольник_497" data-name="Прямоугольник 497" width="0.913" height="0.609" transform="translate(3.127 2.696) rotate(-45)"/>
-  <rect id="Прямоугольник_498" data-name="Прямоугольник 498" width="0.913" height="0.609" transform="translate(2.05 3.772) rotate(-45)"/>
-  <rect id="Прямоугольник_499" data-name="Прямоугольник 499" width="2.435" height="0.609" transform="translate(11.95 10.228) rotate(135)"/>
-  <rect id="Прямоугольник_500" data-name="Прямоугольник 500" width="0.913" height="0.609" transform="translate(10.228 10.658) rotate(135)"/>
-  <rect id="Прямоугольник_501" data-name="Прямоугольник 501" width="0.913" height="0.609" transform="translate(11.304 9.582) rotate(135)"/>
-  <rect id="Прямоугольник_502" data-name="Прямоугольник 502" width="2.435" height="0.609" transform="translate(10.659 8.937) rotate(135)"/>
-  <rect id="Прямоугольник_503" data-name="Прямоугольник 503" width="2.435" height="0.609" transform="translate(10.228 2.05) rotate(45)"/>
-  <rect id="Прямоугольник_504" data-name="Прямоугольник 504" width="2.435" height="0.609" transform="translate(9.583 2.696) rotate(45)"/>
-  <rect id="Прямоугольник_505" data-name="Прямоугольник 505" width="2.435" height="0.609" transform="translate(8.937 3.342) rotate(45)"/>
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!-- Generator: Adobe Illustrator 19.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 512 512" style="enable-background:new 0 0 512 512;" xml:space="preserve">
+<circle style="fill:#F0F0F0;" cx="256" cy="256" r="256"/>
+<path style="fill:#D80027;" d="M345.043,256c0,22.261-39.866,77.913-89.043,77.913S166.957,278.261,166.957,256
+	c0-49.178,39.866-89.043,89.043-89.043S345.043,206.822,345.043,256z"/>
+<path style="fill:#0052B4;" d="M345.043,256c0,49.178-39.866,89.043-89.043,89.043S166.957,305.178,166.957,256"/>
+<rect x="353.427" y="319.639" transform="matrix(0.7071 -0.7071 0.7071 0.7071 -125.4831 358.5964)" width="33.391" height="22.261"/>
+<rect x="314.07" y="358.994" transform="matrix(0.7071 -0.7071 0.7071 0.7071 -164.8388 342.2935)" width="33.391" height="22.261"/>
+<rect x="400.656" y="366.851" transform="matrix(0.7071 -0.7071 0.7071 0.7071 -145.034 405.8207)" width="33.391" height="22.261"/>
+<rect x="361.299" y="406.213" transform="matrix(0.7071 -0.7071 0.7071 0.7071 -184.3942 389.5197)" width="33.391" height="22.261"/>
+<rect x="377.04" y="343.247" transform="matrix(0.7071 -0.7071 0.7071 0.7071 -135.2602 382.2079)" width="33.391" height="22.261"/>
+<rect x="337.694" y="382.602" transform="matrix(0.7071 -0.7071 0.7071 0.7071 -174.6126 365.9128)" width="33.391" height="22.261"/>
+<rect x="329.544" y="126.805" transform="matrix(-0.7071 -0.7071 0.7071 -0.7071 541.0344 499.9738)" width="89.043" height="22.261"/>
+<rect x="314.081" y="130.749" transform="matrix(-0.7071 -0.7071 0.7071 -0.7071 464.3475 476.0975)" width="33.391" height="22.26"/>
+<rect x="353.427" y="170.098" transform="matrix(-0.7071 -0.7071 0.7071 -0.7071 503.692 571.0911)" width="33.391" height="22.26"/>
+<rect x="361.282" y="83.526" transform="matrix(-0.7071 -0.7071 0.7071 -0.7071 578.3161 428.8593)" width="33.391" height="22.261"/>
+<rect x="400.651" y="122.879" transform="matrix(-0.7071 -0.7071 0.7071 -0.7071 617.6954 523.8765)" width="33.391" height="22.261"/>
+<rect x="69.81" y="386.542" transform="matrix(0.7071 0.7071 -0.7071 0.7071 314.6838 35.6313)" width="89.043" height="22.261"/>
+<rect x="140.919" y="382.6" transform="matrix(0.7071 0.7071 -0.7071 0.7071 324.573 3.8704)" width="33.391" height="22.26"/>
+<rect x="101.569" y="343.252" transform="matrix(0.7071 0.7071 -0.7071 0.7071 285.2246 20.1705)" width="33.391" height="22.261"/>
+<rect x="117.031" y="339.316" transform="matrix(0.7071 0.7071 -0.7071 0.7071 295.1205 -11.5916)" width="89.043" height="22.261"/>
+<rect x="69.81" y="103.201" transform="matrix(-0.7071 0.7071 -0.7071 -0.7071 276.0196 114.331)" width="89.043" height="22.261"/>
+<rect x="93.412" y="126.806" transform="matrix(-0.7071 0.7071 -0.7071 -0.7071 333.0029 137.9383)" width="89.043" height="22.261"/>
+<rect x="117.038" y="150.428" transform="matrix(-0.7071 0.7071 -0.7071 -0.7071 390.0373 161.557)" width="89.043" height="22.26"/>
+<g>
+</g>
+<g>
+</g>
+<g>
+</g>
+<g>
+</g>
+<g>
+</g>
+<g>
+</g>
+<g>
+</g>
+<g>
+</g>
+<g>
+</g>
+<g>
+</g>
+<g>
+</g>
+<g>
+</g>
+<g>
+</g>
+<g>
+</g>
+<g>
+</g>
 </svg>
