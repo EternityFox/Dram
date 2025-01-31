@@ -1,6 +1,40 @@
-<svg id="mini-aed" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14">
-  <circle id="Эллипс_1160" data-name="Эллипс 1160" cx="7" cy="7" r="7" fill="#f0f0f0"/>
-  <path id="Контур_2061" data-name="Контур 2061" d="M144.7,345.043l.609,4.13a7.007,7.007,0,0,0,9-4.13Z" transform="translate(-140.739 -335.608)"/>
-  <path id="Контур_2062" data-name="Контур 2062" d="M144.7,4.565,145.3.435a7.007,7.007,0,0,1,9,4.13Z" transform="translate(-140.739)" fill="#6da544"/>
-  <path id="Контур_2063" data-name="Контур 2063" d="M0,22.488a7,7,0,0,0,4.565,6.565V15.923A7,7,0,0,0,0,22.488Z" transform="translate(0 -15.488)" fill="#a2001d"/>
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!-- Generator: Adobe Illustrator 19.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 512 512" style="enable-background:new 0 0 512 512;" xml:space="preserve">
+<circle style="fill:#F0F0F0;" cx="256" cy="256" r="256"/>
+<path d="M144.696,345.043l22.261,151.036C194.689,506.37,224.686,512,256,512c110.07,0,203.906-69.472,240.076-166.957H144.696z"/>
+<path style="fill:#6DA544;" d="M144.696,166.957l22.261-151.036C194.689,5.63,224.686,0,256,0
+	c110.07,0,203.906,69.472,240.076,166.957H144.696z"/>
+<path style="fill:#A2001D;" d="M0,256c0,110.071,69.473,203.906,166.957,240.077V15.923C69.473,52.094,0,145.929,0,256z"/>
+<g>
+</g>
+<g>
+</g>
+<g>
+</g>
+<g>
+</g>
+<g>
+</g>
+<g>
+</g>
+<g>
+</g>
+<g>
+</g>
+<g>
+</g>
+<g>
+</g>
+<g>
+</g>
+<g>
+</g>
+<g>
+</g>
+<g>
+</g>
+<g>
+</g>
 </svg>
