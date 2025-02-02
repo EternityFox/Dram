@@ -80,20 +80,41 @@ let Table = {
         container: $('#tableSymbolList'),
 
         openSymbolList: function () {
-
+            if ($('.cloned-dropdown')) {
+                Table.symbolPanel.removeClonedDropdown();
+            }
             let container = $(this);
+            let dropdown = container.find('.table-entry-list');
+            if (dropdown.length === 0) return;
             container.toggleClass('active');
-            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-            container.find('.table-entry-list').css('top', `${container.offset().top - scrollTop + 40}px`);
-            if ($(window).width() > 769)
-                container.find('.table-entry-list').css('left', `${container.offset().left + 50}px`);
-            container.find('.table-entry-list').slideToggle(300);
-            $(window).scroll(function () {
+            if (container.hasClass('active')) {
+                Table.symbolPanel.cloneDropdown(dropdown, container);
+            }
+        },
+        cloneDropdown: function (dropdown, container) {
+            let scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            let offset = container.offset();
+
+            let clonedDropdown = dropdown.clone();
+            clonedDropdown.addClass('cloned-dropdown');
+            clonedDropdown.css({
+                top: `${offset.top - scrollTop + 40}px`,
+                left: $(window).width() > 769 ? `${offset.left + 50}px` : 'auto'
+            });
+
+            $('body').append(clonedDropdown);
+            clonedDropdown.slideToggle(300);
+
+            $(window).on('scroll', function () {
                 if (container.hasClass('active')) {
                     container.removeClass('active');
-                    container.find('.table-entry-list').slideUp();
+                    Table.symbolPanel.removeClonedDropdown();
                 }
             });
+        },
+
+        removeClonedDropdown: function () {
+            $('.cloned-dropdown').remove();
         },
         changeSymbol: function (e) {
             if (Table.disabled)
