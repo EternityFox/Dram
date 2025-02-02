@@ -491,6 +491,8 @@ section {
 }
 
 .header-lang-header img {
+    width: 16px;
+    height: 16px;
     position: relative;
     top: -2px;
 }
@@ -741,10 +743,12 @@ section {
 .table-list-item.active .table-list-item-object {
     display: block;
 }
-#sortable-menu-container .admin-banners{
+
+#sortable-menu-container .admin-banners {
     margin-top: 1.5rem;
 }
-#sortable-menu-container .admin-banners[data-menu-index="1"]{
+
+#sortable-menu-container .admin-banners[data-menu-index="1"] {
     margin-top: 0;
 }
 
@@ -758,23 +762,29 @@ section {
     top: -1px;
     width: 30%;
 }
-.bank-info-all-item{
+
+.bank-info-all-item {
     width: 30%;
 }
-.bank-names-col{
+
+.bank-names-col {
     border-top-left-radius: 30px;
 }
-.bank-names-col.gray-bank, .bank-value.gray-bank{
+
+.bank-names-col.gray-bank, .bank-value.gray-bank {
     background: #fbfbfb;
 }
-.bank-value.gray-bank{
+
+.bank-value.gray-bank {
     border-top-right-radius: 16px;
     padding-top: 1px;
     margin-top: -1px;
 }
-.bank-names-col.gray-bank .table-row.table-bg .table-item-title{
+
+.bank-names-col.gray-bank .table-row.table-bg .table-item-title {
     color: #a7a7a7;
 }
+
 .table-text-row {
     padding: 0 30px;
 }
@@ -894,7 +904,6 @@ section {
 }
 
 
-
 .table-entry-item {
     position: relative;
 }
@@ -922,7 +931,8 @@ section {
     width: 14px;
     height: 14px;
 }
-.table-entry-item-inner-icon img, .table-entry-list-item-icon img{
+
+.table-entry-item-inner-icon img, .table-entry-list-item-icon img {
     width: 14px;
     height: 14px;
 }
@@ -939,8 +949,9 @@ section {
     border: 1px solid #E3E3E3;
     border-radius: 30px;
 }
-#top-menu{
-    display: none!important;
+
+#top-menu {
+    display: none !important;
 }
 
 .table-entry-item-inner-text {
@@ -958,7 +969,7 @@ section {
 }
 
 .table-entry-list {
-    z-index: 2;
+    z-index: 22;
     position: fixed;
     left: 43%;
     transform: translateX(-50%);
@@ -1039,13 +1050,14 @@ section {
     width: 100%;
     justify-content: flex-start;
 }
-.banks-info-wrap{
+
+.banks-info-wrap {
     width: 70%;
     position: relative;
     margin-top: -110px;
 }
 
-.banks-info-wrap .table-bg{
+.banks-info-wrap .table-bg {
     top: -3px;
     background: #ffffff;
     padding-top: 4px;
@@ -1054,58 +1066,63 @@ section {
 }
 
 
-.banks-info-wrap .table-items{
+.banks-info-wrap .table-items {
     display: flex;
     flex-direction: row;
 }
 
-.banks-info-wrap .table-items{
+.banks-info-wrap .table-items {
     width: calc(100% + 16px);
 }
-.banks-info-wrap .items-head .table-items, .banks-info .table-items{
+
+.banks-info-wrap .items-head .table-items, .banks-info .table-items {
     padding-right: 16px;
     width: calc(25% + 16px);
 }
-.banks-info-wrap .table-bg .table-items .table-item{
+
+.banks-info-wrap .table-bg .table-items .table-item {
     width: calc(50% - 8px);
 }
 
 .banks-info-wrap .table-bg .table-items .table-item.five,
 .banks-info-wrap .table-bg .table-items .table-item.seven,
 .banks-info-wrap .table-bg .table-items .table-item.nine,
-.banks-info-wrap .table-bg .table-items .table-item.eleven{
+.banks-info-wrap .table-bg .table-items .table-item.eleven {
     margin-right: 8px;
 }
 
-.banks-info .items-head .table-items:last-child,.banks-info .table-items:last-child{
+.banks-info .items-head .table-items:last-child, .banks-info .table-items:last-child {
     padding-right: 0;
     width: 25%;
 }
 
-.banks-info .items-head .table-items, .banks-info-wrap .table-bg .table-items{
+.banks-info .items-head .table-items, .banks-info-wrap .table-bg .table-items {
     background: #f5f5f5;
 }
 
-.banks-info-wrap .table-entry .table-entry-item:last-child .table-items{
+.banks-info-wrap .table-entry .table-entry-item:last-child .table-items {
     width: 100%;
     border-radius: 0 30px 30px 0;
 }
-.banks-info-wrap .table-entry .table-entry-item:last-child .table-items .table-item{
+
+.banks-info-wrap .table-entry .table-entry-item:last-child .table-items .table-item {
     width: 50%;
     margin-right: 0;
 }
-.banks-info-wrap .table-item{
+
+.banks-info-wrap .table-item {
     width: 50%;
 }
 
-.banks-info .table-row .table-items:last-child{
+.banks-info .table-row .table-items:last-child {
     border-radius: 0 30px 30px 0;
 }
 
-.banks-info .table-items .table-item{
+.banks-info .table-items .table-item {
     width: 50%;
 }
-.nav-icons{
+
+.nav-icons {
     display: flex;
     flex-direction: row;
     align-items: flex-end;
@@ -1117,23 +1134,25 @@ section {
     gap: 40px;
     margin-bottom: 20px;
 }
-.nav-icons .nav-icon{
+
+.nav-icons .nav-icon {
     display: flex;
     flex-direction: column;
     gap: 16px;
     align-items: center;
     padding: 12px 24px;
 }
-.nav-icons .nav-icon.active{
+
+.nav-icons .nav-icon.active {
     border: 1px solid #E3E3E3;
     border-radius: 16px;
 }
 
-.nav-icons  .nav-icon img{
+.nav-icons .nav-icon img {
     width: 40px;
 }
 
-.nav-icons .nav-icon .nav-icon-text{
+.nav-icons .nav-icon .nav-icon-text {
     font-size: 12px;
     color: #000000;
 }
@@ -1154,6 +1173,7 @@ section {
 .table-item-text.blue {
     font-size: 10px;
 }
+
 .table-item-text {
     color: #AAAAAA;
     font-size: 11px;
@@ -1221,7 +1241,8 @@ section {
     overflow: hidden;
     color: #CCCCCC;
 }
-.table-item-slogan a{
+
+.table-item-slogan a {
     color: #454545;
     font-size: 12px;
     white-space: nowrap;
@@ -1233,9 +1254,10 @@ section {
     color: #AAAAAA;
 }
 
-.bank-info-all-item .bank-names-col:first-child .table-row:first-child, .banks-info-wrap .table-row.scroller{
+.bank-info-all-item .bank-names-col:first-child .table-row:first-child, .banks-info-wrap .table-row.scroller {
     margin-top: 0;
 }
+
 .table-row {
     display: none;
     animation: show 0.3s;
@@ -1868,7 +1890,6 @@ section {
     /*.table-flex-item+.table-flex-item {
         margin-top: 20px
     }*/
-
     .extra-block {
         padding: 30px;
     }
@@ -2080,7 +2101,6 @@ section {
     }
 
 
-
     /* mw 350 */
     .table-list-item {
         padding: 6px 8px 6px 8px;
@@ -2093,16 +2113,24 @@ section {
 
 }
 
-/*
+
 @media screen and (max-width: 350px) {
-    .table-list-item {
-        padding: 6px 8px 6px 8px;
+    .table-point-item {
+        padding: 10px 25px 10px 12px;
     }
 
-    .table-list-item .table-entry-item-inner-text {
-        margin-left: 4px
+    .table-point-item span {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 50px;
+        font-size: 10px;
     }
-}*/
+
+    .table-point-item-icon {
+        right: 8px;
+    }
+}
 
 .custom-control-label {
     padding-top: 3px;
@@ -2213,33 +2241,42 @@ section {
     .bank-value.gray-bank {
         min-width: 1500px;
     }
-    .header-row{
+
+    .header-row {
         justify-content: space-between;
     }
-    .nav-icons{
+
+    .nav-icons {
         gap: 8px;
     }
-    .table-entry-item{
+
+    .table-entry-item {
         width: 100px;
         min-width: 100px;
     }
-    .table-point-item{
+
+    .table-point-item {
         font-size: 11px;
     }
-    .banks-info-wrap .items-head .table-items, .banks-info .table-items{
+
+    .banks-info-wrap .items-head .table-items, .banks-info .table-items {
         width: 116px;
         min-width: 116px;
     }
-    .banks-info-wrap .items-head .table-items:last-child, .banks-info .table-items-row .table-items:last-child{
+
+    .banks-info-wrap .items-head .table-items:last-child, .banks-info .table-items-row .table-items:last-child {
         width: 100px;
         min-width: 100px;
     }
-    .bank-info-all-item, .table-flex{
+
+    .bank-info-all-item, .table-flex {
         width: 60%;
     }
-    .banks-info-wrap{
+
+    .banks-info-wrap {
         width: 40%;
     }
+
     .tab-btn-item {
         font-size: 11px;
     }
@@ -2299,13 +2336,13 @@ section {
     padding: 2px 0;
 }
 
-.scrollable-row{
+.scrollable-row {
     overflow-x: scroll;
     -webkit-overflow-scrolling: touch !important;
     overflow-scrolling: touch !important;
 }
 
-.scroll-slider::-webkit-scrollbar, .scrollable-row::-webkit-scrollbar, .nav-icons::-webkit-scrollbar{
+.scroll-slider::-webkit-scrollbar, .scrollable-row::-webkit-scrollbar, .nav-icons::-webkit-scrollbar {
     width: 0;
     height: 0;
     -webkit-appearance: none;

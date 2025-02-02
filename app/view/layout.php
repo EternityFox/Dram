@@ -150,7 +150,7 @@
             </div>
             <div class="header-lang accordion">
                 <div class="header-lang-header accordion-header">
-                    <img src="img/lang/<?= $lang ?>.png" alt="">
+                    <img src="img/lang/<?= $lang ?>.svg" alt="">
                 </div>
                 <div class="header-lang-content accordion-content">
                     <div class="header-lang-block">
