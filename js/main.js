@@ -1,18 +1,18 @@
-$(document).ready(function() {
+$(document).ready(function () {
     try {
-        $('.toggle .card-header').each(function() {
-            $(this).click(function() {
+        $('.toggle .card-header').each(function () {
+            $(this).click(function () {
                 $(this).next().toggle();
             })
         });
-        $('#pc-version').click(function() {
+        $('#pc-version').click(function () {
             $('#viewport').remove()
             let meta = document.createElement('meta');
             meta.name = "viewport";
             meta.content = "width=1200";
             meta.id = 'viewport'
             document.getElementsByTagName('head')[0].appendChild(meta);
-            Cookies.set('show-pc-version', 1, { expires: 365 });
+            Cookies.set('show-pc-version', 1, {expires: 365});
         });
 
         if ('/web' === window.location.pathname || '1' == Cookies.get('show-pc-version')) {
@@ -22,7 +22,6 @@ $(document).ready(function() {
         function sleep(ms) {
             return new Promise(resolve => setTimeout(resolve, ms));
         }
-
 
 
         if ($('.table-entry-item-input-placeholder').length) {
@@ -37,14 +36,13 @@ $(document).ready(function() {
 
         $(this).find('#ursuminput').css({"color": "transparent"});
 
-        $('.table-entry-item-input').click(function() {
+        $('.table-entry-item-input').click(function () {
             $(this).find('.table-entry-item-input-placeholder').fadeOut(0);
             $(this).find('#ursuminput').css({"color": "#111"});
         });
 
 
-
-        $(".table-entry-item-input input").focusout(function() {
+        $(".table-entry-item-input input").focusout(function () {
             if ($(this).val() == '') {
                 $(this).find('#ursuminput').css({"color": "transparent"});
                 $(this).closest('.table-entry-item-input').find('.table-entry-item-input-placeholder').fadeIn(0);
@@ -59,7 +57,7 @@ $(document).ready(function() {
         //     $("#ursuminput").focus();
         // });
 
-        $('#mobile-version').click(function() {
+        $('#mobile-version').click(function () {
             $('#viewport').remove()
             let meta = document.createElement('meta');
             meta.name = "viewport";
@@ -67,7 +65,7 @@ $(document).ready(function() {
             else meta.content = "width=" + screen.width;
             meta.id = 'viewport'
             document.getElementsByTagName('head')[0].appendChild(meta);
-            Cookies.set('show-pc-version', 0, { expires: 365 });
+            Cookies.set('show-pc-version', 0, {expires: 365});
         });
 
         if ('/mob' === window.location.pathname || '0' == Cookies.get('show-pc-version')) {
@@ -76,25 +74,25 @@ $(document).ready(function() {
 
         if ($(window).width() > 1200) {
 
-            $('.header-search-arrow').click(function() {
+            $('.header-search-arrow').click(function () {
                 $('.header-menu').toggleClass('mob');
             });
 
         }
         if ($(window).width() > 1600) {
-            $('.header-search-arrow').click(function() {
+            $('.header-search-arrow').click(function () {
                 $('.header-menu-block').slideToggle(300);
             });
         }
         if ($(window).width() <= 1200) {
 
-            $('.header-search-arrow').click(function() {
+            $('.header-search-arrow').click(function () {
                 $('.header-menu-block').slideToggle(300);
             });
 
         }
 
-        $('.tab-btn-item').not($('.idle')).click(function() {
+        $('.tab-btn-item').not($('.idle')).click(function () {
             var tabIndex = $(this).attr('data-tab');
             $('.tab-btn-item').removeClass('active');
             $(this).addClass('active');
@@ -103,10 +101,10 @@ $(document).ready(function() {
 
         });
 
-        $('.clue-close').click(function() {
+        $('.clue-close').click(function () {
             $(this).closest('.clue').addClass('hide');
         });
-        $('.header-notif-block-inner-btn').click(function() {
+        $('.header-notif-block-inner-btn').click(function () {
             $('.header-notif-block-inner-btn').removeClass('active');
             $(this).addClass('active');
         });
@@ -170,7 +168,7 @@ $(document).ready(function() {
         checkWinWidth(hq)
 
 
-        $(document).click(function(event) {
+        $(document).click(function (event) {
             if ($(event.target).closest(".accordion-content, .accordion-header").length) return; //при клике на эти блоки не скрывать .display_settings_content
             $(".accordion-content").hide(); //скрываем .display_settings_content при клике вне .display_settings_content
             event.stopPropagation();
@@ -205,20 +203,20 @@ $(document).ready(function() {
         //     infinite: false,
         // });
 
-        $('.header-list-item').click(function() {
+        $('.header-list-item').click(function () {
             $('.header-list-item').removeClass('active');
             $(this).addClass('active');
         });
-        $('.table-entry-item-input-clear').click(function() {
+        $('.table-entry-item-input-clear').click(function () {
             $(this).closest('.table-entry-item-input').find('input').val('');
             $(this).closest('.table-entry-item-input').find('input').focus();
         });
 
-        $('.tab-inner').click(function() {
+        $('.tab-inner').click(function () {
             let elem = $(this);
             $.ajax({
                 url: 'ajax/chart/' + elem.data('graph')
-            }).done(function(response) {
+            }).done(function (response) {
                 let canvas = document.getElementById('graph_' + elem.data('graph-num'))
                     .getContext('2d');
                 document.chart[elem.data('graph-num')].destroy();
@@ -234,7 +232,7 @@ $(document).ready(function() {
                                 data: response.data,
                             }]
                         },
-                        options: { responsive: true, maintainAspectRatio: false }
+                        options: {responsive: true, maintainAspectRatio: false}
                     });
 
                 elem.closest('.tab-content-item').find('.tab-inner').removeClass('active');
@@ -250,38 +248,186 @@ $(document).ready(function() {
     if ($(window).width() > 1200) {
         $('.header-menu').addClass('mob');
         $('.header-menu').hover(
-            function() {
+            function () {
                 $(this).removeClass('mob');
             },
-            function() {
+            function () {
                 $(this).addClass('mob');
             }
         );
     } else {
         $('.removeCLass').addClass('mob');
     }
+    document.getElementById("personal_code").addEventListener("input", function (e) {
+        this.value = this.value.replace(/[^A-Za-z]/g, "").toUpperCase();
+    });
 
-    $('.header-bars').click(function() {
+    document.getElementById("search-btn-number-car").addEventListener("click", function (e) {
+        e.preventDefault();
+
+        let pre = document.getElementById("personal_pre").value.trim();
+        let code = document.getElementById("personal_code").value.trim();
+        let post = document.getElementById("personal_post").value.trim();
+        let resultTable = document.querySelector(".table-result-append");
+        let errorMessage = document.querySelector(".error-message");
+        let resultContainer = document.getElementById("result");
+        let currentLang = document.getElementById("lang-data").dataset.lang;
+        const searchNumberAuto = {
+            'fields_required': {
+                'ru': 'Ошибка: Поля "2 цифры" и "3 цифры" обязательны!',
+                'am': 'Սխալ. ‘2 թվանշան’ և ‘3 թվանշան’ դաշտերը պարտադիր են!',
+                'en': 'Error: The fields ‘2 digits’ and ‘3 digits’ are required!',
+            },
+            'number_busy': {
+                'ru': 'Запрошенный номер(а) занят(ы).',
+                'am': 'The requested number(s) is/are taken.',
+                'en': 'Պահանջված համար(ները) զբաղված է(են)։',
+            },
+            'number_000': {
+                'ru': 'В поиск не попадают номера с особым требованием о регистрации транспортного средства, то есть номера с нулями',
+                'am': 'Numbers with special vehicle registration requirements, such as those with zeros, are not included in the search.',
+                'en': 'Որոնման մեջ չեն ներառվում համարանիշերը, որոնք ունեն տրանսպորտային միջոցի գրանցման հատուկ պահանջներ, օրինակ՝ զրոներով համարանիշերը։',
+            },
+            'request_error': {
+                'ru': 'Ошибка при обработке запроса',
+                'am': 'Error processing request',
+                'en': 'Սխալ հարցման մշակման ընթացքում',
+            },
+            'server_error': {
+                'ru': 'Ошибка соединения с сервером',
+                'am': 'Server connection error',
+                'en': 'Սխալ՝ սերվերի միացման ընթացքում',
+            }
+        };
+        // Очистка ошибок
+        errorMessage.innerHTML = '';
+        // Проверка обязательных полей
+        if (!pre || !post) {
+            errorMessage.innerHTML = `<p>${searchNumberAuto['fields_required'][currentLang]}</p>`;
+            return;
+        }
+
+        let formattedPlate = `${pre} ${code.padEnd(2, " ")} ${post}`;
+        document.querySelector(".loader").style.display = "block";
+
+        function formatPrice(price) {
+            return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        }
+
+        // Запрос к серверу
+        $.post("/ajax/plate-search", {plate_number: formattedPlate}, function (data) {
+            console.log(data);
+            document.querySelector(".loader").style.display = "none";
+            resultTable.innerHTML = "";
+            if (data.status === "OK") {
+                let results = [];
+                if (Array.isArray(data.data)) {
+                    results = data.data;
+                } else if (typeof data.data === "object" && data.data !== null) {
+                    results = [data.data];
+                }
+                if (results.length > 0) {
+                    results.forEach((item, index) => {
+                        let row = document.createElement("tr");
+                        row.innerHTML = `
+                        <td>${index + 1}</td>
+                        <td>${item.plate}</td>
+                        <td>${formatPrice(item.price)} <sub> ֏</sub></td>
+                    `;
+                        resultTable.appendChild(row);
+                    });
+                } else {
+                    resultTable.innerHTML = `<tr><td colspan="3">Нет доступных номеров</td></tr>`;
+                }
+            } else if (data.message && data.message === "Сервер вернул HTML-код") {
+                errorMessage.innerHTML = `<p>${searchNumberAuto['number_busy'][currentLang]}</p>`;
+                resultTable.innerHTML = `<tr><td colspan="3">${searchNumberAuto['number_busy'][currentLang]}</td></tr>`;
+            } else if (data.message && data.message === "В поиск не попадают номера с нулями") {
+                errorMessage.innerHTML = `<p>${searchNumberAuto['number_000'][currentLang]}</p>`;
+                resultTable.innerHTML = `<tr><td colspan="3">${searchNumberAuto['number_000'][currentLang]}</td></tr>`;
+            } else {
+                errorMessage.innerHTML = `<p class="error-message">${data.message || searchNumberAuto['request_error'][currentLang]}</p>`;
+                resultTable.innerHTML = `<tr><td colspan="3">${searchNumberAuto['request_error'][currentLang]}</td></tr>`;
+            }
+        }, "json").fail(function () {
+            document.querySelector(".loader").style.display = "none";
+            errorMessage.innerHTML = `<p class="error-message">${searchNumberAuto['server_error'][currentLang]}</p>`;
+            resultTable.innerHTML = `<tr><td colspan="3">${searchNumberAuto['server_error'][currentLang]}</td></tr>`;
+        });
+    });
+
+    $(".car_numbers_block input").on('keyup', function (e) {
+        var maxlength = $(this).attr('maxlength') * 1;
+        if ($(this).val().length >= maxlength) {
+            $(this).val($(this).val().substr(0, maxlength));
+            if ($(this).parents('.block').next().find('input').length) {
+                $(this).blur();
+                $(this).parents('.block').next().find('input').focus();
+            }
+        }
+        if (e.keyCode == 8 && $(this).val().length == 0) {
+            if ($(this).parents('.block').prev().find('input').length > 0) {
+                $(this).blur();
+                $(this).parents('.block').prev().find('input').focus();
+            }
+        }
+    });
+
+    $("#personal_pre").keydown(function (e) {
+        if (e.keyCode == 9 && $("#personal_pre").val().length < 2) {
+            e.preventDefault();
+            return;
+        }
+    });
+
+    $("#personal_code").keydown(function (e) {
+        if (e.keyCode == 9 && $(this).val().length == 0) {
+            e.preventDefault();
+            $("#personal_post").focus();
+            return;
+        }
+        if ($(this).val().length == 1 && (e.keyCode == 9 || e.keyCode == 39)) {
+            e.preventDefault();
+            return;
+        }
+        if (e.keyCode == 39 && $(this).val().length == 0) {
+            e.preventDefault();
+            $("#personal_post").focus();
+            return;
+        }
+    });
+
+    $("#personal_post").keyup(function (e) {
+        el = document.getElementById('personal_post');
+        val = el.value;
+        pointer = val.slice(0, el.selectionStart).length;
+        if (e.keyCode == 37 && pointer == 0) {
+            $("#personal_code").focus();
+            return;
+        }
+    });
+
+    $('.header-bars').click(function () {
         $('.header-menu-block').slideToggle(300);
     });
 
-    $('.header-menu-more').click(function() {
+    $('.header-menu-more').click(function () {
         $(this).toggleClass('active');
         $('.menu-hide').slideToggle(300);
     });
 
-    $('.menu-link').click(function() {
+    $('.menu-link').click(function () {
         $('.menu-link').not($(this)).removeClass('active');
         $('.menu-two').not($(this).closest('.menu-item').find('.menu-two')).fadeOut(0);
         $(this).toggleClass('active');
         $(this).closest('.menu-item').find('.menu-two').slideToggle(300);
     });
 
-    $('.accordion-header').click(function() {
+    $('.accordion-header').click(function () {
         $('.accordion-content').not($(this).closest('.accordion').find('.accordion-content')).fadeOut(50);
         $(this).closest('.accordion').find('.accordion-content').slideToggle(300);
     });
-    $('.accordion-close').click(function() {
+    $('.accordion-close').click(function () {
         $(this).closest('.accordion-content').fadeOut(200);
     });
 
@@ -305,7 +451,7 @@ $(document).ready(function() {
         let href = el.attr('href');
 
         if (href === window.location.pathname
-            || (lang.includes(window.location.pathname) &&  '/' === href)
+            || (lang.includes(window.location.pathname) && '/' === href)
         ) {
             el.addClass('active');
         }
@@ -321,7 +467,7 @@ $(document).ready(function() {
 });
 
 function handleElemContent(elem) {
-    elem.find('[data-maxlen]').each(function() {
+    elem.find('[data-maxlen]').each(function () {
         let text = $(this).text().trim(),
             max = $(this).data('maxlen');
 
@@ -329,12 +475,12 @@ function handleElemContent(elem) {
             $(this).text(text.substring(0, max) + '...');
     });
 
-    elem.find('[data-maxchild]').each(function() {
+    elem.find('[data-maxchild]').each(function () {
         let childs = $(this).children(),
             max = $(this).data('maxchild');
 
         if (childs.length > (max + 1)) {
-            childs.each(function(i, el) {
+            childs.each(function (i, el) {
                 el = $(this);
                 if (i >= max && i !== (childs.length - 1)) {
                     el.addClass('d-none');
@@ -348,7 +494,7 @@ function handleElemContent(elem) {
             childs.last().addClass('d-none');
         }
     });
-    elem.find('[data-spoiler="open"]').click(function(e) {
+    elem.find('[data-spoiler="open"]').click(function (e) {
         let container = $(this).closest('[data-maxchild]');
 
         container.find('[data-spoiler="true"]').toggleClass('d-none');
@@ -356,7 +502,7 @@ function handleElemContent(elem) {
         container.find('[data-spoiler="close"]').toggleClass('d-none');
         e.preventDefault();
     });
-    elem.find('[data-spoiler="close"]').click(function(e) {
+    elem.find('[data-spoiler="close"]').click(function (e) {
         let container = $(this).closest('[data-maxchild]');
 
         container.find('[data-spoiler="true"]').toggleClass('d-none');
@@ -381,7 +527,7 @@ function bindEventList(list) {
     }
 }
 
-$(document).click(function(event) {
+$(document).click(function (event) {
     if ($(event.target).closest(".exchange-block-list-header, .exchange-block-list-footer").length) return; //при клике на эти блоки не скрывать .display_settings_content
 
     $(this).closest('.exchange-block-list').find(".exchange-block-list-footer").hide(); //скрываем .display_settings_content при клике вне .display_settings_content
@@ -435,7 +581,7 @@ $(document).click(function(event) {
     event.stopPropagation();
 });
 
-$('.drop-header').click(function() {
+$('.drop-header').click(function () {
     $('.drop').find('.drop-footer').not($(this).closest('.drop').find('.drop-footer')).fadeOut(200);
     $('.drop').find('.drop-header').not($(this)).removeClass('active');
     $(this).closest('.drop').find('.drop-footer').slideToggle(200);
@@ -456,23 +602,23 @@ let currencyPricesCrossSell = $('input[name="currencyPricesCrossSell"]').data('c
 // console.log(currencyPricesCrossSell);
 
 // $('.i-have, .i-get').focus(function() {
-$('.i-have, .i-get').on('focus, input', function() {
+$('.i-have, .i-get').on('focus, input', function () {
     let $this = $(this);
     let exchangeType = $this.data('exchange-type');
     // console.log('focus, input', exchangeType, Date.now());
     $this.attr('data-currency', $('.exchange-currency-' + exchangeType + ' .exchange-list-header-item-val').data('currency-val'));
 
-    let other = ('i-get' == exchangeType ? 'i-have' : 'i-get' );
+    let other = ('i-get' == exchangeType ? 'i-have' : 'i-get');
 
     $('.' + other).attr('data-currency', $('.exchange-currency-' + other + ' .exchange-list-header-item-val').data('currency-val'));
 });
 
-$('.i-have, .i-get').on('input', function() {
+$('.i-have, .i-get').on('input', function () {
     let $this = $(this);
     let val = $this.val();
     let exchangeType = $this.data('exchange-type');
     // console.log('input', exchangeType, Date.now());
-    let other = ('i-get' == exchangeType ? 'i-have' : 'i-get' );
+    let other = ('i-get' == exchangeType ? 'i-have' : 'i-get');
     let $other = $('.' + other);
     let otherVal = $other.val();
     let fromCurrency = $this.attr('data-currency');
@@ -654,7 +800,7 @@ $('.i-have, .i-get').on('input', function() {
 
 let currencyVal;
 
-$('.drop-footer .drop-item').on('click', function() {
+$('.drop-footer .drop-item').on('click', function () {
     var $this = $(this);
 
     currencyVal = $this.find('.exchange-list-header-item-val').data('currency-val');
@@ -667,14 +813,14 @@ $('.drop-footer .drop-item').on('click', function() {
     $(this).closest('.drop').find('.drop-header').toggleClass('active');
 });
 
-$('.exchange-block-list-footer .drop-item').on('click', function() {
+$('.exchange-block-list-footer .drop-item').on('click', function () {
     refreshConverter();
 });
 
 // скрываем в соседнем выпадающем списке валют для обмена выбранную валюту,
 // чтобы нельзя было выбрать обмен валюты на саму себя;
 // так же отображаем ранее скрытую валюту
-$('.exchange-list-footer.drop-footer .drop-item').on('click', function() {
+$('.exchange-list-footer.drop-footer .drop-item').on('click', function () {
     let $this = $(this);
     let targetClass;
     let $inputForTrigger;
@@ -714,7 +860,7 @@ function refreshConverter() {
     // console.log('i-get', $('.i-get').attr('data-currency'));
     $.ajax({
         url: 'ajax/converter/' + $('.exchange-block-list-header').find('input[name="type"]').val() + '/' + $('.i-have').attr('data-currency') + '/' + $('.i-get').attr('data-currency')
-    }).done(function(response) {
+    }).done(function (response) {
         $('.exchange-table').html(response.data);
         // console.log($('input[name="currencyPrices"]').data('currency-prices'));
         currencyPrices = $('input[name="currencyPrices"]').data('currency-prices');
@@ -738,13 +884,13 @@ $('.i-have').val(1).trigger("input")
 // $('.i-have, .i-get').blur();
 
 let angle = 0;
-$('.exchange-inner-object').click(function() {
+$('.exchange-inner-object').click(function () {
     let el = $(this);
     let img = el.find('img');
 
     angle = angle - 180;
 
-    img.css({ transform: 'rotate(' + angle + 'deg)' });
+    img.css({transform: 'rotate(' + angle + 'deg)'});
 
     let iHave = $('.i-have');
     let iHaveVal = iHave.val();
@@ -753,8 +899,8 @@ $('.exchange-inner-object').click(function() {
 
     // меняем местами значения в input
     // if ('AMD' == iHave.attr('data-currency') || 'AMD' == iGet.attr('data-currency')) {
-        iHave.val(iGetVal);
-        iGet.val(iHaveVal);
+    iHave.val(iGetVal);
+    iGet.val(iHaveVal);
     // }
 
     let currencyIHave = $('.exchange-currency-i-have');
@@ -777,13 +923,13 @@ $('.exchange-inner-object').click(function() {
     currencyIGetInList.closest('.exchange-list-header-item').html(currencyIGetHtml);
 
     // if ('AMD' == iHave.attr('data-currency') || 'AMD' == iGet.attr('data-currency')) {
-        $('.i-have, .i-get').trigger("input");
-        $('.i-have, .i-get').blur();
+    $('.i-have, .i-get').trigger("input");
+    $('.i-have, .i-get').blur();
     // }
     refreshConverter();
 });
 
-$('.exchange-course-btn').click(function() {
+$('.exchange-course-btn').click(function () {
     let el = $(this);
     el.siblings('.exchange-course').find('.last-item').toggleClass('last-active');
     el.toggleClass('active');
@@ -801,7 +947,7 @@ $('.exchange-table').on('click', '.exchange-table-item.head', function () {
     $('.exchange-table-container').not($(this).closest('.exchange-table-container')).removeClass('active');
 });
 
-$('.exchange-course .tab-course').click(function() {
+$('.exchange-course .tab-course').click(function () {
     let currency = $(this).data('currency');
 
     $('.exchange-currency-i-have-list').find('.drop-footer').find('.exchange-list-header-item-val[data-currency-val="' + currency + '"]').closest('.drop-item').click();
