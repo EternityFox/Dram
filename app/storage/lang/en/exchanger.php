@@ -175,13 +175,7 @@ return [
     'BERKUT' => 'BERKUT',
     'Мергелян Ереван Сити' => 'Mergelyan Yerevan City',
     'Эталон Супермаркет' => 'Etalon Supermarket',
-<<<<<<< HEAD
     'Эталон Супермаркет Малатия' => 'Etalon Supermarket Malatia',
     'MG Верин Птгни' => 'MG Verin Ptghni',
     'AGORA 7-й жилой массив' => 'AGORA 7th Residential Area',
-=======
-    'AGORA 7-й жилой массив' => 'AGORA 7th Residential Area',
-    'Эталон Супермаркет Малатия' => 'Etalon Supermarket Malatia',
-    'MG Верин Птгни' => 'MG Verin Ptghni',
->>>>>>> 71f806e25203726a1acaadc287f53daef50b823a
 ];
