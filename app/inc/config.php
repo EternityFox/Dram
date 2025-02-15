@@ -20,6 +20,7 @@ return [
         'converter' => 'site/converter',
         'charts' => 'site/charts',
         'about' => 'site/about',
+        'plate-number-search' => 'site/numberSearch',
         'faq' => 'site/faq',
         'contacts' => 'site/contacts',
         'advertising' => 'site/advertising',
@@ -29,6 +30,7 @@ return [
             '(?<num>\d+)_(?<symbol>[A-Z]+)/(?<course>direct|cross)/(?<type>cash|noncash|card)' => 'site/changeSymbol',
             'chart/(?<symbol>[A-Za-z\d%]+)' => 'site/chart',
             'converter/(?<type>cash|noncash|card)/(?<fromCurrency>[A-Z]+)/(?<toCurrency>[A-Z]+)' => 'site/converterAjax',
+            'plate-search' => 'site/plateSearch',
             '.*' => 'error/ajax'
         ],
         'login' => 'admin/login',

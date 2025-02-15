@@ -7,7 +7,7 @@
     <meta name="description"
           content="dram.am - Финансовый маркетплейс в Армении (Курсы валют, Кредиты, Вклады, Банковские карты).">
     <meta name="keywords" content="Курс валют в Армении, kurs rubli dram dollar, exchange in Armenia">
-    <meta property="og:image" content="img/site_preview_s.jpg" />
+    <meta property="og:image" content="img/site_preview_s.jpg"/>
     <meta name="robots" content="">
     <meta name="Author" content="Copyright by Georgi Selmidis">
     <meta name="Copyright" content="Copyright by Georgi Selmidis">
@@ -43,7 +43,7 @@
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2241706448393061"
             crossorigin="anonymous"></script>
     <!-- Yandex.RTB -->
-    <script>window.yaContextCb=window.yaContextCb||[]</script>
+    <script>window.yaContextCb = window.yaContextCb || []</script>
     <script src="https://yandex.ru/ads/system/context.js" async></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
 
@@ -203,7 +203,21 @@
     </header>
 
     <?php $this->render('widget/Menu', ['menu' => $menu['left']]) ?>
-
+    <?php if (isset($navigations) && !empty($navigations)): ?>
+        <div class="container pt-4">
+            <div class="nav-icons">
+                <?php foreach ($navigations as $navigation): ?>
+                    <a href="<?= $navigation['link'] ?>">
+                        <div class="nav-icon<?= (explode('?', $_SERVER['REQUEST_URI'])[0] === $navigation['link'] ? ' active' : '') ?>">
+                            <img src="img/<?= $navigation['image'] ?>"
+                                 alt="<?= $navigation["title_" . $lang->getLang()] ?>">
+                            <span class="nav-icon-text"><?= $navigation["title_" . $lang->getLang()] ?></span>
+                        </div>
+                    </a>
+                <?php endforeach ?>
+            </div>
+        </div>
+    <?php endif; ?>
     <?php if (isset($right_template)): ?>
         <section class="content">
             <div class="container">
@@ -265,7 +279,10 @@
                             <?= $lang('Присоединяйтесь к нам с соц сетях') ?>
                         </div>
                         <div class="f-soc">
-                            <iframe src="https://www.facebook.com/plugins/like.php?href=https%3A%2F%2Fwww.facebook.com%2Fwww.dram.am&width=20&layout&action&size&share=true&height=35&appId" width="280" height="26" style="border:none;overflow:hidden" scrolling="no" frameborder="0" allowfullscreen="true" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
+                            <iframe src="https://www.facebook.com/plugins/like.php?href=https%3A%2F%2Fwww.facebook.com%2Fwww.dram.am&width=20&layout&action&size&share=true&height=35&appId"
+                                    width="280" height="26" style="border:none;overflow:hidden" scrolling="no"
+                                    frameborder="0" allowfullscreen="true"
+                                    allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
                             <!--<a href="#" class="f-soc-item">
                                 <img src="img/facebook.png" alt="">
                             </a>
@@ -308,7 +325,7 @@
                                 (document, screen)</script><!--/LiveInternet-->
                         </p>
                         <p class="f-text mt-0">
-                            © 2020 - <?=date('Y'); ?> “dram.am” by
+                            © 2020 - <?= date('Y'); ?> “dram.am” by
                             <a href="https://www.behance.net/selmidis" target="_blank">Selmidis</a>
                         </p>
                     </div>

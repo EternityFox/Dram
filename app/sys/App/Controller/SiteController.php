@@ -14,6 +14,7 @@ use Core\Controller,
     App\Widget\IntlCourses,
     App\Widget\Converter;
 use Core\Widget;
+
 //use PHPHtmlParser\Dom;
 
 class SiteController extends Controller
@@ -71,13 +72,14 @@ class SiteController extends Controller
         $bankInfo = unserialize(file_get_contents(__DIR__ . '/../../../storage/bank_info_pure.txt'));
         if (empty($bankInfo[$id]))
             return $this->actionNotFound();
-
+        $navigations = App::db()->query("SELECT * FROM navigation")->fetchAll();
         return [
             'site/bank',
             [
                 'settings' => $settings,
                 'menu' => $menu,
                 'bankInfo' => $bankInfo[$id],
+                'navigations' => $navigations,
                 'model' => App::exchanger()->get(10)
             ]
         ];
@@ -100,6 +102,7 @@ class SiteController extends Controller
         $bankInfo = unserialize(file_get_contents(__DIR__ . '/../../../storage/exchanger_info_pure.txt'));
         if (empty($bankInfo[$id]))
             return $this->actionNotFound();
+        $navigations = App::db()->query("SELECT * FROM navigation")->fetchAll();
 
         return [
             'site/exchanger',
@@ -107,6 +110,7 @@ class SiteController extends Controller
                 'settings' => $settings,
                 'menu' => $menu,
                 'bankInfo' => $bankInfo[$id],
+                'navigations' => $navigations,
             ]
         ];
     }
@@ -124,6 +128,7 @@ class SiteController extends Controller
         unset($menuLeft['hidden']);
 
         $menu['left']['basic'] = $menuLeft;
+        $navigations = App::db()->query("SELECT * FROM navigation")->fetchAll();
 
         return [
             'site/static_widget',
@@ -131,6 +136,7 @@ class SiteController extends Controller
                 'settings' => $settings,
                 'menu' => $menu,
                 'widget' => $widget,
+                'navigations' => $navigations,
             ]
         ];
     }
@@ -166,6 +172,7 @@ class SiteController extends Controller
         $menu['left']['basic'] = $menuLeft;
 
         $content = unserialize(file_get_contents(__DIR__ . '/../../../storage/static/' . $pageName . '.txt'));
+        $navigations = App::db()->query("SELECT * FROM navigation")->fetchAll();
 
         return [
             'site/static',
@@ -173,6 +180,7 @@ class SiteController extends Controller
                 'settings' => $settings,
                 'menu' => $menu,
                 'content' => $content,
+                'navigations' => $navigations,
             ]
         ];
     }
@@ -181,6 +189,31 @@ class SiteController extends Controller
     {
 
         return $this->staticPage('about');
+    }
+
+    protected function actionNumberSearch()
+    {
+        $query = App::db()->query("SELECT * FROM settings");
+        $settings = $query->fetch();
+
+        $menu['top'] = include_once(__DIR__ . '/../../../storage/menu/top.php');
+        $menuLeft = include_once(__DIR__ . '/../../../storage/menu/left.php');
+
+        $menu['left']['hidden'] = $menuLeft['hidden'];
+
+        unset($menuLeft['hidden']);
+
+        $menu['left']['basic'] = $menuLeft;
+        $navigations = App::db()->query("SELECT * FROM navigation")->fetchAll();
+
+        return [
+            'site/number_search',
+            [
+                'settings' => $settings,
+                'menu' => $menu,
+                'navigations' => $navigations,
+            ]
+        ];
     }
 
     protected function actionFaq()
@@ -217,6 +250,7 @@ class SiteController extends Controller
         $menu['left']['basic'] = $menuLeft;
 
 //        $content = unserialize(file_get_contents(__DIR__ . '/../../../storage/static/' . $pageName . '.txt'));
+        $navigations = App::db()->query("SELECT * FROM navigation")->fetchAll();
 
         return [
             'site/404',
@@ -224,6 +258,7 @@ class SiteController extends Controller
                 'settings' => $settings,
                 'menu' => $menu,
 //                'content' => $content,
+                'navigations' => $navigations,
             ]
         ];
     }
@@ -269,8 +304,7 @@ class SiteController extends Controller
                     $symbols[$key] = $name;
                     break;
                 }
-            }
-            else {
+            } else {
                 $symbols[$num] = $symbol;
             }
             $symbols = $widget->activeSymbols = array_values($symbols);
@@ -298,7 +332,7 @@ class SiteController extends Controller
                 . ' ORDER BY date_at DESC';
             $query = App::db()->query($sql);
             while ($res = $query->fetch()) {
-                $data[date('Y.m.d', (int) $res['date_at'])][] = $res['price'];
+                $data[date('Y.m.d', (int)$res['date_at'])][] = $res['price'];
             }
             $data = array_reverse($data);
             foreach ($data as $key => $val) {
@@ -312,7 +346,7 @@ class SiteController extends Controller
                 . ' ORDER BY date_at DESC LIMIT 0, 24';
             $query = App::db()->query($sql);
             while ($res = $query->fetch()) {
-                $data[date('H:i', (int) $res['date_at'])] = $res['price'];
+                $data[date('H:i', (int)$res['date_at'])] = $res['price'];
             }
             $data = array_reverse($data);
         }
@@ -323,6 +357,86 @@ class SiteController extends Controller
             'labels' => array_keys($data),
             'data' => array_values($data),
         ]);
+    }
+
+    public function actionPlateSearch()
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo json_encode(["status" => "error", "message" => "Метод не разрешен"]);
+            exit;
+        }
+
+        $plateNumber = $_POST['plate_number'] ?? null;
+        if (!$plateNumber) {
+            echo json_encode(["status" => "error", "message" => "Введите номерной знак"]);
+            exit;
+        }
+
+        if (preg_match('/^00/', $plateNumber) || preg_match('/000$/', $plateNumber)) {
+            echo json_encode([
+                "status" => "error",
+                "message" => "В поиск не попадают номера с нулями"
+            ]);
+            exit;
+        }
+
+        $session = curl_init();
+        $url = "https://roadpolice.am/ru/plate-number-search";
+        curl_setopt($session, CURLOPT_URL, $url);
+        curl_setopt($session, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($session, CURLOPT_HEADER, true);
+        curl_setopt($session, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($session, CURLOPT_SSL_VERIFYHOST, false);
+        curl_setopt($session, CURLOPT_FOLLOWLOCATION, true);
+        curl_setopt($session, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
+
+        $response = curl_exec($session);
+        preg_match('/XSRF-TOKEN=([^;]+)/', $response, $tokenMatch);
+        preg_match('/rd_session=([^;]+)/', $response, $sessionMatch);
+
+        if (empty($tokenMatch[1]) || empty($sessionMatch[1])) {
+            echo json_encode(["status" => "error", "message" => "Не удалось получить XSRF-TOKEN или сессию"]);
+            exit;
+        }
+        $csrfToken = urldecode($tokenMatch[1]);
+        $rdSession = $sessionMatch[1];
+        $postData = http_build_query(["number" => strtoupper($plateNumber)]);
+        $headers = [
+            "Content-Type: application/x-www-form-urlencoded",
+            "X-XSRF-TOKEN: $csrfToken",
+            "Cookie: XSRF-TOKEN=$csrfToken; rd_session=$rdSession",
+            "Referer: $url",
+            "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        ];
+
+        curl_setopt($session, CURLOPT_URL, $url);
+        curl_setopt($session, CURLOPT_POST, true);
+        curl_setopt($session, CURLOPT_POSTFIELDS, $postData);
+        curl_setopt($session, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($session, CURLOPT_HEADER, false);
+        curl_setopt($session, CURLOPT_RETURNTRANSFER, true);
+
+        $response = curl_exec($session);
+        $httpCode = curl_getinfo($session, CURLINFO_HTTP_CODE);
+        $contentType = curl_getinfo($session, CURLINFO_CONTENT_TYPE);
+        curl_close($session);
+
+        if (strpos($contentType, "text/html") !== false) {
+            echo json_encode([
+                "status" => "error",
+                "message" => "Сервер вернул HTML-код",
+                "http_code" => $httpCode
+            ]);
+            exit;
+        }
+
+        if ($httpCode == 200) {
+            echo $response;
+        } else {
+            echo json_encode(["status" => "error", "message" => "Ошибка HTTP: " . $httpCode, "response" => $response]);
+        }
+        exit;
     }
 
     protected function actionConverterAjax(string $type, string $fromCurrency, string $toCurrency)
@@ -938,7 +1052,7 @@ HTML;
             $exchangers[] = $exch->id;
             $exchangersFullInfo[] = $exch;
         }
-        
+
         echo "<pre>";
         print_r($exchangersFullInfo);
         echo "</pre>";

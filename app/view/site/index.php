@@ -3,19 +3,6 @@
         <div class="row">
             <div class="col-lg-9">
                 <div class="left-block">
-                    <?php if (isset($navigations) && !empty($navigations)): ?>
-                        <div class="nav-icons">
-                            <?php foreach ($navigations as $navigation): ?>
-                                <a href="<?= $navigation['link'] ?>">
-                                    <div class="nav-icon<?= (explode('?', $_SERVER['REQUEST_URI'])[0] === $navigation['link'] ? ' active' : '') ?>">
-                                        <img src="img/<?= $navigation['image'] ?>"
-                                             alt="<?= $navigation["title_" . $lang->getLang()] ?>">
-                                        <span class="nav-icon-text"><?= $navigation["title_" . $lang->getLang()] ?></span>
-                                    </div>
-                                </a>
-                            <?php endforeach ?>
-                        </div>
-                    <?php endif; ?>
                     <div class="banner def-box banner-desktop">
                         <?= random_elem($settings['banner_head'], $settings['banner_head_2'], $settings['banner_head_3']) ?>
                     </div>
