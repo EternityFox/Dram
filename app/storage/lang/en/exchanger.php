@@ -175,4 +175,7 @@ return [
     'BERKUT' => 'BERKUT',
     'Мергелян Ереван Сити' => 'Mergelyan Yerevan City',
     'Эталон Супермаркет' => 'Etalon Supermarket',
+    'Эталон Супермаркет Малатия' => 'Etalon Supermarket Malatia',
+    'MG Верин Птгни' => 'MG Verin Ptghni',
+    'AGORA 7-й жилой массив' => 'AGORA 7th Residential Area',
 ];
