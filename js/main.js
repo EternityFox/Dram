@@ -258,11 +258,53 @@ $(document).ready(function () {
     } else {
         $('.removeCLass').addClass('mob');
     }
-    document.getElementById("personal_code").addEventListener("input", function (e) {
+
+    function enableDragScroll(selector) {
+        const navIcons = $(selector);
+        let isDown = false;
+        let startX;
+        let scrollLeft;
+
+        // Перетаскивание мышью
+        navIcons.on("mousedown", function (e) {
+            isDown = true;
+            navIcons.addClass("active");
+            startX = e.pageX - navIcons.offset().left;
+            scrollLeft = navIcons.scrollLeft();
+        });
+
+        $(document).on("mouseup", function () {
+            isDown = false;
+            navIcons.removeClass("active");
+        });
+
+        navIcons.on("mouseleave", function () {
+            isDown = false;
+            navIcons.removeClass("active");
+        });
+
+        navIcons.on("mousemove", function (e) {
+            if (!isDown) return;
+            e.preventDefault();
+            const x = e.pageX - navIcons.offset().left;
+            const walk = (x - startX) * 2; // Ускоряем прокрутку
+            navIcons.scrollLeft(scrollLeft - walk);
+        });
+
+        // Прокрутка колесиком мыши (горизонтальная при вертикальном скролле)
+        navIcons.on("wheel", function (e) {
+            e.preventDefault();
+            const delta = e.originalEvent.deltaY; // Получаем направление колеса
+            navIcons.scrollLeft(navIcons.scrollLeft() + delta); // Горизонтальная прокрутка
+        });
+    }
+
+    enableDragScroll(".nav-icons");
+    $("#personal_code").on("input", function (e) {
         this.value = this.value.replace(/[^A-Za-z]/g, "").toUpperCase();
     });
 
-    document.getElementById("search-btn-number-car").addEventListener("click", function (e) {
+    $("#search-btn-number-car").on("click", function (e) {
         e.preventDefault();
 
         let pre = document.getElementById("personal_pre").value.trim();
@@ -526,6 +568,7 @@ function bindEventList(list) {
         }
     }
 }
+
 
 $(document).click(function (event) {
     if ($(event.target).closest(".exchange-block-list-header, .exchange-block-list-footer").length) return; //при клике на эти блоки не скрывать .display_settings_content

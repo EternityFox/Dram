@@ -1141,6 +1141,8 @@ section {
     overflow-scrolling: touch !important;
     flex-wrap: nowrap;
     gap: 40px;
+    cursor: grab;
+    user-select: none;
     margin-bottom: 20px;
 }
 
