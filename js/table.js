@@ -529,6 +529,8 @@ let Table = {
 };
 
 $(document).ready(function () {
+    $(document).on('click', '.cloned-dropdown [data-symbol-change]', Table.symbolPanel.changeSymbol);
+    $(document).on('click', '.cloned-dropdown [data-symbol-change-mobile]', Table.symbolPanel.changeSymbolMobile);
     bindEventList(Table.getEventList());
 
     $(document).click(function (e) {
