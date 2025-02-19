@@ -1914,6 +1914,9 @@ section {
     display: block;
     font-size: 0.750em;
     color: #999;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .symbol_count span:after {
@@ -2494,6 +2497,7 @@ th {
     }
     .car_numbers{
         gap: 16px;
+        padding-right: 6px;
     }
     .car_numbers input{
         height: 100px;
