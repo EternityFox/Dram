@@ -373,7 +373,10 @@ class SiteController extends Controller
             exit;
         }
 
-        if (preg_match('/^00/', $plateNumber) || preg_match('/000$/', $plateNumber)) {
+        if (
+            preg_match('/^\d{3}/', $plateNumber) && (preg_match('/^000/', $plateNumber) || preg_match('/00$/', $plateNumber)) ||
+            preg_match('/\d{3}$/', $plateNumber) && (preg_match('/^00/', $plateNumber) || preg_match('/000$/', $plateNumber))
+        ) {
             echo json_encode([
                 "status" => "error",
                 "message" => "В поиск не попадают номера с нулями"

@@ -303,7 +303,41 @@ $(document).ready(function () {
     $("#personal_code").on("input", function (e) {
         this.value = this.value.replace(/[^A-Za-z]/g, "").toUpperCase();
     });
+    $('.tabs_holder_ul').children('li').click(function (e) {
+        let pre = document.getElementById("personal_pre");
+        let code = document.getElementById("personal_code");
+        let pre_parent = pre.closest('.block');
+        let pre_parent_span = pre_parent.querySelector('span');
+        let post = document.getElementById("personal_post");
+        let post_parent = post.closest('.block');
+        let post_parent_span = post_parent.querySelector('span');
+        $(this).parents('.tabs_holder_ul').find('.active_tabe').removeClass('active_tabe');
+        var data_id = $(this).data('id');
+        $(this).addClass('active_tabe');
+        code.value ='';
+        pre.value ='';
+        post.value ='';
+        if (data_id == "#tab-id-2") {
+            pre.setAttribute("maxlength", "3");
+            pre.setAttribute("placeholder", "111");
+            post.setAttribute("maxlength", "2");
+            post.setAttribute("placeholder", "11");
+            pre_parent.style.width = "40%";
+            post_parent.style.width = "30%";
+            pre_parent_span.innerHTML = pre_parent_span.innerHTML.replace("2", "3");
+            post_parent_span.innerHTML = pre_parent_span.innerHTML.replace("3", "2");
+        } else {
+            pre.setAttribute("maxlength", "2");
+            pre.setAttribute("placeholder", "11");
+            post.setAttribute("maxlength", "3");
+            post.setAttribute("placeholder", "111");
+            pre_parent.style.width = "30%";
+            post_parent.style.width = "40%";
+            pre_parent_span.innerHTML = pre_parent_span.innerHTML.replace("3", "2");
+            post_parent_span.innerHTML = pre_parent_span.innerHTML.replace("2", "3");
+        }
 
+    });
     $("#search-btn-number-car").on("click", function (e) {
         e.preventDefault();
 
@@ -358,7 +392,6 @@ $(document).ready(function () {
 
         // Запрос к серверу
         $.post("/ajax/plate-search", {plate_number: formattedPlate}, function (data) {
-            console.log(data);
             document.querySelector(".loader").style.display = "none";
             resultTable.innerHTML = "";
             if (data.status === "OK") {
