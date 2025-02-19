@@ -58,7 +58,7 @@
             </div>
             <div class="header-logo">
                 <a href="/" class="logo">
-                    <img src="img/logo.svg" alt="Логотип">
+                    <img src="img/<?=$settings['img_logo']?>" alt="Логотип">
                 </a>
             </div>
             <div class="header-place accordion">
@@ -241,7 +241,7 @@
                 <div class="col-md-4 col-sm-6">
                     <div class="f-logo-block">
                         <a href="#" class="f-logo">
-                            <img src="img/logo.svg" alt="Логотип">
+                            <img src="img/<?=$settings['img_logo']?>" alt="Логотип">
                         </a>
                     </div>
                 </div>

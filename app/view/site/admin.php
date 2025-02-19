@@ -2,8 +2,19 @@
     <div class="container">
         <h1>Панель управления</h1>
         <form action="" method="POST" class="mt-4" enctype="multipart/form-data">
-            <?php $i = 0; ?>
             <div class="card admin-banners toggle">
+                <h5 class="card-header">Логотип</h5>
+                <div class="card-body" style="display: none;">
+                    <div>
+                        <img src="/img/<?=$settings['img_logo']?>" alt="Изображение" height="30"/>
+                    </div>
+                    <div class="form-group">
+                        <input type="file" class="form-control" name="logo-image">
+                    </div>
+                </div>
+            </div>
+            <?php $i = 0; ?>
+            <div class="card admin-banners toggle mt-4">
                 <h5 class="card-header">Меню навигации</h5>
                 <div class="card-body" style="display: none;">
                     <div id="sortable-menu-container">
@@ -105,6 +116,7 @@
                             });
                         });
                     }
+
                     function initLanguageTabs(menuIndex) {
                         const tabsContainer = document.querySelector(`#tabs-${menuIndex}`);
 

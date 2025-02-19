@@ -51,15 +51,29 @@
                 'ru' => 'Пусто',
                 'am' => 'Դատարկ',
                 'en' => 'Empty',
+            ],
+            "individual" => [
+                'ru' => 'Физическое лицо',
+                'am' => 'Ֆիզիկական անձ',
+                'en' => 'Individual',
+            ],
+            "legal" => [
+                'ru' => 'Юридическое лицо',
+                'am' => 'Իրավաբանական անձ',
+                'en' => 'Legal entity',
             ]
         ];
         ?>
-        <div class="text-center pb-5">
+        <div class="text-center">
             <h1 class="mb-3 mb-4 search-number-text"><?= $searchNumberAuto['search-title-number-auto'][$lang->getLang()] ?></h1>
             <p class="lead alert-box">
                 <strong>⚠ </strong><?= $searchNumberAuto['wrong-text-number-auto'][$lang->getLang()] ?>
             </p>
         </div>
+        <ul class="tabs_holder_ul mt-5 pb-5">
+            <li data-id="#tab-id-1" class="active_tabe"><?= $searchNumberAuto['individual'][$lang->getLang()] ?></li>
+            <li data-id="#tab-id-2" class=""><?= $searchNumberAuto['legal'][$lang->getLang()] ?></li>
+        </ul>
         <div class="car_number_button_block">
             <div class="car_numbers_block">
                 <div class="flag_car_number"><img src="img/flag_plate_number.png" alt="Флаг на номер" width="102"
