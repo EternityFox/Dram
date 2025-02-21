@@ -300,187 +300,209 @@ $(document).ready(function () {
     }
 
     enableDragScroll(".nav-icons");
-    $("#personal_code").on("input", function (e) {
-        this.value = this.value.replace(/[^A-Za-z]/g, "").toUpperCase();
-    });
-    $('.tabs_holder_ul').children('li').click(function (e) {
-        let pre = document.getElementById("personal_pre");
-        let code = document.getElementById("personal_code");
-        let pre_parent = pre.closest('.block');
-        let pre_parent_span = pre_parent.querySelector('span');
-        let post = document.getElementById("personal_post");
-        let post_parent = post.closest('.block');
-        let post_parent_span = post_parent.querySelector('span');
-        $(this).parents('.tabs_holder_ul').find('.active_tabe').removeClass('active_tabe');
-        var data_id = $(this).data('id');
-        $(this).addClass('active_tabe');
-        code.value ='';
-        pre.value ='';
-        post.value ='';
-        if (data_id == "#tab-id-2") {
-            pre.setAttribute("maxlength", "3");
-            pre.setAttribute("placeholder", "111");
-            post.setAttribute("maxlength", "2");
-            post.setAttribute("placeholder", "11");
-            pre_parent.style.width = "40%";
-            post_parent.style.width = "30%";
-            pre_parent_span.innerHTML = pre_parent_span.innerHTML.replace("2", "3");
-            post_parent_span.innerHTML = pre_parent_span.innerHTML.replace("3", "2");
-        } else {
-            pre.setAttribute("maxlength", "2");
-            pre.setAttribute("placeholder", "11");
-            post.setAttribute("maxlength", "3");
-            post.setAttribute("placeholder", "111");
-            pre_parent.style.width = "30%";
-            post_parent.style.width = "40%";
-            pre_parent_span.innerHTML = pre_parent_span.innerHTML.replace("3", "2");
-            post_parent_span.innerHTML = pre_parent_span.innerHTML.replace("2", "3");
-        }
-
-    });
-    $("#search-btn-number-car").on("click", function (e) {
-        e.preventDefault();
-
-        let pre = document.getElementById("personal_pre").value.trim();
-        let code = document.getElementById("personal_code").value.trim();
-        let post = document.getElementById("personal_post").value.trim();
-        let resultTable = document.querySelector(".table-result-append");
-        let errorMessage = document.querySelector(".error-message");
-        let resultContainer = document.getElementById("result");
-        let currentLang = document.getElementById("lang-data").dataset.lang;
-        const searchNumberAuto = {
-            'fields_required': {
-                'ru': 'Ошибка: Поля "2 цифры" и "3 цифры" обязательны!',
-                'am': 'Սխալ. ‘2 թվանշան’ և ‘3 թվանշան’ դաշտերը պարտադիր են!',
-                'en': 'Error: The fields ‘2 digits’ and ‘3 digits’ are required!',
-            },
-            'number_busy': {
-                'ru': 'Запрошенный номер(а) занят(ы).',
-                'am': 'The requested number(s) is/are taken.',
-                'en': 'Պահանջված համար(ները) զբաղված է(են)։',
-            },
-            'number_000': {
-                'ru': 'В поиск не попадают номера с особым требованием о регистрации транспортного средства, то есть номера с нулями',
-                'am': 'Numbers with special vehicle registration requirements, such as those with zeros, are not included in the search.',
-                'en': 'Որոնման մեջ չեն ներառվում համարանիշերը, որոնք ունեն տրանսպորտային միջոցի գրանցման հատուկ պահանջներ, օրինակ՝ զրոներով համարանիշերը։',
-            },
-            'request_error': {
-                'ru': 'Ошибка при обработке запроса',
-                'am': 'Error processing request',
-                'en': 'Սխալ հարցման մշակման ընթացքում',
-            },
-            'server_error': {
-                'ru': 'Ошибка соединения с сервером',
-                'am': 'Server connection error',
-                'en': 'Սխալ՝ սերվերի միացման ընթացքում',
-            }
-        };
-        // Очистка ошибок
-        errorMessage.innerHTML = '';
-        // Проверка обязательных полей
-        if (!pre || !post) {
-            errorMessage.innerHTML = `<p>${searchNumberAuto['fields_required'][currentLang]}</p>`;
-            return;
-        }
-
-        let formattedPlate = `${pre} ${code.padEnd(2, " ")} ${post}`;
-        document.querySelector(".loader").style.display = "block";
-
-        function formatPrice(price) {
-            return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-        }
-
-        // Запрос к серверу
-        $.post("/ajax/plate-search", {plate_number: formattedPlate}, function (data) {
-            document.querySelector(".loader").style.display = "none";
-            resultTable.innerHTML = "";
-            if (data.status === "OK") {
-                let results = [];
-                if (Array.isArray(data.data)) {
-                    results = data.data;
-                } else if (typeof data.data === "object" && data.data !== null) {
-                    results = [data.data];
+    if (document.querySelector(".car_number_button_block")) {
+        $("#personal_code").on("input", function () {
+            this.value = this.value.replace(/[^A-Za-z ]/g, "").toUpperCase();
+        });
+        $(".car_numbers_block input").on('keyup', function (e) {
+            var maxlength = $(this).attr('maxlength') * 1;
+            if ($(this).val().length >= maxlength) {
+                $(this).val($(this).val().substr(0, maxlength));
+                if ($(this).parents('.block').next().find('input').length) {
+                    $(this).blur();
+                    $(this).parents('.block').next().find('input').focus();
                 }
-                if (results.length > 0) {
-                    results.forEach((item, index) => {
-                        let row = document.createElement("tr");
-                        row.innerHTML = `
+            }
+            if (e.keyCode == 8 && $(this).val().length == 0) {
+                if ($(this).parents('.block').prev().find('input').length > 0) {
+                    $(this).blur();
+                    $(this).parents('.block').prev().find('input').focus();
+                }
+            }
+        });
+
+        $("#personal_pre").keydown(function (e) {
+            if (e.keyCode == 9 && $("#personal_pre").val().length < 2) {
+                e.preventDefault();
+                return;
+            }
+        });
+
+        $("#personal_code").keydown(function (e) {
+            if (e.keyCode == 9 && $(this).val().length == 0) {
+                e.preventDefault();
+                $("#personal_post").focus();
+                return;
+            }
+            if ($(this).val().length == 1 && (e.keyCode == 9 || e.keyCode == 39)) {
+                e.preventDefault();
+                return;
+            }
+            if (e.keyCode == 39 && $(this).val().length == 0) {
+                e.preventDefault();
+                $("#personal_post").focus();
+                return;
+            }
+        });
+
+        $("#personal_post").keyup(function (e) {
+            el = document.getElementById('personal_post');
+            val = el.value;
+            pointer = val.slice(0, el.selectionStart).length;
+            if (e.keyCode == 37 && pointer == 0) {
+                $("#personal_code").focus();
+                return;
+            }
+        });
+
+        function updateTabState(dataId) {
+            if (dataId === "#tab-id-2") {
+                setInputState("3", "111", "2", "11");
+            } else {
+                setInputState("2", "11", "3", "111");
+            }
+        }
+
+        function setInputState(preMaxLength, prePlaceholder, postMaxLength, postPlaceholder) {
+            const pre = document.getElementById("personal_pre");
+            const code = document.getElementById("personal_code");
+            const post = document.getElementById("personal_post");
+            const preParent = pre.closest('.block');
+            const postParent = post.closest('.block');
+            const preParentSpan = preParent.querySelector('span');
+            const postParentSpan = postParent.querySelector('span');
+            code.value = '';
+            pre.value = '';
+            post.value = '';
+            pre.setAttribute("maxlength", preMaxLength);
+            pre.setAttribute("placeholder", prePlaceholder);
+            post.setAttribute("maxlength", postMaxLength);
+            post.setAttribute("placeholder", postPlaceholder);
+            preParent.style.width = preMaxLength === "3" ? "40%" : "30%";
+            postParent.style.width = postMaxLength === "3" ? "30%" : "40%";
+            preParentSpan.innerHTML = preParentSpan.innerHTML.replace(/\d/, preMaxLength);
+            postParentSpan.innerHTML = postParentSpan.innerHTML.replace(/\d/, postMaxLength);
+        }
+
+        $('.tabs_holder_ul').children('li').click(function () {
+            const dataId = $(this).data('id');
+            $(this).parents('.tabs_holder_ul').find('.active_tabe').removeClass('active_tabe');
+            $(this).addClass('active_tabe');
+            updateTabState(dataId);
+        });
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const numberParam = urlParams.get("number");
+        if (numberParam) {
+            const formattedNumber = numberParam.toUpperCase();
+            if (/^\d{3}\s(?:[A-Z]{2}|\s{2}|[A-Z]\s|\s[A-Z])\s\d{2}$/.test(formattedNumber)) {
+                $('.tabs_holder_ul li[data-id="#tab-id-2"]')[0].click();
+                document.getElementById("personal_pre").value = formattedNumber.slice(0, 3);
+                document.getElementById("personal_code").value = formattedNumber.slice(4, 6);
+                document.getElementById("personal_post").value = formattedNumber.slice(7);
+                searchPlateNumber();
+            }
+            if (/^\d{2}\s(?:[A-Z]{2}|\s{2}|[A-Z]\s|\s[A-Z])\s\d{3}$/.test(formattedNumber)) {
+                $('.tabs_holder_ul li [data-id="#tab-id-1"]').click();
+                document.getElementById("personal_pre").value = formattedNumber.slice(0, 2);
+                document.getElementById("personal_code").value = formattedNumber.slice(3, 5);
+                document.getElementById("personal_post").value = formattedNumber.slice(6);
+                searchPlateNumber();
+            }
+        }
+
+        $("#search-btn-number-car").on("click", function (e) {
+            e.preventDefault();
+            searchPlateNumber();
+        });
+
+        function searchPlateNumber() {
+            let pre = document.getElementById("personal_pre").value;
+            let code = document.getElementById("personal_code").value;
+            let post = document.getElementById("personal_post").value;
+            let resultTable = document.querySelector(".table-result-append");
+            let errorMessage = document.querySelector(".error-message");
+            let currentLang = document.getElementById("lang-data").dataset.lang;
+            const searchNumberAuto = {
+                'fields_required': {
+                    'ru': 'Ошибка: Поля "2 цифры" и "3 цифры" обязательны!',
+                    'am': 'Սխալ. ‘2 թվանշան’ և ‘3 թվանշան’ դաշտերը պարտադիր են!',
+                    'en': 'Error: The fields ‘2 digits’ and ‘3 digits’ are required!',
+                },
+                'number_busy': {
+                    'ru': 'Запрошенный номер(а) занят(ы).',
+                    'am': 'The requested number(s) is/are taken.',
+                    'en': 'Պահանջված համար(ները) զբաղված է(են)։',
+                },
+                'number_000': {
+                    'ru': 'В поиск не попадают номера с особым требованием о регистрации транспортного средства, то есть номера с нулями',
+                    'am': 'Numbers with special vehicle registration requirements, such as those with zeros, are not included in the search.',
+                    'en': 'Որոնման մեջ չեն ներառվում համարանիշերը, որոնք ունեն տրանսպորտային միջոցի գրանցման հատուկ պահանջներ, օրինակ՝ զրոներով համարանիշերը։',
+                },
+                'request_error': {
+                    'ru': 'Ошибка при обработке запроса',
+                    'am': 'Error processing request',
+                    'en': 'Սխալ հարցման մշակման ընթացքում',
+                },
+                'server_error': {
+                    'ru': 'Ошибка соединения с сервером',
+                    'am': 'Server connection error',
+                    'en': 'Սխալ՝ սերվերի միացման ընթացքում',
+                }
+            };
+            errorMessage.innerHTML = '';
+            if (!pre || !post) {
+                errorMessage.innerHTML = `<p>${searchNumberAuto['fields_required'][currentLang]}</p>`;
+                return;
+            }
+
+            let formattedPlate = `${pre} ${code.padEnd(2, " ").includes(' ') ? '  ' : code.padEnd(2, " ")} ${post}`;
+            document.querySelector(".loader").style.display = "block";
+
+            function formatPrice(price) {
+                return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+            }
+
+            // Запрос к серверу
+            $.post("/ajax/plate-search", {plate_number: formattedPlate}, function (data) {
+                document.querySelector(".loader").style.display = "none";
+                resultTable.innerHTML = "";
+                const newUrl = `/plate-number-search?number=${encodeURIComponent(formattedPlate)}`;
+                window.history.pushState({path: newUrl}, "", newUrl);
+                if (data.status === "OK") {
+                    let results = Array.isArray(data.data) ? data.data : [data.data];
+                    if (results.length > 0) {
+                        results.forEach((item, index) => {
+                            let row = document.createElement("tr");
+                            row.innerHTML = `
                         <td>${index + 1}</td>
                         <td>${item.plate}</td>
                         <td>${formatPrice(item.price)} <sub> ֏</sub></td>
                     `;
-                        resultTable.appendChild(row);
-                    });
+                            resultTable.appendChild(row);
+                        });
+                    } else {
+                        resultTable.innerHTML = `<tr><td colspan="3">Нет доступных номеров</td></tr>`;
+                    }
+                } else if (data.message && data.message === "Сервер вернул HTML-код") {
+                    errorMessage.innerHTML = `<p>${searchNumberAuto['number_busy'][currentLang]}</p>`;
+                    resultTable.innerHTML = `<tr><td colspan="3">${searchNumberAuto['number_busy'][currentLang]}</td></tr>`;
+                } else if (data.message && data.message === "В поиск не попадают номера с нулями") {
+                    errorMessage.innerHTML = `<p>${searchNumberAuto['number_000'][currentLang]}</p>`;
+                    resultTable.innerHTML = `<tr><td colspan="3">${searchNumberAuto['number_000'][currentLang]}</td></tr>`;
                 } else {
-                    resultTable.innerHTML = `<tr><td colspan="3">Нет доступных номеров</td></tr>`;
+                    errorMessage.innerHTML = `<p class="error-message">${data.message || searchNumberAuto['request_error'][currentLang]}</p>`;
+                    resultTable.innerHTML = `<tr><td colspan="3">${searchNumberAuto['request_error'][currentLang]}</td></tr>`;
                 }
-            } else if (data.message && data.message === "Сервер вернул HTML-код") {
-                errorMessage.innerHTML = `<p>${searchNumberAuto['number_busy'][currentLang]}</p>`;
-                resultTable.innerHTML = `<tr><td colspan="3">${searchNumberAuto['number_busy'][currentLang]}</td></tr>`;
-            } else if (data.message && data.message === "В поиск не попадают номера с нулями") {
-                errorMessage.innerHTML = `<p>${searchNumberAuto['number_000'][currentLang]}</p>`;
-                resultTable.innerHTML = `<tr><td colspan="3">${searchNumberAuto['number_000'][currentLang]}</td></tr>`;
-            } else {
-                errorMessage.innerHTML = `<p class="error-message">${data.message || searchNumberAuto['request_error'][currentLang]}</p>`;
-                resultTable.innerHTML = `<tr><td colspan="3">${searchNumberAuto['request_error'][currentLang]}</td></tr>`;
-            }
-        }, "json").fail(function () {
-            document.querySelector(".loader").style.display = "none";
-            errorMessage.innerHTML = `<p class="error-message">${searchNumberAuto['server_error'][currentLang]}</p>`;
-            resultTable.innerHTML = `<tr><td colspan="3">${searchNumberAuto['server_error'][currentLang]}</td></tr>`;
-        });
-    });
+            }, "json").fail(function () {
+                document.querySelector(".loader").style.display = "none";
+                errorMessage.innerHTML = `<p class="error-message">${searchNumberAuto['server_error'][currentLang]}</p>`;
+                resultTable.innerHTML = `<tr><td colspan="3">${searchNumberAuto['server_error'][currentLang]}</td></tr>`;
+            });
+        }
 
-    $(".car_numbers_block input").on('keyup', function (e) {
-        var maxlength = $(this).attr('maxlength') * 1;
-        if ($(this).val().length >= maxlength) {
-            $(this).val($(this).val().substr(0, maxlength));
-            if ($(this).parents('.block').next().find('input').length) {
-                $(this).blur();
-                $(this).parents('.block').next().find('input').focus();
-            }
-        }
-        if (e.keyCode == 8 && $(this).val().length == 0) {
-            if ($(this).parents('.block').prev().find('input').length > 0) {
-                $(this).blur();
-                $(this).parents('.block').prev().find('input').focus();
-            }
-        }
-    });
+    }
 
-    $("#personal_pre").keydown(function (e) {
-        if (e.keyCode == 9 && $("#personal_pre").val().length < 2) {
-            e.preventDefault();
-            return;
-        }
-    });
-
-    $("#personal_code").keydown(function (e) {
-        if (e.keyCode == 9 && $(this).val().length == 0) {
-            e.preventDefault();
-            $("#personal_post").focus();
-            return;
-        }
-        if ($(this).val().length == 1 && (e.keyCode == 9 || e.keyCode == 39)) {
-            e.preventDefault();
-            return;
-        }
-        if (e.keyCode == 39 && $(this).val().length == 0) {
-            e.preventDefault();
-            $("#personal_post").focus();
-            return;
-        }
-    });
-
-    $("#personal_post").keyup(function (e) {
-        el = document.getElementById('personal_post');
-        val = el.value;
-        pointer = val.slice(0, el.selectionStart).length;
-        if (e.keyCode == 37 && pointer == 0) {
-            $("#personal_code").focus();
-            return;
-        }
-    });
 
     $('.header-bars').click(function () {
         $('.header-menu-block').slideToggle(300);
