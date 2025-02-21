@@ -20,7 +20,7 @@ return [
         'converter' => 'site/converter',
         'charts' => 'site/charts',
         'about' => 'site/about',
-        'plate-number-search' => 'site/numberSearch',
+        'plate-number-search.*' => 'site/numberSearch',
         'faq' => 'site/faq',
         'contacts' => 'site/contacts',
         'advertising' => 'site/advertising',
