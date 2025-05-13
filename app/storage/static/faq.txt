@@ -1,1 +1,106 @@
-a:2:{s:5:"title";a:3:{s:2:"ru";s:46:"Часто задаваемые вопросы";s:2:"en";s:26:"Frequently asked Questions";s:2:"am";s:40:"Հաճախակի տրվող հարցեր";}s:4:"text";a:3:{s:2:"ru";s:47:"Список вопросов и ответов";s:2:"en";s:29:"List of questions and answers";s:2:"am";s:51:"Հարցերի և պատասխանների ցանկ";}}
+a:2:{s:5:"title";a:3:{s:2:"ru";s:53:"Политика конфиденциальности";s:2:"en";s:14:"Privacy Policy";s:2:"am";s:57:"Գաղտնիության քաղաքականություն";}s:4:"text";a:3:{s:2:"ru";s:4640:"<div style="font-family: Arial, sans-serif; line-height: 1.6; margin: 20px; padding: 20px; max-width: 800px; margin: auto; background-color: #f9f9f9;">
+
+    <p><strong>Дата вступления в силу: 01.01.2025</strong></p>
+
+    <p style="color: #333;"><strong>1. Общие положения</strong></p>
+    <p style="color: #555;"><strong>dram.am</strong> — информационный портал, предоставляющий данные из различных источников. Мы не несем ответственности за точность, актуальность и достоверность этих данных. Пользователям рекомендуется самостоятельно проверять информацию у официальных поставщиков.</p>
+    <p style="color: #555;"><strong>dram.am</strong> — зарегистрированный товарный знак в Армении. Использование данных сайта возможно только с письменного согласия руководства <strong>dram.am</strong>.</p>
+    <p style="color: #555;">Используя сайт, пользователь соглашается с положениями настоящей Политики конфиденциальности.</p>
+
+    <p style="color: #333;"><strong>2. Сбор и использование данных</strong></p>
+    <p style="color: #555;">Мы можем автоматически собирать технические данные об использовании сайта, включая:</p>
+    <ul style="color: #555;">
+        <li>IP-адрес,</li>
+        <li>тип устройства и браузера,</li>
+        <li>файлы cookie и аналогичные технологии.</li>
+    </ul>
+    <p style="color: #555;">Мы не собираем личные данные пользователей, за исключением случаев, когда они предоставляются добровольно (например, через форму обратной связи).</p>
+
+    <p style="color: #333;"><strong>3. Использование файлов cookie</strong></p>
+    <p style="color: #555;"><strong>dram.am</strong> может использовать файлы cookie для улучшения пользовательского опыта, проведения аналитики и персонализации контента.</p>
+    <p style="color: #555;">Пользователь может отключить файлы cookie в настройках браузера, однако это может повлиять на функциональность сайта.</p>
+
+    <p style="color: #333;"><strong>4. Передача данных третьим лицам</strong></p>
+    <p style="color: #555;">Мы не продаем и не передаем личные данные пользователей третьим лицам без их согласия, за исключением случаев, предусмотренных законом.</p>
+    <p style="color: #555;">Мы можем предоставлять анонимизированные статистические данные нашим партнерам для аналитики и улучшения услуг.</p>
+
+    <p style="color: #333;"><strong>5. Безопасность данных</strong></p>
+    <p style="color: #555;">Мы принимаем разумные меры для защиты информации, но не можем гарантировать абсолютную безопасность данных при передаче через Интернет.</p>
+
+    <p style="color: #333;"><strong>6. Изменения в Политике конфиденциальности</strong></p>
+    <p style="color: #555;">Мы оставляем за собой право обновлять настоящую Политику конфиденциальности. Обновления будут опубликованы на этой странице с указанием даты изменений.</p>
+
+    <p style="color: #333;"><strong>7. Контактные данные</strong></p>
+    <p style="color: #555;">Если у вас есть вопросы по настоящей Политике конфиденциальности, вы можете связаться с нами по адресу: <strong>selmidis.com@gmail.com</strong>.</p>
+
+</div>";s:2:"en";s:2801:"<div style="font-family: Arial, sans-serif; line-height: 1.6; margin: 20px; padding: 20px; max-width: 800px; margin: auto; background-color: #f9f9f9;">
+
+    <p><strong>Effective Date: 01.01.2025</strong></p>
+
+    <p style="color: #333;"><strong>1. General Provisions</strong></p>
+    <p style="color: #555;"><strong>dram.am</strong> is an information portal providing data from various sources. We are not responsible for the accuracy, timeliness, and reliability of this data. Users are advised to independently verify information with official providers.</p>
+    <p style="color: #555;"><strong>dram.am</strong> is a registered trademark in Armenia. The use of site data is possible only with the written consent of <strong>dram.am</strong> management.</p>
+    <p style="color: #555;">By using the site, the user agrees to the provisions of this Privacy Policy.</p>
+
+    <p style="color: #333;"><strong>2. Data Collection and Use</strong></p>
+    <p style="color: #555;">We may automatically collect technical data about site usage, including:</p>
+    <ul style="color: #555;">
+        <li>IP address,</li>
+        <li>device and browser type,</li>
+        <li>cookies and similar technologies.</li>
+    </ul>
+    <p style="color: #555;">We do not collect users' personal data, except when they are provided voluntarily (e.g., through a feedback form).</p>
+
+    <p style="color: #333;"><strong>3. Use of Cookies</strong></p>
+    <p style="color: #555;"><strong>dram.am</strong> may use cookies to improve user experience, conduct analytics, and personalize content.</p>
+    <p style="color: #555;">The user can disable cookies in the browser settings, but this may affect the site's functionality.</p>
+
+    <p style="color: #333;"><strong>4. Data Transfer to Third Parties</strong></p>
+    <p style="color: #555;">We do not sell or transfer users' personal data to third parties without their consent, except as required by law.</p>
+    <p style="color: #555;">We may provide anonymized statistical data to our partners for analytics and service improvement purposes.</p>
+
+    <p style="color: #333;"><strong>5. Data Security</strong></p>
+    <p style="color: #555;">We take reasonable measures to protect information, but cannot guarantee absolute data security during transmission over the Internet.</p>
+
+    <p style="color: #333;"><strong>6. Changes to the Privacy Policy</strong></p>
+    <p style="color: #555;">We reserve the right to update this Privacy Policy. Updates will be posted on this page with the date of changes.</p>
+
+    <p style="color: #333;"><strong>7. Contact Information</strong></p>
+    <p style="color: #555;">If you have any questions about this Privacy Policy, you can contact us at: <strong>selmidis.com@gmail.com</strong>.</p>
+
+</div>";s:2:"am";s:4917:"<div style="font-family: Arial, sans-serif; line-height: 1.6; margin: 20px; padding: 20px; max-width: 800px; margin: auto; background-color: #f9f9f9;">
+
+    <p><strong>Ուժի մեջ մտնելու ամսաթիվը՝ 01.01.2025</strong></p>
+
+    <p style="color: #333;"><strong>1. Ընդհանուր դրույթներ</strong></p>
+    <p style="color: #555;"><strong>dram.am</strong> — տեղեկատվական պորտալ է, որը տրամադրում է տվյալներ տարբեր աղբյուրներից։ Մենք պատասխանատվություն չենք կրում այս տվյալների ճշգրտության, արդիականության և հավաստիության համար։ Օգտատերերին խորհուրդ է տրվում ինքնուրույն ստուգել տեղեկատվությունը պաշտոնական մատակարարների մոտ։</p>
+    <p style="color: #555;"><strong>dram.am</strong>-ը գրանցված ապրանքային նշան է Հայաստանում։ Կայքի տվյալների օգտագործումը հնարավոր է միայն <strong>dram.am</strong>-ի ղեկավարության գրավոր համաձայնությամբ։</p>
+    <p style="color: #555;">Կայքը օգտագործելով՝ օգտատերը համաձայնում է այս Գաղտնիության քաղաքականության դրույթներին։</p>
+
+    <p style="color: #333;"><strong>2. Տվյալների հավաքագրում և օգտագործում</strong></p>
+    <p style="color: #555;">Մենք կարող ենք ավտոմատ կերպով հավաքել կայքի օգտագործման տեխնիկական տվյալները, այդ թվում՝</p>
+    <ul style="color: #555;">
+        <li>IP հասցե,</li>
+        <li>սարքի և դիտարկչի տեսակը,</li>
+        <li>cookie-ներ և նմանատիպ տեխնոլոգիաներ։</li>
+    </ul>
+    <p style="color: #555;">Մենք չենք հավաքում օգտատերերի անձնական տվյալները, բացառությամբ այն դեպքերի, երբ դրանք տրամադրվում են կամավոր (օրինակ՝ հետադարձ կապի ձևի միջոցով)։</p>
+
+    <p style="color: #333;"><strong>3. Cookie-ների օգտագործում</strong></p>
+    <p style="color: #555;"><strong>dram.am</strong>-ը կարող է օգտագործել cookie-ներ՝ օգտատիրոջ փորձը բարելավելու, վերլուծություն իրականացնելու և բովանդակությունը անհատականացնելու համար։</p>
+    <p style="color: #555;">Օգտատերը կարող է անջատել cookie-ները դիտարկչի կարգավորումներում, սակայն դա կարող է ազդել կայքի աշխատանքային հնարավորությունների վրա։</p>
+
+    <p style="color: #333;"><strong>4. Տվյալների փոխանցում երրորդ կողմերին</strong></p>
+    <p style="color: #555;">Մենք չենք վաճառում և չենք փոխանցում օգտատերերի անձնական տվյալները երրորդ անձանց առանց նրանց համաձայնության, բացառությամբ օրենքով սահմանված դեպքերի։</p>
+    <p style="color: #555;">Մենք կարող ենք տրամադրել անանունացված վիճակագրական տվյալներ մեր գործընկերներին՝ վերլուծությունների և ծառայությունների բարելավման նպատակով։</p>
+
+    <p style="color: #333;"><strong>5. Տվյալների անվտանգություն</strong></p>
+    <p style="color: #555;">Մենք ձեռնարկում ենք ողջամիտ միջոցներ տեղեկատվության պաշտպանման համար, սակայն չենք կարող երաշխավորել տվյալների բացարձակ անվտանգություն ինտերնետում փոխանցելիս։</p>
+
+    <p style="color: #333;"><strong>6. Գաղտնիության քաղաքականության փոփոխություններ</strong></p>
+    <p style="color: #555;">Մենք իրավունք ենք վերապահում թարմացնել այս Գաղտնիության քաղաքականությունը։ Թարմացումները կհրապարակվեն այս էջում՝ փոփոխությունների ամսաթվի նշումով։</p>
+
+    <p style="color: #333;"><strong>7. Կապի տվյալներ</strong></p>
+    <p style="color: #555;">Եթե հարցեր ունեք այս Գաղտնիության քաղաքականության վերաբերյալ, կարող եք կապ հաստատել մեզ հետ՝ <strong>selmidis.com@gmail.com</strong> էլ. հասցեով։</p>
+
+</div>";}}

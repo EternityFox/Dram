@@ -2621,7 +2621,9 @@ th {
     .tab-btn-item + .tab-btn-item {
         margin-left: 5px
     }
-
+    .widget.def-box{
+        display: none;
+    }
 }
 
 @media screen and (max-width: 640px) {

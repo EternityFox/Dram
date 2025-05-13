@@ -178,4 +178,8 @@ return [
     'Эталон Супермаркет Малатия' => 'Etalon Supermarket Malatia',
     'MG Верин Птгни' => 'MG Verin Ptghni',
     'AGORA 7-й жилой массив' => 'AGORA 7th Residential Area',
+    'Титан 5-й Массив' => 'Titan 5th Residental Area',
+    'Casadel' => 'Casadel',
+    'Комитас 34' => 'Komitas 34',
+    'Comfarea' => 'Comfarea',
 ];
