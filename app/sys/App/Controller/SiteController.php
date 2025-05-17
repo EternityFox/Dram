@@ -73,6 +73,7 @@ class SiteController extends Controller
         if (empty($bankInfo[$id]))
             return $this->actionNotFound();
         $navigations = App::db()->query("SELECT * FROM navigation")->fetchAll();
+
         return [
             'site/bank',
             [
@@ -80,6 +81,7 @@ class SiteController extends Controller
                 'menu' => $menu,
                 'bankInfo' => $bankInfo[$id],
                 'navigations' => $navigations,
+                'id' => $id,
                 'model' => App::exchanger()->get(10)
             ]
         ];
@@ -110,6 +112,7 @@ class SiteController extends Controller
                 'settings' => $settings,
                 'menu' => $menu,
                 'bankInfo' => $bankInfo[$id],
+                'id' => $id,
                 'navigations' => $navigations,
             ]
         ];

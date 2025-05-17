@@ -34,22 +34,14 @@ $pages = [
     'banks' => [
         'is_bank' => true,
         'type' => Exrcourse::TYPE_CASH,
-        'upd_field' => 'upd_cash'
+        'upd_field' => 'upd_cash',
+        'info' => 'bank'
     ],
-    /*'banks/non-cash' => [
-        'is_bank' => true,
-        'type' => Exrcourse::TYPE_NONCASH,
-        'upd_field' => 'upd_noncash'
-    ],
-    'banks/card-transaction' => [
-        'is_bank' => true,
-        'type' => Exrcourse::TYPE_CARD,
-        'upd_field' => 'upd_card'
-    ],*/
     'exchange-points' => [
         'is_bank' => false,
         'type' => Exrcourse::TYPE_CASH_NONCASH,
-        'upd_field' => 'upd_cash'
+        'upd_field' => 'upd_cash',
+        'info' => 'exchange-point'
     ]
 ];
 $ws_page = 'exchange-points/cash/corporate';
@@ -87,7 +79,6 @@ $last_ex_id = $exchangers->max('id') ?? 0;
 $rateam = new Rateam;
 $new_exchangers = $new_images = [];
 
-//foreach ($symbolPack as $pack) {
 $activeSymbols = [];
 foreach ($symbolPack as $pack) {
     foreach ($pack as $i => $symbol) {
@@ -104,6 +95,11 @@ foreach ($symbolPack as $pack) {
 $pack = implode(',', $pack);
 $cids = array_column($activeSymbols, 'id');
 
+$banksFile = App::path('storage/bank_info_pure.txt');
+$banks = file_exists($banksFile) ? unserialize(file_get_contents($banksFile)) : [];
+$exchangersFile = App::path('storage/exchanger_info_pure.txt');
+$exchangers_array = file_exists($exchangersFile) ? unserialize(file_get_contents($exchangersFile)) : [];
+
 foreach ($pages as $path => $info) {
     $ids = $new_ids = $rates = [];
 
@@ -112,7 +108,6 @@ foreach ($pages as $path => $info) {
     $exList = $rateam->takeList();
     echo 'Обменников: ' . count($exList) . "\r\n";
 
-    // Перебор обменников
     foreach ($exList as $raid => $data) {
         if (!($local = $exchangers->findOne(['raid' => $raid])) || $local['name'] != $data['name']) {
             if ($local) {
@@ -129,7 +124,6 @@ foreach ($pages as $path => $info) {
                 'name' => $data['name'],
                 'branches' => $data['branches'],
                 'is_bank' => $info['is_bank'],
-                //$info['upd_field'] => $data['date'],
                 'upd_cash' => $data['date'],
                 'upd_noncash' => $data['date'],
                 'upd_card' => $data['date'],
@@ -139,10 +133,81 @@ foreach ($pages as $path => $info) {
             $new_ids[$local->id] = $local->raid;
             $new_exchangers[$local->id] = [$raid, $data['logo'], $local->name];
         } else {
-            //$local[$info['upd_field']] = $data['date'];
             $local['upd_cash'] = $data['date'];
             $local['upd_noncash'] = $data['date'];
             $local['upd_card'] = $data['date'];
+        }
+        if ($info['is_bank']) {
+            try {
+                $bankHtml = $rateam->loadInfoPage($info['info'], $data['slug']);
+                $parsedData = $rateam->takeInfoList($local['id']);
+
+                if (!isset($parsedData['name']) || !is_array($parsedData['baranches']) || count($parsedData['baranches']) === 0) {
+                    throw new Exception('Некорректные или пустые данные при парсинге');
+                }
+
+                $makeLang = fn(string $value) => ['ru' => $value, 'en' => $value, 'am' => $value];
+
+                $banks[$local['id']] = [
+                    'name' => $parsedData['name'],
+                    'baranches' => [],
+                ];
+
+                foreach ($parsedData['baranches'] as $branch) {
+                    $banks[$local['id']]['baranches'][] = [
+                        'name' => $makeLang($branch['name']),
+                        'address' => $makeLang($branch['address']),
+                        'phones' => $branch['phones'],
+                        'emails' => $branch['emails'],
+                        'of_sites' => $branch['of_sites'],
+                        'socials' => $branch['socials'],
+                        'hours' => $branch['hours'],
+                        'latitude' => $branch['latitude'],
+                        'longitude' => $branch['longitude'],
+                        'img' => $branch['img'],
+                    ];
+                }
+                echo "✓ Сохранены данные банка ID {$local['id']} - {$parsedData['name']}\r\n";
+
+            } catch (Throwable $e) {
+                echo "× Ошибка парсинга страницы банка: {$raid} — {$e->getMessage()}\r\n";
+            }
+        } else {
+            try {
+                $bankHtml = $rateam->loadInfoPage($info['info'], rawurlencode($data['slug']));
+                $parsedData = $rateam->takeInfoList($local['id']);
+
+                if (!isset($parsedData['name']) || !is_array($parsedData['baranches']) || count($parsedData['baranches']) === 0) {
+                    throw new Exception('Некорректные или пустые данные при парсинге');
+                }
+
+                $makeLang = fn(string $value) => ['ru' => $value, 'en' => $value, 'am' => $value];
+
+                $exchangers_array[$local['id']] = [
+                    'name' => $parsedData['name'],
+                    'baranches' => [],
+                ];
+
+                foreach ($parsedData['baranches'] as $branch) {
+                    $exchangers_array[$local['id']]['baranches'][] = [
+                        'name' => $makeLang($branch['name']),
+                        'address' => $makeLang($branch['address']),
+                        'phones' => $branch['phones'],
+                        'emails' => $branch['emails'],
+                        'of_sites' => $branch['of_sites'],
+                        'socials' => $branch['socials'],
+                        'license' => $branch['license'],
+                        'hours' => $branch['hours'],
+                        'latitude' => $branch['latitude'],
+                        'longitude' => $branch['longitude'],
+                        'img' => $branch['img'],
+                    ];
+                }
+                echo "✓ Сохранены данные обменника ID {$local['id']} - {$parsedData['name']}\r\n";
+
+            } catch (Throwable $e) {
+                echo "× Ошибка парсинга страницы обменника: {$raid} — {$e->getMessage()}\r\n";
+            }
         }
 
         if (
@@ -153,13 +218,7 @@ foreach ($pages as $path => $info) {
             )) {
             $new_images[$raid] = $data['logo'];
         }
-
-        /*if (!$info['is_bank']) {
-            $local['upd_noncash'] = $data['date'];*/
-
         $ids[$local->raid] = $local->id;
-
-        // Перебор курсов
         foreach ($data['rates'] as $symbol => $rate) {
             $s = $symbol;
             if (isset($symbolAliases[$symbol]))
@@ -238,36 +297,21 @@ foreach ($pages as $path => $info) {
                 }
             }
         }
-
-        /*foreach ($data['rates'] as $currNum => $rate) {
-            if (!$rate[0] && !$rate[1])
-                continue;
-
-            $symbol = $activeSymbols[$currNum];
-            $id = Exrcourse::generateId(
-                $local['id'], $symbol['id'], $info['type']
-            );
-            $rates[$id] = [
-                'id' => $id,
-                'eid' => $local['id'],
-                'cid' => $symbol['id'],
-                'type' => $info['type'],
-                'buy' => ($rate[0] / $symbol['amt']),
-                'sell' => ($rate[1] / $symbol['amt'])
-            ];
-        }*/
     }
+    file_put_contents($banksFile, serialize($banks));
+    echo "✓ Финальное сохранение всех банков: " . count($banks) . "\r\n";
+
+    file_put_contents($exchangersFile, serialize($exchangers_array));
+    echo "✓ Финальное сохранение всех обменников: " . count($exchangers_array) . "\r\n";
 
     echo 'Новых обменников: ' . count($new_ids) . "\r\n";
     echo 'Кол-во курсов: ' . count($rates) . "\r\n";
 
-    // Обновление курсов
     Exrcourse::delete(
         'eid IN(' . implode(', ', $ids) . ')'
         . ' AND cid IN(' . implode(', ', $cids) . ')'
     );
 
-    // Добавление новых обменников/обновление даты изменения курсов валют
     $fields = [];
     foreach ($ids as $raid => $id) {
         $ex = $exchangers->findOne(['raid' => $raid]);
@@ -279,38 +323,6 @@ foreach ($pages as $path => $info) {
 
     if ($fields)
         Exchanger::insert(array_keys($fields[0]), $fields);
-
-    // Получение оптовых цен для обменников
-    /*
-    if (!$info['is_bank']) {
-        echo "Страница: {$ws_page}\r\n";
-
-        $rateam->loadPage($ws_page, $pack);
-        $exList = $rateam->takeList();
-        $cnt = 0;
-        foreach ($exList as $raid => $data) {
-            if (!($local = $exchangers->findOne(['raid' => $raid])))
-                continue;
-
-            foreach ($data['rates'] as $currNum => $rate) {
-                $symbol = $activeSymbols[$currNum];
-                $id = Exrcourse::generateId(
-                    $local['id'], $symbol['id'], $info['type']
-                );
-                if (empty($rates[$id]) || (!$rate[0] && !$rate[1]))
-                    continue;
-
-                $rates[$id] += [
-                    'ws_buy' => ($rate[0] / $symbol['amt']),
-                    'ws_sell' => ($rate[1] / $symbol['amt'])
-                ];
-                ++$cnt;
-            }
-        }
-
-        echo "Кол-во оптовых курсов: {$cnt}\r\n";
-    }*/
-
     if (!empty($rates))
         Exrcourse::insert(array_keys($rates[array_key_first($rates)]), $rates);
 }
@@ -319,7 +331,6 @@ foreach ($pages as $path => $info) {
 echo 'Затраченное время: '
     . round((microtime(true) - App::STARTED_AT), 2) . " сек.\r\n";
 
-// Получение данных с банков
 echo 'Получение курсов с сайтов банков.' . "\r\n";
 $bankStart = microtime(true);
 $bankList = [
@@ -409,7 +420,6 @@ echo 'Затраченное время: '
 echo 'Получение названий и логотипов для новых обменников: '
     . count($new_exchangers) . "\r\n";
 
-// Получение названий новых обменников на разных языкам
 if ($new_exchangers) {
     $paths = [array_key_first($pages), array_key_last($pages)];
     foreach ($langs as $lang) {
@@ -445,11 +455,6 @@ if ($new_exchangers) {
     }
 }
 
-// Загрузка новых логотипов
-/*foreach ($new_exchangers as $id => $data) {
-    $rateam->download($data[1], App::path("img/exchanger/{$data[0]}.png"));
-}
-*/
 foreach ($new_images as $raid => $url) {
     $imgfile = App::path("img/exchanger/{$raid}.svg");
     @unlink($imgfile);
@@ -464,5 +469,4 @@ echo 'Общее время: '
     . round((microtime(true) - App::STARTED_AT), 2) . " сек.\r\n";
 echo round((memory_get_peak_usage() / 1024), 2) . ' Kb. | '
     . round((memory_get_peak_usage(true) / 1024), 2) . ' Kb.';
-
 saveLog();
