@@ -26,29 +26,6 @@
 
             <div class="col-lg-3">
                 <div class="right-block">
-                    <div class="soc-block def-box">
-                        <p class="soc-block-title">
-                            <?= $lang('Мы в соц сетях') ?>
-                        </p>
-                        <div class="soc-block-row">
-                            <a href="#" class="soc-block-row-item">
-                                <img src="img/facebook.png" alt="">
-                            </a>
-                            <a href="#" class="soc-block-row-item">
-                                <img src="img/instagram.png" alt="">
-                            </a>
-                            <a href="#" class="soc-block-row-item">
-                                <img src="img/linkedin.png" alt="">
-                            </a>
-                            <a href="#" class="soc-block-row-item">
-                                <img src="img/youtube.png" alt="">
-                            </a>
-                            <a href="#" class="soc-block-row-item">
-                                <img src="img/twitter.png" alt="">
-                            </a>
-                        </div>
-                    </div>
-
                     <div class="clue-container">
                         <div class="clue">
                             <div class="clue-inner">

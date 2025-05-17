@@ -1,4 +1,4 @@
-<section class="content py-5">
+<section class="content plate-block">
     <div class="container">
         <?php
         $searchNumberAuto = [
