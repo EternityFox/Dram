@@ -45,7 +45,9 @@
     <!-- Yandex.RTB -->
     <script>window.yaContextCb = window.yaContextCb || []</script>
     <script src="https://yandex.ru/ads/system/context.js" async></script>
+    <script src="https://api-maps.yandex.ru/2.1/?apikey=93e925f4-cf14-4f88-b5a7-38bbb050f665&lang=ru_RU" type="text/javascript"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
 
 </head>
 
@@ -58,7 +60,7 @@
             </div>
             <div class="header-logo">
                 <a href="/" class="logo">
-                    <img src="img/<?=$settings['img_logo']?>" alt="Логотип">
+                    <img src="img/<?= $settings['img_logo'] ?>" alt="Логотип">
                 </a>
             </div>
             <div class="header-place accordion">
@@ -241,7 +243,7 @@
                 <div class="col-md-4 col-sm-6">
                     <div class="f-logo-block">
                         <a href="#" class="f-logo">
-                            <img src="img/<?=$settings['img_logo']?>" alt="Логотип">
+                            <img src="img/<?= $settings['img_logo'] ?>" alt="Логотип">
                         </a>
                     </div>
                 </div>

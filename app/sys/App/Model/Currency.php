@@ -44,7 +44,7 @@ class Currency extends Model
     public function getImage(): string
     {
         return $this->img
-            ?: ($this->symbol . (2 === $this->type ? '.png' : '.svg'));
+            ?: ($this->symbol . (2 === $this->type ? '.svg' : '.png'));
     }
 
     /**

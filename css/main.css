@@ -765,15 +765,17 @@ section {
     display: flex;
     position: -webkit-sticky;
     position: sticky;
-    padding: 54px 0 12px;
+    padding: 54px 0 2px;
     z-index: 11;
     background: #FFF;
-    top: -1px;
+    top: -8px;
     width: 30%;
 }
 
 .bank-info-all-item {
+    margin-top: 8px;
     width: 30%;
+    margin-right: -1px;
 }
 
 .bank-names-col {
@@ -786,8 +788,6 @@ section {
 
 .bank-value.gray-bank {
     border-top-right-radius: 16px;
-    padding-top: 1px;
-    margin-top: -1px;
 }
 
 .bank-names-col.gray-bank .table-row.table-bg .table-item-title {
@@ -831,10 +831,47 @@ section {
     cursor: pointer;
 }
 
+.button-transparent {
+    background: transparent !important;
+    color: #000000 !important;
+}
+
+.accordion-header-text {
+    font-weight: 600;
+}
+
+.background-gray {
+    background: #e3e3e37a;
+    border-radius: 10px;
+}
+
+.branches-address {
+    font-size: 14px;
+}
+
+.branches-phone, .branches-email {
+    font-size: 16px;
+    color: #1f1f1f;
+}
+
+.branches-of_site {
+    font-size: 14px;
+    color: #1f1f1f;
+}
+
+.button-transparent::after {
+    filter: grayscale(100%);
+}
+
 .table-point-item.active {
     background: #2D84EC;
     color: #fff;
     box-shadow: 0 3px 6px rgba(54, 132, 236, 0.37);
+}
+
+.name-branch {
+    font-size: 14px;
+    font-weight: 600;
 }
 
 .table-point-container.active .table-point-item-icon img {
@@ -1067,9 +1104,9 @@ section {
 }
 
 .banks-info-wrap .table-bg {
-    top: -3px;
+    top: -12px;
     background: #ffffff;
-    padding-top: 4px;
+    padding: 12.4px 0 0 0;
     z-index: 11;
     border-radius: 0;
 }
@@ -2621,7 +2658,8 @@ th {
     .tab-btn-item + .tab-btn-item {
         margin-left: 5px
     }
-    .widget.def-box{
+
+    .widget.def-box {
         display: none;
     }
 }
