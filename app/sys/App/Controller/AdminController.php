@@ -11,8 +11,10 @@ class AdminController extends Controller
 {
     protected function actionIndex()
     {
+
         $query = App::db()->query("PRAGMA table_info(settings)");
         $columns = $query->fetchAll(PDO::FETCH_ASSOC);
+
         $columnExists = false;
         foreach ($columns as $column) {
             if ($column['name'] === 'img_logo') {
@@ -23,6 +25,13 @@ class AdminController extends Controller
 
         if (!$columnExists) {
             App::db()->query("ALTER TABLE settings ADD COLUMN img_logo TEXT DEFAULT 'logo.svg'");
+        }
+        $columns = array_column($columns, 'name');
+        if (!in_array('banner_middle_1', $columns)) {
+            App::db()->query("ALTER TABLE settings ADD COLUMN banner_middle_1 TEXT DEFAULT ''");
+        }
+        if (!in_array('banner_middle_2', $columns)) {
+            App::db()->query("ALTER TABLE settings ADD COLUMN banner_middle_2 TEXT DEFAULT ''");
         }
         $query = App::db()->query("SELECT * FROM settings");
         $settings = $query->fetch();
@@ -76,6 +85,7 @@ class AdminController extends Controller
                      banner_footer = ?, banner_footer_2 = ? ,  banner_footer_3 = ? ,  
                      banner_footer_mobile = ?, banner_footer_mobile_2 = ? ,  
                      banner_footer_small = ?, banner_footer_small_2 = ? ,  banner_footer_small_3 = ?,
+                     banner_middle_1 = ?, banner_middle_2 = ?,
                      img_logo = ?
                  WHERE true")
                 ->execute([
@@ -88,7 +98,8 @@ class AdminController extends Controller
                     $_POST['banner_footer'], $_POST['banner_footer_2'], $_POST['banner_footer_3'],
                     $_POST['banner_footer_mobile'], $_POST['banner_footer_mobile_2'],
                     $_POST['banner_footer_small'], $_POST['banner_footer_small_2'], $_POST['banner_footer_small_3'],
-                    $imageName,
+                    $_POST['banner_middle_1'], $_POST['banner_middle_2'],
+                    $imageName
                 ]);
 
             file_put_contents(__DIR__ . '/../../../storage/lang/en/main.php', $_POST['english']);

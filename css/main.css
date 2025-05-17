@@ -217,6 +217,10 @@ section {
     outline: none !important;
 }
 
+.plate-block {
+    margin-top: 40px;
+}
+
 .slick-slide:focus,
 .slick-slide:active {
     outline: none !important;
@@ -250,8 +254,8 @@ section {
     cursor: pointer;
 }
 
-.header-logo {
-    margin-left: 120px;
+.header-bars img {
+    width: 17px;
 }
 
 .logo {
@@ -2156,8 +2160,6 @@ th {
     margin-left: -8px;
 }
 
-}
-
 @media screen and (max-width: 1200px) {
     .header-menu-block {
         display: none;
@@ -2206,6 +2208,15 @@ th {
 }
 
 @media screen and (max-width: 768px) {
+    .plate-block {
+        margin-top: 0;
+        padding-top: 20px;
+    }
+
+    .table-entry {
+        gap: 6px;
+    }
+
     .table-flex-item.table-flex-course:last-child {
         width: 40%;
     }
@@ -2442,24 +2453,6 @@ th {
 }
 
 
-@media screen and (max-width: 350px) {
-    .table-point-item {
-        padding: 10px 25px 10px 12px;
-    }
-
-    .table-point-item span {
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        max-width: 50px;
-        font-size: 10px;
-    }
-
-    .table-point-item-icon {
-        right: 8px;
-    }
-}
-
 .custom-control-label {
     padding-top: 3px;
 }
@@ -2566,17 +2559,53 @@ th {
 }
 
 @media screen and (max-width: 768px) {
+    .table-point {
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+    }
+
+    #exchangeType {
+        z-index: 15;
+    }
+
+    .table-flex {
+        padding: 20px 0 4px;
+        top: -23px;
+    }
+
+    .table-point-container, .table-point-item {
+        width: 100px;
+    }
+
+    #courseType {
+        margin-left: 0;
+    }
+
+    .tabs_holder_ul {
+        padding: 0 !important;;
+        margin: 20px auto !important;
+        width: 80%;
+    }
+
+    .tabs_holder_ul li {
+        font-size: 14px;
+        padding: 10px 24px;
+    }
+
     .search-number-text {
-        font-size: 30px;
+        font-size: 24px;
+        margin-bottom: 20px !important;
     }
 
     .alert-box {
-        font-size: 18px;
+        font-size: 12px;
     }
 
     .car_number_button_block {
         flex-direction: column;
         align-items: center;
+        margin-top: 40px;
     }
 
     .car_numbers_block {
@@ -2634,8 +2663,12 @@ th {
     }
 
     .banks-info-wrap .items-head .table-items, .banks-info .table-items {
-        width: 116px;
-        min-width: 116px;
+        width: 106px;
+        min-width: 106px;
+    }
+
+    .banks-info-wrap .items-head .table-items, .banks-info .table-items {
+        padding-right: 6px;
     }
 
     .banks-info-wrap .items-head .table-items:last-child, .banks-info .table-items-row .table-items:last-child {
@@ -2644,11 +2677,11 @@ th {
     }
 
     .bank-info-all-item, .table-flex {
-        width: 60%;
+        width: 45%;
     }
 
     .banks-info-wrap {
-        width: 40%;
+        width: 55%;
     }
 
     .tab-btn-item {
@@ -2743,6 +2776,32 @@ th {
         display: none;
     }
 
+}
+
+@media screen and (max-width: 350px) {
+    .table-flex {
+        padding: 20px 0 6px;
+    }
+
+    .bank-info-all-item, .banks-info-wrap, .table-flex {
+        width: 50%;
+    }
+
+    .table-point-item {
+        padding: 10px 25px 10px 12px;
+    }
+
+    .table-point-item span {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 50px;
+        font-size: 10px;
+    }
+
+    .table-point-item-icon {
+        right: 8px;
+    }
 }
 
 

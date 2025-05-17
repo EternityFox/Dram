@@ -8,7 +8,7 @@
                          stroke="black" stroke-width="1.5">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 4.5L3 12M3 12L10.5 19.5M3 12H21"/>
                     </svg>
-                    <span class="ml-2">Назад</span>
+                    <span class="ml-2"><?= $lang("Назад") ?></span>
                 </a>
             </div>
             <h1 class="h4 m-0 fw-bold ml-4"><?= $lang("exchanger>{$bankInfo['name']}") ?></h1>
@@ -148,7 +148,7 @@
                                                         <?php if ($licenses): ?>
                                                             <div class="d-flex justify-content-end gap-5 mt-auto">
                                                                 <div class="ml-auto">
-                                                                    Лицензия: <span class=""><?= $licenses ?></span>
+                                                                    <?= $lang("Лицензия") ?>: <span class=""><?= $licenses ?></span>
                                                                 </div>
                                                             </div>
                                                         <?php endif; ?>
@@ -165,7 +165,7 @@
                                                                       stroke-linecap="round"
                                                                       stroke-linejoin="round"></path>
                                                             </svg>
-                                                            <span class="name-branch">Рабочие часы</span>
+                                                            <span class="name-branch"><?= $lang("Рабочие часы") ?></span>
                                                         </div>
                                                         <?php if ($hoursRaw): ?>
                                                             <?php if (mb_stripos($hoursRaw, 'круглосуточно') !== false): ?>
@@ -219,29 +219,6 @@
 
             <div class="col-lg-3">
                 <div class="right-block">
-                    <div class="soc-block def-box">
-                        <p class="soc-block-title">
-                            <?= $lang('Мы в соц сетях') ?>
-                        </p>
-                        <div class="soc-block-row">
-                            <a href="#" class="soc-block-row-item">
-                                <img src="img/facebook.png" alt="">
-                            </a>
-                            <a href="#" class="soc-block-row-item">
-                                <img src="img/instagram.png" alt="">
-                            </a>
-                            <a href="#" class="soc-block-row-item">
-                                <img src="img/linkedin.png" alt="">
-                            </a>
-                            <a href="#" class="soc-block-row-item">
-                                <img src="img/youtube.png" alt="">
-                            </a>
-                            <a href="#" class="soc-block-row-item">
-                                <img src="img/twitter.png" alt="">
-                            </a>
-                        </div>
-                    </div>
-
                     <div class="clue-container">
                         <div class="clue">
                             <div class="clue-inner">
