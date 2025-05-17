@@ -6,7 +6,7 @@
                 <h5 class="card-header">Логотип</h5>
                 <div class="card-body" style="display: none;">
                     <div>
-                        <img src="/img/<?=$settings['img_logo']?>" alt="Изображение" height="30"/>
+                        <img src="/img/<?= $settings['img_logo'] ?>" alt="Изображение" height="30"/>
                     </div>
                     <div class="form-group">
                         <input type="file" class="form-control" name="logo-image">
@@ -222,7 +222,6 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="card admin-banners toggle mt-4">
                         <h5 class="card-header">Сайдбар</h5>
                         <div class="card-body" style="display: none;">
@@ -369,6 +368,16 @@
                         <label>Баннер топ (2) (220x275):</label>
                         <textarea class="form-control" name="banner_head_mobile_2"
                                   rows="3"><?= $settings['banner_head_mobile_2'] ?></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Баннер по середине (1) (220x275):</label>
+                        <textarea class="form-control" name="banner_middle_1"
+                                  rows="3"><?= $settings['banner_middle_1'] ?? '' ?></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Баннер по середине (2) (220x275):</label>
+                        <textarea class="form-control" name="banner_middle_2"
+                                  rows="3"><?= $settings['banner_middle_2'] ?? '' ?></textarea>
                     </div>
                     <div class="form-group">
                         <label>Баннер низ (720x90):</label>

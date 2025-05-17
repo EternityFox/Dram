@@ -45,7 +45,8 @@
     <!-- Yandex.RTB -->
     <script>window.yaContextCb = window.yaContextCb || []</script>
     <script src="https://yandex.ru/ads/system/context.js" async></script>
-    <script src="https://api-maps.yandex.ru/2.1/?apikey=93e925f4-cf14-4f88-b5a7-38bbb050f665&lang=ru_RU" type="text/javascript"></script>
+    <script src="https://api-maps.yandex.ru/2.1/?apikey=93e925f4-cf14-4f88-b5a7-38bbb050f665&lang=ru_RU"
+            type="text/javascript"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <script src="js/bootstrap.min.js"></script>
 
@@ -53,127 +54,129 @@
 
 <body>
 <div class="wrapper">
-    <header class="header">
+    <header class="header my-3">
         <div class="header-row">
             <div class="header-bars">
-                <img src="img/menu.png" alt="">
+                <img src="img/menu.svg" alt="">
             </div>
-            <div class="header-logo">
-                <a href="/" class="logo">
-                    <img src="img/<?= $settings['img_logo'] ?>" alt="Логотип">
-                </a>
-            </div>
-            <div class="header-place accordion">
-                <div class="header-place-content accordion-content">
-                    <div class="accordion-close">
-                        <img src="img/close-circle.svg" alt="">
-                    </div>
-                    <div class="header-place-block">
-                        <div class="header-place-block-icon">
-                            <img src="img/place.png" alt="">
+            <div class="container d-flex flex-row justify-content-between align-items-center">
+                <div class="header-logo">
+                    <a href="/" class="logo">
+                        <img src="img/<?= $settings['img_logo'] ?>" alt="Логотип">
+                    </a>
+                </div>
+                <div class="header-place accordion">
+                    <div class="header-place-content accordion-content">
+                        <div class="accordion-close">
+                            <img src="img/close-circle.svg" alt="">
                         </div>
-                        <div class="header-place-block-title">
-                            <?= $lang('Выберите город') ?>
+                        <div class="header-place-block">
+                            <div class="header-place-block-icon">
+                                <img src="img/place.png" alt="">
+                            </div>
+                            <div class="header-place-block-title">
+                                <?= $lang('Выберите город') ?>
+                            </div>
                         </div>
-                    </div>
-                    <div class="header-place-list">
-                        <a href="#" class="header-place-list-item header-place-list-item-head ">
-                            <p>
-                                <?= $lang('Ереван') ?>
-                            </p>
-                        </a>
-                        <a href="#" class="header-place-list-item">
-                            <p>
-                                <?= $lang('Ачапняк') ?>
-                            </p>
-                        </a>
-                        <a href="#" class="header-place-list-item">
-                            <p>
-                                <?= $lang('Арабкир') ?>
-                            </p>
-                        </a>
-                        <a href="#" class="header-place-list-item">
-                            <p>
-                                <?= $lang('Аван') ?>
-                            </p>
-                        </a>
-                        <a href="#" class="header-place-list-item">
-                            <p>
-                                <?= $lang('Давидашен') ?>
-                            </p>
-                        </a>
-                        <a href="#" class="header-place-list-item">
-                            <p>
-                                <?= $lang('Эребуни') ?>
-                            </p>
-                        </a>
-                        <a href="#" class="header-place-list-item">
-                            <p>
-                                <?= $lang('Зейтун Канакер') ?>
-                            </p>
-                        </a>
-                        <a href="#" class="header-place-list-item">
-                            <p>
-                                <?= $lang('Кентрон') ?>
-                            </p>
-                        </a>
-                        <a href="#" class="header-place-list-item">
-                            <p>
-                                <?= $lang('Малация Себастия') ?>
-                            </p>
-                        </a>
-                        <a href="#" class="header-place-list-item header-place-list-item-head">
-                            <p>
-                                <?= $lang('Арагацотн') ?>
-                            </p>
-                        </a>
-                        <a href="#" class="header-place-list-item">
-                            <p>
-                                <?= $lang('Аштарак') ?>
-                            </p>
-                        </a>
-                        <a href="#" class="header-place-list-item">
-                            <p>
-                                <?= $lang('Бюракан') ?>
-                            </p>
-                        </a>
-                        <a href="#" class="header-place-list-item">
-                            <p>
-                                <?= $lang('Ошакан') ?>
-                            </p>
-                        </a>
-                        <a href="#" class="header-place-list-item">
-                            <p>
-                                <?= $lang('Талин') ?>
-                            </p>
-                        </a>
+                        <div class="header-place-list">
+                            <a href="#" class="header-place-list-item header-place-list-item-head ">
+                                <p>
+                                    <?= $lang('Ереван') ?>
+                                </p>
+                            </a>
+                            <a href="#" class="header-place-list-item">
+                                <p>
+                                    <?= $lang('Ачапняк') ?>
+                                </p>
+                            </a>
+                            <a href="#" class="header-place-list-item">
+                                <p>
+                                    <?= $lang('Арабкир') ?>
+                                </p>
+                            </a>
+                            <a href="#" class="header-place-list-item">
+                                <p>
+                                    <?= $lang('Аван') ?>
+                                </p>
+                            </a>
+                            <a href="#" class="header-place-list-item">
+                                <p>
+                                    <?= $lang('Давидашен') ?>
+                                </p>
+                            </a>
+                            <a href="#" class="header-place-list-item">
+                                <p>
+                                    <?= $lang('Эребуни') ?>
+                                </p>
+                            </a>
+                            <a href="#" class="header-place-list-item">
+                                <p>
+                                    <?= $lang('Зейтун Канакер') ?>
+                                </p>
+                            </a>
+                            <a href="#" class="header-place-list-item">
+                                <p>
+                                    <?= $lang('Кентрон') ?>
+                                </p>
+                            </a>
+                            <a href="#" class="header-place-list-item">
+                                <p>
+                                    <?= $lang('Малация Себастия') ?>
+                                </p>
+                            </a>
+                            <a href="#" class="header-place-list-item header-place-list-item-head">
+                                <p>
+                                    <?= $lang('Арагацотн') ?>
+                                </p>
+                            </a>
+                            <a href="#" class="header-place-list-item">
+                                <p>
+                                    <?= $lang('Аштарак') ?>
+                                </p>
+                            </a>
+                            <a href="#" class="header-place-list-item">
+                                <p>
+                                    <?= $lang('Бюракан') ?>
+                                </p>
+                            </a>
+                            <a href="#" class="header-place-list-item">
+                                <p>
+                                    <?= $lang('Ошакан') ?>
+                                </p>
+                            </a>
+                            <a href="#" class="header-place-list-item">
+                                <p>
+                                    <?= $lang('Талин') ?>
+                                </p>
+                            </a>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div class="header-lang accordion">
-                <div class="header-lang-header accordion-header">
-                    <img src="img/lang/<?= $lang ?>.svg" alt="">
-                </div>
-                <div class="header-lang-content accordion-content">
-                    <div class="header-lang-block">
+                <div class="header-lang accordion">
+                    <div class="header-lang-header accordion-header">
+                        <img src="img/lang/<?= $lang ?>.svg" alt="">
+                    </div>
+                    <div class="header-lang-content accordion-content">
+                        <div class="header-lang-block">
 
-                        <?php foreach ($languages as $lng => $lngFull): ?>
-                            <a href="<?= $lng ?>" class="header-lang-block-item">
+                            <?php foreach ($languages as $lng => $lngFull): ?>
+                                <a href="<?= $lng ?>" class="header-lang-block-item">
                                 <span class="header-lang-block-item-icon">
                                     <img src="img/lang/<?= $lng ?>.png" alt="<?= $lng ?>">
                                 </span>
-                                <span class="header-lang-block-item-text">
+                                    <span class="header-lang-block-item-text">
                                 <?= $lngFull ?>
                             </span>
-                            </a>
-                        <?php endforeach ?>
+                                </a>
+                            <?php endforeach ?>
 
+                        </div>
                     </div>
                 </div>
+                <a href="#" class="header-profile">
+                    <img src="img/profile.png" alt="">
+                </a>
             </div>
-            <a href="#" class="header-profile">
-                <img src="img/profile.png" alt="">
-            </a>
         </div>
         <!--        <div class="header-list scroll-slider lg-hide">-->
         <!--            <a href="#" class="header-list-item active">-->

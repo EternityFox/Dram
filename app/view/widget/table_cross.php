@@ -7,7 +7,7 @@
         <?php foreach ($table as $tableNum => $data): ?>
             <div class="bank-names-col p-0<?= (2 == $tableNum ?' gray-bank' :'') ?>">
                 <div class="table-row active table-bg">
-                    <div class="table-item one head active">
+                    <div class="table-item one head<?= (2 == $tableNum ?'' :' active') ?>">
                         <div class="table-item-arrow">
                             <img src="img/table-arrow.png" alt="">
                         </div>
@@ -18,7 +18,7 @@
                     </div>
                 </div>
                 <?php $i = 0; foreach ($data as $exch): ?>
-                    <div class="table-row active">
+                    <div class="table-row<?= (2 == $tableNum ?'' :' active') ?>">
                         <div class="table-item one">
                             <div class="table-item-number">
                                 <?= ++$i ?>
@@ -138,7 +138,7 @@
                         </div>
                     <?php endif; ?>
                     <?php $i = 0; foreach ($data as $exch): ?>
-                        <div class="table-row active table-items-row">
+                        <div class="table-row<?= (2 == $tableNum ?'' :' active') ?> table-items-row">
                             <?php $num = 0 ?>
                             <?php $nums = [['four', 'five'], ['six', 'seven'], ['eight', 'nine'], ['ten', 'eleven']] ?>
                             <?php foreach ($activeSymbols as $i => $symbol): ?>

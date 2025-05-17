@@ -7,7 +7,7 @@
     <div class="tab-block">
         <div class="tab-block-item">
             <p class="exchange-course-title">
-                <?= $lang("Курсы") ?>
+                <?= $lang('Курсы') ?>
             </p>
             <div class="exchange-course">
                 <?php $active = false; ?>
