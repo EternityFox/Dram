@@ -182,4 +182,5 @@ return [
     'Casadel' => 'Casadel',
     'Комитас 34' => 'Komitas 34',
     'Comfarea' => 'Comfarea',
+    'Шаавет cупермаркет' => 'Shahavet supermarket',
 ];
