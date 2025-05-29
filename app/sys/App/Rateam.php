@@ -147,7 +147,7 @@ class Rateam
      * @return array
      * @throws \Exception
      */
-    function takeInfoList($id)
+    public function takeInfoList($id)
     {
         libxml_use_internal_errors(true);
         $dom = new \DOMDocument();
@@ -162,13 +162,13 @@ class Rateam
 
         $branchBlocks = $xpath->query("//div[contains(@class, 'flex') and contains(@class, 'flex-col') and contains(@class, 'items-start') and contains(@class, 'border') and contains(@class, 'rounded-lg')]");
         $branches = [];
-
         foreach ($branchBlocks as $block) {
             $childDivs = (new \DOMXPath($block->ownerDocument))->query(".//div[@id]", $block);
 
             foreach ($childDivs as $child) {
                 $childXpath = new \DOMXPath($child->ownerDocument);
-
+                $idAttr = $child->getAttribute('id');
+                if (!$idAttr) continue;
                 $cityNameNode = $childXpath->query(".//span[contains(@class, 'font-bold') and contains(@class, 'text-base')]", $child);
                 $addressNode = $childXpath->query(".//span[contains(@class, 'gap-2')]", $child);
                 $phoneNodes = $childXpath->query(".//a[starts-with(@href, 'tel:')]", $child);
@@ -185,98 +185,48 @@ class Rateam
 
                 if ($imgNode->length > 0) {
                     $srcRaw = $imgNode->item(0)->getAttribute('src');
-                    if (strpos($srcRaw, 'undefined.svg') !== false) {
-                        $imgUrl = '';
-                    } else {
+                    if (strpos($srcRaw, 'undefined.svg') === false) {
                         $parsed = parse_url($srcRaw);
                         $q = [];
-                        if (isset($parsed['query'])) {
-                            parse_str($parsed['query'], $q);
-                        }
-                        if (!empty($q['url'])) {
-                            $imgUrl = $q['url'];
-                        } else {
-                            $imgUrl = 'https://rate.am' . $srcRaw;
-                        }
+                        if (isset($parsed['query'])) parse_str($parsed['query'], $q);
+                        $imgUrl = $q['url'] ?? ('https://rate.am' . $srcRaw);
 
-                        if (
-                            $imgUrl
-                            && (
-                                !file_exists(App::path("img/logos/{$id}.webp"))
-                                || filemtime(App::path("img/logos/{$id}.webp")) < (time() - 86400 * 3)
-                            )
-                        ) {
-                            $imgfile = App::path("img/logos/{$id}.webp");
+                        $imgfile = App::path("img/logos/{$id}.webp");
+                        if (!file_exists($imgfile) || filemtime($imgfile) < time() - 86400 * 3) {
                             @unlink($imgfile);
-
-                            if (!$this->download($imgUrl, $imgfile)) {
-                                echo "\r\n" . 'Filed create image from: ' . $imgUrl;
-                                @unlink($imgfile);
-                            }
+                            if (!$this->download($imgUrl, $imgfile)) @unlink($imgfile);
                         }
-
                         $imgUrl = "img/logos/{$id}.webp";
                     }
                 }
+
                 $hours = '';
-                $hoursBlock = $childXpath->query(".//div[contains(@class, 'gap-1.5')]", $child);
+                $hoursBlock = $childXpath->query(".//div[contains(@class, 'gap-1.5') and not(contains(@class, 'items-start'))]", $child);
                 foreach ($hoursBlock as $block) {
-                    if (strpos($block->textContent, 'Понедельник') !== false ||
-                        strpos($block->textContent, 'Круглосуточно') !== false ||
-                        strpos($block->textContent, 'Работает') !== false) {
-                        $hourLines = $childXpath->query(".//span[contains(@class, 'flex') and contains(@class, 'items-center') and contains(@class, 'justify-between')]", $block);
-                        if ($hourLines->length > 0) {
-                            foreach ($hourLines as $line) {
-                                $hours .= trim($line->textContent) . "<br />";
-                            }
-                        } else {
-                            $hours = trim($block->textContent);
-                        }
-                        break;
-                    }
+                    $hourLines = $childXpath->query(".//span[contains(@class, 'flex') and contains(@class, 'items-center') and contains(@class, 'justify-between')]", $block);
+                    if ($hourLines->length > 0) {
+                        foreach ($hourLines as $line) $hours .= trim($line->textContent) . "<br />";
+                    } else $hours = trim($block->textContent);
                 }
 
                 $name = $cityNameNode->length ? trim($cityNameNode->item(0)->textContent) : '';
-                if (!$name) continue;
-
                 $address = $addressNode->length ? trim($addressNode->item(0)->textContent) : '';
 
                 $phones = [];
-                foreach ($phoneNodes as $node) {
-                    $phones[] = [
-                        'text' => trim($node->textContent),
-                        'href' => $node->getAttribute('href'),
-                    ];
-                }
-
+                foreach ($phoneNodes as $node) $phones[] = ['text' => trim($node->textContent), 'href' => $node->getAttribute('href')];
                 $emails = [];
-                foreach ($emailNodes as $node) {
-                    $emails[] = [
-                        'text' => trim($node->textContent),
-                        'href' => $node->getAttribute('href'),
-                    ];
-                }
-
+                foreach ($emailNodes as $node) $emails[] = ['text' => trim($node->textContent), 'href' => $node->getAttribute('href')];
                 $sites = [];
-                foreach ($siteNodes as $node) {
-                    $href = $node->getAttribute('href');
-                    if (filter_var($href, FILTER_VALIDATE_URL)) {
-                        $sites[] = $href;
-                    }
-                }
-
+                foreach ($siteNodes as $node) if (filter_var($node->getAttribute('href'), FILTER_VALIDATE_URL)) $sites[] = $node->getAttribute('href');
                 $latitude = $latNode->length ? $latNode->item(0)->getAttribute('value') : '';
                 $longitude = $lngNode->length ? $lngNode->item(0)->getAttribute('value') : '';
-
                 $socials = [];
                 foreach ($socialNodes as $s) {
                     $href = $s->getAttribute('href');
-                    if (!in_array($href, $socials)) {
-                        $socials[] = $href;
-                    }
+                    if (!in_array($href, $socials)) $socials[] = $href;
                 }
 
-                $branches[$name] = [
+                $branches[$idAttr] = [
                     'name' => $name,
                     'address' => $address,
                     'phones' => $phones,
@@ -294,7 +244,7 @@ class Rateam
 
         return [
             'name' => $orgName,
-            'baranches' => $branches,
+            'baranches' => $branches
         ];
     }
 

@@ -209,7 +209,7 @@
 
     <?php $this->render('widget/Menu', ['menu' => $menu['left']]) ?>
     <?php if (isset($navigations) && !empty($navigations)): ?>
-        <div class="container pt-4">
+        <div class="container pt-3">
             <div class="nav-icons">
                 <?php foreach ($navigations as $navigation): ?>
                     <a href="<?= $navigation['link'] ?>">

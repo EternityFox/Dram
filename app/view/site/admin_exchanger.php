@@ -1,187 +1,130 @@
+<?php /** @var array $exchanger */ ?>
 <section class="content">
     <div class="container">
-        <div>
-            <a href="/admin/"><img src="img/clue-link.png" alt="">&nbsp; Назад в админку</a>
-        </div>
+        <div><a href="/admin/"><img src="/img/clue-link.png" alt=""> Назад в админку</a></div>
 
-        <h1>Редактирование обменника</h1>
-
-        <form action="" method="POST" class="mt-4">
-
-            <div class="card">
-                <h5 class="card-header">
-                    <img src="img/exchanger/<?= $bank['raid'] ?>.png" alt=""
-                         style="width: 32px; height: 16px;">
-                    <?= $bank['name'] ?>
-                </h5>
-
+        <h1>Редактирование банка</h1>
+        <form action="" method="POST">
+            <div class="card mb-4">
+                <h5 class="card-header">Название обменника</h5>
                 <div class="card-body">
-                    <div class="form-group">
-                        <ul class="nav nav-tabs" style="border-bottom: none;">
-                            <li class="nav-item head">
-                                <div class="nav-link tabs active" data-target="#bank_info_ru">Ру</div>
+                    <ul class="nav nav-tabs mb-3">
+                        <?php foreach (['ru', 'en', 'am'] as $lang): ?>
+                            <li class="nav-item">
+                                <a class="nav-link<?= $lang === 'ru' ? ' active' : '' ?>" data-bs-toggle="tab" href="#bank_name_<?= $lang ?>"><?= strtoupper($lang) ?></a>
                             </li>
-                            <li class="nav-item head">
-                                <div class="nav-link tabs" data-target="#bank_info_en">EN</div>
-                            </li>
-                            <li class="nav-item head">
-                                <div class="nav-link tabs" data-target="#bank_info_am">Հա</div>
-                            </li>
-                        </ul>
-
-                        <table id="bank_info_ru" class="bank-info mb-3 collapse show">
-                            <tr>
-                                <th class="bank-info-th"><?= $lang("Центральный офис") ?></th>
-                                <td><input type="text" name="bank[head_office][ru]" value='<?= $bank['head_office']['ru'] ?>'></td>
-                            </tr>
-                            <tr>
-                                <th class="bank-info-th"><?= $lang("Телефон(ы)") ?></th>
-                                <td><input type="text" name="bank[phone][ru]" value='<?= $bank['phone']['ru'] ?>'></td>
-                            </tr>
-                            <tr>
-                                <th class="bank-info-th"><?= $lang("Факс") ?></th>
-                                <td><input type="text" name="bank[fax][ru]" value='<?= $bank['fax']['ru']?>'></td>
-                            </tr>
-                            <tr>
-                                <th class="bank-info-th"><?= $lang("Сайт") ?></th>
-                                <td><input type="text" name="bank[url][ru]" value='<?= $bank['url']['ru'] ?>'></td>
-                            </tr>
-                        </table>
-
-                        <table id="bank_info_en" class="bank-info mb-3 collapse">
-                            <tr>
-                                <th class="bank-info-th"><?= $lang("Центральный офис") ?></th>
-                                <td><input type="text" name="bank[head_office][en]" value='<?= $bank['head_office']['en'] ?>'></td>
-                            </tr>
-                            <tr>
-                                <th class="bank-info-th"><?= $lang("Телефон(ы)") ?></th>
-                                <td><input type="text" name="bank[phone][en]" value='<?= $bank['phone']['en'] ?>'></td>
-                            </tr>
-                            <tr>
-                                <th class="bank-info-th"><?= $lang("Факс") ?></th>
-                                <td><input type="text" name="bank[fax][en]" value='<?= $bank['fax']['en']?>'></td>
-                            </tr>
-                            <tr>
-                                <th class="bank-info-th"><?= $lang("Сайт") ?></th>
-                                <td><input type="text" name="bank[url][en]" value='<?= $bank['url']['en'] ?>'></td>
-                            </tr>
-                        </table>
-
-                        <table id="bank_info_am" class="bank-info mb-3 collapse">
-                            <tr>
-                                <th class="bank-info-th"><?= $lang("Центральный офис") ?></th>
-                                <td><input type="text" name="bank[head_office][am]" value='<?= $bank['head_office']['am'] ?>'></td>
-                            </tr>
-                            <tr>
-                                <th class="bank-info-th"><?= $lang("Телефон(ы)") ?></th>
-                                <td><input type="text" name="bank[phone][am]" value='<?= $bank['phone']['am'] ?>'></td>
-                            </tr>
-                            <tr>
-                                <th class="bank-info-th"><?= $lang("Факс") ?></th>
-                                <td><input type="text" name="bank[fax][am]" value='<?= $bank['fax']['am']?>'></td>
-                            </tr>
-                            <tr>
-                                <th class="bank-info-th"><?= $lang("Сайт") ?></th>
-                                <td><input type="text" name="bank[url][am]" value='<?= $bank['url']['am'] ?>'></td>
-                            </tr>
-                        </table>
-                    </div>
-
-                    <div class="d-flex justify-content-end">
-                        <button class="btn btn-primary mt-2">Сохранить</button>
-                    </div>
-
-                    <div class="form-group">
-                        <ul class="nav nav-tabs" style="border-bottom: none;">
-                            <li class="nav-item head">
-                                <div class="nav-link tabs active" data-target="#branches_info_ru">Ру</div>
-                            </li>
-                            <li class="nav-item head">
-                                <div class="nav-link tabs" data-target="#branches_info_en">EN</div>
-                            </li>
-                            <li class="nav-item head">
-                                <div class="nav-link tabs" data-target="#branches_info_am">Հա</div>
-                            </li>
-                        </ul>
-
-                        <table id="branches_info_ru" class="branches branches-admin collapse show">
-                            <tr class="branches-th">
-                                <th></th>
-                                <th><?= $lang("Отделение") ?></th>
-                                <th><?= $lang("Адрес") ?></th>
-                                <th><?= $lang("Телефон(ы)") ?></th>
-                            </tr>
-                            <?php foreach ($bank['baranches'] as $key => $branch): ?>
-                                <tr>
-                                    <td><?= $key + 1 ?></td>
-                                    <td>
-                                        <textarea name="bank[baranches][name][ru][]"><?= $branch['name']['ru'] ?></textarea>
-                                    </td>
-                                    <td>
-                                        <textarea name="bank[baranches][address][ru][]"><?= $branch['address']['ru'] ?></textarea>
-                                    </td>
-                                    <td>
-                                        <textarea name="bank[baranches][phone][ru][]"><?= $branch['phone']['ru'] ?></textarea>
-                                    </td>
-                                </tr>
-                            <?php endforeach ?>
-                        </table>
-
-                        <table id="branches_info_en" class="branches branches-admin collapse">
-                            <tr class="branches-th">
-                                <th></th>
-                                <th><?= $lang("Отделение") ?></th>
-                                <th><?= $lang("Адрес") ?></th>
-                                <th><?= $lang("Телефон(ы)") ?></th>
-                            </tr>
-                            <?php foreach ($bank['baranches'] as $key => $branch): ?>
-                                <tr>
-                                    <td><?= $key + 1 ?></td>
-                                    <td>
-                                        <textarea name="bank[baranches][name][en][]"><?= $branch['name']['en'] ?></textarea>
-                                    </td>
-                                    <td>
-                                        <textarea name="bank[baranches][address][en][]"><?= $branch['address']['en'] ?></textarea>
-                                    </td>
-                                    <td>
-                                        <textarea name="bank[baranches][phone][en][]"><?= $branch['phone']['en'] ?></textarea>
-                                    </td>
-                                </tr>
-                            <?php endforeach ?>
-                        </table>
-
-                        <table id="branches_info_am" class="branches branches-admin collapse">
-                            <tr class="branches-th">
-                                <th></th>
-                                <th><?= $lang("Отделение") ?></th>
-                                <th><?= $lang("Адрес") ?></th>
-                                <th><?= $lang("Телефон(ы)") ?></th>
-                            </tr>
-                            <?php foreach ($bank['baranches'] as $key => $branch): ?>
-                                <tr>
-                                    <td><?= $key + 1 ?></td>
-                                    <td>
-                                        <textarea name="bank[baranches][name][am][]"><?= $branch['name']['am'] ?></textarea>
-                                    </td>
-                                    <td>
-                                        <textarea name="bank[baranches][address][am][]"><?= $branch['address']['am'] ?></textarea>
-                                    </td>
-                                    <td>
-                                        <textarea name="bank[baranches][phone][am][]"><?= $branch['phone']['am'] ?></textarea>
-                                    </td>
-                                </tr>
-                            <?php endforeach ?>
-                        </table>
-                    </div>
-
-                    <div class="d-flex justify-content-end">
-                        <button class="btn btn-primary mt-4">Сохранить</button>
-                    </div>
-
-                    <div>
-                        <a href="/admin/"><img src="img/clue-link.png" alt="">&nbsp; Назад в админку</a>
+                        <?php endforeach; ?>
+                    </ul>
+                    <div class="tab-content">
+                        <?php foreach (['ru', 'en', 'am'] as $lang): ?>
+                            <div class="tab-pane fade<?= $lang === 'ru' ? ' show active' : '' ?>" id="bank_name_<?= $lang ?>">
+                                <div class="form-group">
+                                    <label>Название (<?= strtoupper($lang) ?>)</label>
+                                    <input type="text" class="form-control" name="bank[name][<?= $lang ?>]" value="<?= htmlspecialchars($exchanger['name'][$lang] ?? '') ?>">
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
                     </div>
                 </div>
+            </div>
+
+            <!-- Филиалы банка -->
+            <div class="accordion" id="branchesAccordion">
+                <?php $i = 0; foreach ($exchanger['baranches'] as $key => $branch): ?>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="heading<?= $i ?>">
+                            <button class="accordion-button<?= $i > 0 ? ' collapsed' : '' ?>" type="button" data-bs-toggle="collapse" data-bs-target="#collapse<?= $i ?>" aria-expanded="<?= $i === 0 ? 'true' : 'false' ?>" aria-controls="collapse<?= $i ?>">
+                                <?= htmlspecialchars($branch['name']['ru'] ?? $key) ?>
+                            </button>
+                        </h2>
+                        <div id="collapse<?= $i ?>" class="accordion-collapse collapse<?= $i === 0 ? ' show' : '' ?>" aria-labelledby="heading<?= $i ?>" data-bs-parent="#branchesAccordion">
+                            <div class="accordion-body">
+                                <ul class="nav nav-tabs mb-3">
+                                    <?php foreach (['ru', 'en', 'am'] as $lang): ?>
+                                        <li class="nav-item">
+                                            <a class="nav-link<?= $lang === 'ru' ? ' active' : '' ?>" data-bs-toggle="tab" href="#tab<?= $i ?>_<?= $lang ?>"><?= strtoupper($lang) ?></a>
+                                        </li>
+                                    <?php endforeach; ?>
+                                </ul>
+                                <div class="tab-content">
+                                    <?php foreach (['ru', 'en', 'am'] as $lang): ?>
+                                        <div class="tab-pane fade<?= $lang === 'ru' ? ' show active' : '' ?>" id="tab<?= $i ?>_<?= $lang ?>">
+                                            <div class="mb-2">
+                                                <label>Название (<?= strtoupper($lang) ?>)</label>
+                                                <input type="text" class="form-control" name="bank[baranches][<?= $key ?>][name][<?= $lang ?>]" value="<?= htmlspecialchars($branch['name'][$lang] ?? '') ?>">
+                                            </div>
+                                            <div class="mb-2">
+                                                <label>Адрес (<?= strtoupper($lang) ?>)</label>
+                                                <input type="text" class="form-control" name="bank[baranches][<?= $key ?>][address][<?= $lang ?>]" value="<?= htmlspecialchars($branch['address'][$lang] ?? '') ?>">
+                                            </div>
+                                            <div class="mb-2">
+                                                <label>Часы работы (<?= strtoupper($lang) ?>)</label>
+                                                <textarea class="form-control" name="bank[baranches][<?= $key ?>][hours][<?= $lang ?>]"><?= htmlspecialchars($branch['hours'][$lang] ?? '') ?></textarea>
+                                            </div>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                                <div class="mb-2">
+                                    <label>Телефоны</label>
+                                    <div class="row g-2">
+                                        <?php foreach ($branch['phones'] ?? [] as $p => $phone): ?>
+                                            <div class="col-md-6">
+                                                <input type="text" class="form-control" name="bank[baranches][<?= $key ?>][phones][<?= $p ?>][text]" placeholder="Номер" value="<?= htmlspecialchars($phone['text']) ?>">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <input type="text" class="form-control" name="bank[baranches][<?= $key ?>][phones][<?= $p ?>][href]" placeholder="tel:" value="<?= htmlspecialchars($phone['href']) ?>">
+                                            </div>
+                                        <?php endforeach; ?>
+                                    </div>
+                                </div>
+                                <div class="mb-2">
+                                    <label>Email</label>
+                                    <div class="row g-2">
+                                        <?php foreach ($branch['emails'] ?? [] as $e => $email): ?>
+                                            <div class="col-md-6">
+                                                <input type="text" class="form-control" name="bank[baranches][<?= $key ?>][emails][<?= $e ?>][text]" placeholder="Email" value="<?= htmlspecialchars($email['text']) ?>">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <input type="text" class="form-control" name="bank[baranches][<?= $key ?>][emails][<?= $e ?>][href]" placeholder="mailto:" value="<?= htmlspecialchars($email['href']) ?>">
+                                            </div>
+                                        <?php endforeach; ?>
+                                    </div>
+                                </div>
+                                <div class="mb-2">
+                                    <label>Официальные сайты</label>
+                                    <?php foreach ($branch['of_sites'] ?? [] as $s => $site): ?>
+                                        <input type="text" class="form-control mb-2" name="bank[baranches][<?= $key ?>][of_sites][<?= $s ?>]" value="<?= htmlspecialchars($site) ?>">
+                                    <?php endforeach; ?>
+                                </div>
+                                <div class="mb-2">
+                                    <label>Социальные сети</label>
+                                    <?php foreach ($branch['socials'] ?? [] as $j => $link): ?>
+                                        <input type="text" class="form-control mb-2" name="bank[baranches][<?= $key ?>][socials][<?= $j ?>]" value="<?= htmlspecialchars($link) ?>">
+                                    <?php endforeach; ?>
+                                </div>
+                                <div class="mb-2">
+                                    <label>Координаты</label>
+                                    <div class="row g-2">
+                                        <div class="col">
+                                            <input type="text" class="form-control" placeholder="Широта" name="bank[baranches][<?= $key ?>][latitude]" value="<?= htmlspecialchars($branch['latitude'] ?? '') ?>">
+                                        </div>
+                                        <div class="col">
+                                            <input type="text" class="form-control" placeholder="Долгота" name="bank[baranches][<?= $key ?>][longitude]" value="<?= htmlspecialchars($branch['longitude'] ?? '') ?>">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mb-2">
+                                    <label>Путь до изображения</label>
+                                    <input type="text" class="form-control" name="bank[baranches][<?= $key ?>][img]" value="<?= htmlspecialchars($branch['img'] ?? '') ?>">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <?php $i++; endforeach; ?>
+            </div>
+
+            <div class="text-end mt-4">
+                <button class="btn btn-primary">Сохранить</button>
             </div>
         </form>
     </div>
