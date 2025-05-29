@@ -1,5 +1,12 @@
 <section class="content">
     <div class="container">
+        <?php
+        $branches = $bankInfo['baranches'] ?? [];
+        $langCode = $lang->getLang() ?? 'ru';
+        $filteredBranches = array_filter($branches, function ($branch) use ($langCode) {
+            return isset($branch['name'][$langCode]) && isset($branch['address'][$langCode]);
+        });
+        ?>
         <div class="d-flex flex-column flex-lg-row align-items-start align-items-lg-center gap-3 gap-lg-4 mb-4">
             <div>
                 <a href="/"
@@ -11,52 +18,52 @@
                     <span class="ml-2"><?= $lang("Назад") ?></span>
                 </a>
             </div>
-            <h1 class="h4 m-0 fw-bold ml-4"><?= $lang("exchanger>{$bankInfo['name']}") ?></h1>
+            <h1 class="h4 m-0 fw-bold ml-4"><?= $bankInfo['name'][$lang->getLang()] ?></h1>
         </div>
         <div class="row">
             <div class="col-lg-9">
                 <div class="left-block tab def-box">
                     <?php
-                    $branches = $bankInfo['baranches'] ?? [];
-                    if (!empty($branches)):
+                    if (!empty($filteredBranches)):
                         ?>
                         <div class="accordion" id="branchAccordion">
-                            <?php foreach ($branches as $index => $branch): ?>
+                            <?php $i = 0;
+                            foreach ($filteredBranches as $key => $branch): ?>
                                 <?php
-                                $branchName = $branch['name'][$_SESSION['lang'] ?? 'ru'];
-                                $address = $branch['address'][$_SESSION['lang'] ?? 'ru'] ?? '-';
+                                $branchName = $branch['name'][$langCode] ?? array_values($branch['name'])[0] ?? '';
+                                $address = $branch['address'][$langCode] ?? array_values($branch['address'])[0] ?? '-';
+                                $hours = $branch['hours'][$langCode] ?? array_values($branch['hours'])[0] ?? '-';
+                                $hoursRaw = trim($hours);
                                 $escapedAddress = htmlspecialchars($address, ENT_QUOTES);
                                 $phones = $branch['phones'];
                                 $emails = $branch['emails'];
+                                $licenses = $branch['license'];
                                 $of_sites = $branch['of_sites'];
                                 $socials = $branch['socials'];
-                                $licenses = $branch['license'];
-                                $hoursRaw = $branch['hours'] ?? '';
-                                $hoursRaw = trim($hoursRaw);
-                                $imagePath = "img/logos/{$id}.webp";
-                                $imageSrc = file_exists($imagePath) ? $imagePath : "img/logos/undefined.svg";
+                                $collapseId = 'collapse' . $i;
+                                $headingId = 'heading' . $i;
                                 ?>
                                 <div class="accordion-item mb-3">
-                                    <h2 class="accordion-header" id="heading<?= $index ?>">
-                                        <button class="accordion-button button-transparent<?= $index > 0 ? ' collapsed' : '' ?>"
+                                    <h2 class="accordion-header" id="<?= $headingId ?>">
+                                        <button class="accordion-button button-transparent<?= $i > 0 ? ' collapsed' : '' ?>"
                                                 type="button"
-                                                data-bs-toggle="collapse" data-bs-target="#collapse<?= $index ?>"
-                                                aria-expanded="<?= $index === 0 ? 'true' : 'false' ?>"
-                                                aria-controls="collapse<?= $index ?>">
+                                                data-bs-toggle="collapse" data-bs-target="#<?= $collapseId ?>"
+                                                aria-expanded="<?= $i === 0 ? 'true' : 'false' ?>"
+                                                aria-controls="<?= $collapseId ?>">
                                             <span class="accordion-header-text"><?= $branchName ?></span>
                                         </button>
                                     </h2>
-                                    <div id="collapse<?= $index ?>"
-                                         class="accordion-collapse collapse <?= $index === 0 ? 'show' : '' ?>"
-                                         aria-labelledby="heading<?= $index ?>" data-bs-parent="#branchAccordion">
+                                    <div id="<?= $collapseId ?>"
+                                         class="accordion-collapse collapse <?= $i === 0 ? 'show' : '' ?>"
+                                         aria-labelledby="<?= $headingId ?>" data-bs-parent="#branchAccordion">
                                         <div class="accordion-body">
                                             <div class="row justify-content-between flex-wrap gap-3">
-                                                <div class="col background-gray p-4 d-flex">
+                                                <div class="col background-gray p-4">
                                                     <div class="d-flex gap-4 flex-column">
                                                         <div class="d-flex flex-row gap-3 align-items-center">
-                                                            <img src="<?= $imageSrc ?>"
+                                                            <img src="img/logos/<?= $id ?>.webp"
                                                                  alt="<?= $branchName ?>"
-                                                                 style="width: 54px; height: 54px;"
+                                                                 style="width: 64px; height: 64px;"
                                                                  class="rounded-3">
                                                             <div class="d-flex flex-column gap-2 align-items-center">
                                                                 <span class="name-branch"><?= $branchName ?></span>
@@ -115,9 +122,9 @@
                                                                     </svg>
                                                                     <span class="branches-of_site"><?= $of_site ?></span></a>
                                                             <?php endforeach; ?>
-                                                            <?php if (!empty($socials)): ?>
+                                                            <?php if (!empty($branch['socials'])): ?>
                                                                 <div class="d-flex align-items-center justify-content-start gap-3 mt-3">
-                                                                    <?php foreach ($socials as $social): ?>
+                                                                    <?php foreach ($branch['socials'] as $social): ?>
                                                                         <?php
                                                                         $icon = '';
                                                                         switch (true) {
@@ -168,7 +175,9 @@
                                                             <span class="name-branch"><?= $lang("Рабочие часы") ?></span>
                                                         </div>
                                                         <?php if ($hoursRaw): ?>
-                                                            <?php if (mb_stripos($hoursRaw, 'круглосуточно') !== false): ?>
+                                                            <?php if (mb_stripos($hoursRaw, 'круглосуточно') !== false ||
+                                                                mb_stripos($hoursRaw, 'around') !== false ||
+                                                                mb_stripos($hoursRaw, 'շուրջօրյա') !== false): ?>
                                                                 <span class="d-flex align-items-center justify-content-between">
                                                                     <span class="font-bold"><?= $lang("Работает круглосуточно") ?></span>
                                                                 </span>
@@ -179,9 +188,7 @@
                                                                     foreach ($hoursLines as $line):
                                                                         $line = trim($line);
                                                                         if (empty($line)) continue;
-
-                                                                        // Извлекаем день и время (ищем первую цифру)
-                                                                        preg_match('/^(.+?)(\d{2}:\d{2}.*|Закрыто)$/u', $line, $matches);
+                                                                        preg_match('/^(.+?)\s*(\d{2}:\d{2}.*|Закрыто|Closed|Փակ է)$/u', $line, $matches);
                                                                         $day = $matches[1] ?? $line;
                                                                         $time = $matches[2] ?? '—';
                                                                         ?>
@@ -202,14 +209,15 @@
                                                 <div class="col-md-12 background-gray p-4">
                                                     <div id="yandex-map-<?= md5($address) ?>"
                                                          data-address="<?= htmlspecialchars($address, ENT_QUOTES) ?>"
-                                                        <?php if ($index === 0) echo 'data-initial="true"'; ?>
-                                                         style="width: 100%; height: 400px;"></div>
+                                                        <?= $i === 0 ? 'data-initial="true"' : '' ?>
+                                                         style="width: 100%; height: 400px;">
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                            <?php endforeach; ?>
+                                <?php $i++; endforeach; ?>
                         </div>
                     <?php else: ?>
                         <p><?= $lang("Информация об отделениях не найдена") ?>.</p>
@@ -259,62 +267,47 @@
 </section>
 
 <script>
-    let maps = {};
-
     ymaps.ready(function () {
-        const mapContainers = document.querySelectorAll('[id^="yandex-map"]');
+        let maps = {};
 
-        // Инициализируем сразу первую карту
-        mapContainers.forEach(mapContainer => {
+        const initMap = (mapContainer) => {
             const address = mapContainer.getAttribute('data-address');
-            const isInitial = mapContainer.getAttribute('data-initial');
-            if (isInitial && address && !maps[address]) {
-                ymaps.geocode(address).then(function (res) {
-                    const coords = res.geoObjects.get(0).geometry.getCoordinates();
-                    const map = new ymaps.Map(mapContainer.id, {
-                        center: coords,
-                        zoom: 16,
-                        controls: ['zoomControl', 'fullscreenControl']
-                    });
-                    const placemark = new ymaps.Placemark(coords, {
-                        balloonContent: address
-                    }, {
-                        preset: 'islands#darkBlueDotIcon'
-                    });
-                    map.geoObjects.add(placemark);
-                    maps[address] = map;
-                }, function (err) {
-                    console.error('Ошибка геокодирования:', err);
+            if (!address || maps[address]) return;
+
+            ymaps.geocode(address).then(function (res) {
+                const coords = res.geoObjects.get(0).geometry.getCoordinates();
+                const map = new ymaps.Map(mapContainer.id, {
+                    center: coords,
+                    zoom: 16,
+                    controls: ['zoomControl', 'fullscreenControl']
                 });
+                const placemark = new ymaps.Placemark(coords, {
+                    balloonContent: address
+                }, {
+                    preset: 'islands#orangeDotIcon'
+                });
+                map.geoObjects.add(placemark);
+                maps[address] = map;
+            }, function (err) {
+                console.error('Ошибка геокодирования:', err);
+            });
+        };
+
+        // Инициализация первой (открытой) карты — с отложенным запуском
+        setTimeout(() => {
+            const initialMap = document.querySelector('[data-initial="true"]');
+            if (initialMap) {
+                initMap(initialMap);
             }
-        });
+        }, 300); // можно увеличить до 500–800 мс при медленных анимациях
 
-        // Отложенная инициализация остальных
+        // Инициализация при открытии аккордеона
         const accordions = document.querySelectorAll('.accordion-collapse');
-
         accordions.forEach(acc => {
             acc.addEventListener('show.bs.collapse', function () {
                 const mapContainer = acc.querySelector('[id^="yandex-map"]');
-                const address = mapContainer?.getAttribute('data-address');
-
-                if (mapContainer && address && !maps[address]) {
-                    ymaps.geocode(address).then(function (res) {
-                        const coords = res.geoObjects.get(0).geometry.getCoordinates();
-                        const map = new ymaps.Map(mapContainer.id, {
-                            center: coords,
-                            zoom: 16,
-                            controls: ['zoomControl', 'fullscreenControl']
-                        });
-                        const placemark = new ymaps.Placemark(coords, {
-                            balloonContent: address
-                        }, {
-                            preset: 'islands#orangeDotIcon'
-                        });
-                        map.geoObjects.add(placemark);
-                        maps[address] = map;
-                    }, function (err) {
-                        console.error('Ошибка геокодирования:', err);
-                    });
+                if (mapContainer) {
+                    initMap(mapContainer);
                 }
             });
 

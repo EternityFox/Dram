@@ -29,6 +29,7 @@ $symbolPack = [
 $symbolAliases = ['RUR' => 'RUB'];
 $symbolAmt = ['JPY' => 10];
 $langs = ['en', 'am'];
+$languages = ['en', 'am', 'ru'];
 
 $pages = [
     'banks' => [
@@ -137,77 +138,70 @@ foreach ($pages as $path => $info) {
             $local['upd_noncash'] = $data['date'];
             $local['upd_card'] = $data['date'];
         }
-        if ($info['is_bank']) {
-            try {
-                $bankHtml = $rateam->loadInfoPage($info['info'], $data['slug']);
+        try {
+            if ($info['is_bank']) {
+                $target =& $banks;
+            } else {
+                $target =& $exchangers_array;
+            }
+            if (!empty($target[$local['id']]['manual'])) {
+                echo "→ Пропущена перезапись вручную изменённых данных ID {$local['id']}\r\n";
+                continue;
+            }
+
+            if (!isset($target[$local['id']])) {
+                $target[$local['id']] = [
+                    'name' => [],
+                    'baranches' => []
+                ];
+            }
+
+            foreach ($languages as $lang) {
+                $html = $rateam->loadInfoPage($info['info'], rawurlencode($data['slug']), $lang === 'am' ? 'hy' : $lang);
                 $parsedData = $rateam->takeInfoList($local['id']);
 
-                if (!isset($parsedData['name']) || !is_array($parsedData['baranches']) || count($parsedData['baranches']) === 0) {
-                    throw new Exception('Некорректные или пустые данные при парсинге');
+                if (
+                    !isset($parsedData['name']) ||
+                    !is_array($parsedData['baranches']) ||
+                    count($parsedData['baranches']) === 0
+                ) {
+                    throw new Exception("Некорректные или пустые данные при парсинге ({$lang})");
                 }
 
-                $makeLang = fn(string $value) => ['ru' => $value, 'en' => $value, 'am' => $value];
+                $target[$local['id']]['name'][$lang] = $parsedData['name'];
 
-                $banks[$local['id']] = [
-                    'name' => $parsedData['name'],
-                    'baranches' => [],
-                ];
+                foreach ($parsedData['baranches'] as $branchId => $branch) {
+                    if (!isset($target[$local['id']]['baranches'][$branchId])) {
+                        $target[$local['id']]['baranches'][$branchId] = [
+                            'name' => [],
+                            'address' => [],
+                            'hours' => [],
+                            'phones' => $branch['phones'] ?? [],
+                            'emails' => $branch['emails'] ?? [],
+                            'of_sites' => $branch['of_sites'] ?? [],
+                            'socials' => $branch['socials'] ?? [],
+                            'latitude' => $branch['latitude'] ?? '',
+                            'longitude' => $branch['longitude'] ?? '',
+                            'img' => $branch['img'] ?? ''
+                        ];
 
-                foreach ($parsedData['baranches'] as $branch) {
-                    $banks[$local['id']]['baranches'][] = [
-                        'name' => $makeLang($branch['name']),
-                        'address' => $makeLang($branch['address']),
-                        'phones' => $branch['phones'],
-                        'emails' => $branch['emails'],
-                        'of_sites' => $branch['of_sites'],
-                        'socials' => $branch['socials'],
-                        'hours' => $branch['hours'],
-                        'latitude' => $branch['latitude'],
-                        'longitude' => $branch['longitude'],
-                        'img' => $branch['img'],
-                    ];
+                        if (!$info['is_bank']) {
+                            $target[$local['id']]['baranches'][$branchId]['license'] = $branch['license'] ?? '';
+                        }
+                    }
+
+                    $target[$local['id']]['baranches'][$branchId]['name'][$lang] = $branch['name'];
+                    $target[$local['id']]['baranches'][$branchId]['address'][$lang] = $branch['address'];
+                    $target[$local['id']]['baranches'][$branchId]['hours'][$lang] = $branch['hours'];
                 }
-                echo "✓ Сохранены данные банка ID {$local['id']} - {$parsedData['name']}\r\n";
-
-            } catch (Throwable $e) {
-                echo "× Ошибка парсинга страницы банка: {$raid} — {$e->getMessage()}\r\n";
             }
-        } else {
-            try {
-                $bankHtml = $rateam->loadInfoPage($info['info'], rawurlencode($data['slug']));
-                $parsedData = $rateam->takeInfoList($local['id']);
 
-                if (!isset($parsedData['name']) || !is_array($parsedData['baranches']) || count($parsedData['baranches']) === 0) {
-                    throw new Exception('Некорректные или пустые данные при парсинге');
-                }
+            $name = $target[$local['id']]['name']['ru'] ?? 'Без имени';
+            echo "✓ Сохранены данные " . ($info['is_bank'] ? 'банка' : 'обменника') . " ID {$local['id']} - {$name}\r\n";
 
-                $makeLang = fn(string $value) => ['ru' => $value, 'en' => $value, 'am' => $value];
 
-                $exchangers_array[$local['id']] = [
-                    'name' => $parsedData['name'],
-                    'baranches' => [],
-                ];
-
-                foreach ($parsedData['baranches'] as $branch) {
-                    $exchangers_array[$local['id']]['baranches'][] = [
-                        'name' => $makeLang($branch['name']),
-                        'address' => $makeLang($branch['address']),
-                        'phones' => $branch['phones'],
-                        'emails' => $branch['emails'],
-                        'of_sites' => $branch['of_sites'],
-                        'socials' => $branch['socials'],
-                        'license' => $branch['license'],
-                        'hours' => $branch['hours'],
-                        'latitude' => $branch['latitude'],
-                        'longitude' => $branch['longitude'],
-                        'img' => $branch['img'],
-                    ];
-                }
-                echo "✓ Сохранены данные обменника ID {$local['id']} - {$parsedData['name']}\r\n";
-
-            } catch (Throwable $e) {
-                echo "× Ошибка парсинга страницы обменника: {$raid} — {$e->getMessage()}\r\n";
-            }
+        } catch (Throwable $e) {
+            echo "× Ошибка парсинга страницы " . ($info['is_bank'] ? 'банка' : 'обменника') . ": {$raid} — {$e->getMessage()}\r\n";
         }
 
         if (

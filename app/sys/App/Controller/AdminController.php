@@ -249,46 +249,9 @@ class AdminController extends Controller
         $banks = unserialize(file_get_contents(__DIR__ . '/../../../storage/bank_info_pure.txt'));
 
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-//            echo "<pre>";
-//            print_r($_POST);
-//            echo "</pre>";
-
             $bank = $_POST['bank'];
-
-            $branches = [];
-
-            foreach ($bank['baranches']['name']['ru'] as $key => $name) {
-                $branches[] = [
-//                    'name' => $name,
-//                    'address' => $bank['baranches']['address'][$key],
-//                    'phone' => $bank['baranches']['phone'][$key],
-                    'name' => [
-                        'ru' => $name,
-                        'en' => $bank['baranches']['name']['en'][$key],
-                        'am' => $bank['baranches']['name']['am'][$key]
-                    ],
-                    'address' => [
-                        'ru' => $bank['baranches']['address']['ru'][$key],
-                        'en' => $bank['baranches']['address']['en'][$key],
-                        'am' => $bank['baranches']['address']['am'][$key]
-                    ],
-                    'phone' => [
-                        'ru' => $bank['baranches']['phone']['ru'][$key],
-                        'en' => $bank['baranches']['phone']['en'][$key],
-                        'am' => $bank['baranches']['phone']['am'][$key]
-                    ],
-                ];
-            }
-
-            $bank['baranches'] = $branches;
-            $bank['name'] = $banks[$id]['name'];
-
-//            echo "<pre>";
-//            print_r($bank);
-//            echo "</pre>";
-//
-//            die(__FILE__ . ': ' . __LINE__);
-
+            //$bank['name'] = $banks[$id]['name']; // не даём перезаписать название вручную (если не хочешь — убери эту строку)
+            $bank['manual'] = true;
             $banks[$id] = $bank;
 
             file_put_contents(__DIR__ . '/../../../storage/bank_info_pure.txt', serialize($banks));
@@ -301,25 +264,8 @@ class AdminController extends Controller
         $menuLeft = include_once(__DIR__ . '/../../../storage/menu/left.php');
 
         $menu['left']['hidden'] = $menuLeft['hidden'];
-
         unset($menuLeft['hidden']);
-
         $menu['left']['basic'] = $menuLeft;
-
-//        echo "<pre>";
-//        print_r($banks);
-//        echo "</pre>";
-//
-//        die(__FILE__ . ': ' . __LINE__);
-
-//        foreach ($banks as $i => $bank) {
-//            $banks[$i]['head_office'] = trim(str_replace(['<td> ', ' </td>'], ' ', $bank['head_office']));
-//            $banks[$i]['phone'] = trim(str_replace(['<td> ', ' </td>'], ' ', $bank['phone']));
-//            $banks[$i]['fax'] = trim(str_replace(['<td> ', ' </td>'], ' ', $bank['fax']));
-//            $banks[$i]['url'] = trim(str_replace(['<td> ', ' </td>'], ' ', $bank['url']));
-//        }
-//
-//        file_put_contents(__DIR__ . '/../../../storage/bank_info_pure.txt', serialize($banks));
 
         return [
             'site/admin_bank',
@@ -349,52 +295,16 @@ class AdminController extends Controller
             return false;
         }
 
-        $banks = unserialize(file_get_contents(__DIR__ . '/../../../storage/exchanger_info_pure.txt'));
+        $exchangers = unserialize(file_get_contents(__DIR__ . '/../../../storage/exchanger_info_pure.txt'));
 
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-//            echo "<pre>";
-//            print_r($_POST);
-//            echo "</pre>";
+            $exchanger = $_POST['exchanger'];
+            $bank['manual'] = true;
+            //$exchanger['name'] = $exchangers[$id]['name']; // можно убрать, если редактирование имени нужно
 
-            $bank = $_POST['bank'];
+            $exchangers[$id] = $exchanger;
 
-            $branches = [];
-
-            foreach ($bank['baranches']['name']['ru'] as $key => $name) {
-                $branches[] = [
-//                    'name' => $name,
-//                    'address' => $bank['baranches']['address'][$key],
-//                    'phone' => $bank['baranches']['phone'][$key],
-                    'name' => [
-                        'ru' => $name,
-                        'en' => $bank['baranches']['name']['en'][$key],
-                        'am' => $bank['baranches']['name']['am'][$key]
-                    ],
-                    'address' => [
-                        'ru' => $bank['baranches']['address']['ru'][$key],
-                        'en' => $bank['baranches']['address']['en'][$key],
-                        'am' => $bank['baranches']['address']['am'][$key]
-                    ],
-                    'phone' => [
-                        'ru' => $bank['baranches']['phone']['ru'][$key],
-                        'en' => $bank['baranches']['phone']['en'][$key],
-                        'am' => $bank['baranches']['phone']['am'][$key]
-                    ],
-                ];
-            }
-
-            $bank['baranches'] = $branches;
-            $bank['name'] = $banks[$id]['name'];
-
-//            echo "<pre>";
-//            print_r($bank);
-//            echo "</pre>";
-
-//            die(__FILE__ . ': ' . __LINE__);
-
-            $banks[$id] = $bank;
-
-            file_put_contents(__DIR__ . '/../../../storage/exchanger_info_pure.txt', serialize($banks));
+            file_put_contents(__DIR__ . '/../../../storage/exchanger_info_pure.txt', serialize($exchangers));
         }
 
         $settings['menu']['top'] = file_get_contents(__DIR__ . '/../../../storage/menu/top.php');
@@ -404,41 +314,19 @@ class AdminController extends Controller
         $menuLeft = include_once(__DIR__ . '/../../../storage/menu/left.php');
 
         $menu['left']['hidden'] = $menuLeft['hidden'];
-
         unset($menuLeft['hidden']);
-
         $menu['left']['basic'] = $menuLeft;
-
-//        echo "<pre>";
-//        print_r($banks);
-//        echo "</pre>";
-//
-//        die(__FILE__ . ': ' . __LINE__);
-
-//        foreach ($banks as $i => $bank) {
-//            $banks[$i]['head_office'] = trim(str_replace(['<td> ', ' </td>'], ' ', $bank['head_office']));
-//            $banks[$i]['phone'] = trim(str_replace(['<td> ', ' </td>'], ' ', $bank['phone']));
-//            $banks[$i]['fax'] = trim(str_replace(['<td> ', ' </td>'], ' ', $bank['fax']));
-//            $banks[$i]['url'] = trim(str_replace(['<td> ', ' </td>'], ' ', $bank['url']));
-//        }
-//
-//        file_put_contents(__DIR__ . '/../../../storage/exchanger_info_pure.txt', serialize($banks));
-
-        if (empty($banks[$id])) {
-            $banks[$id] = [
-                'name' => '',
-            ];
-        }
 
         return [
             'site/admin_exchanger',
             [
                 'settings' => $settings,
                 'menu' => $menu,
-                'bank' => $banks[$id],
+                'exchanger' => $exchangers[$id],
             ]
         ];
     }
+
 
     protected function actionLogin()
     {

@@ -739,7 +739,7 @@
                         <div class="mb-2">
                             <?= $num ?>. <img src="img/exchanger/<?= $bank['raid'] ?>.png" alt=""
                                               style="width: 32px; height: 16px;">
-                            <a href="/admin/bank/<?= $id ?>"><?= $bank['name'] ?></a>
+                            <a href="/admin/bank/<?= $id ?>"><?= $bank['name']['ru'] ?></a>
                         </div>
                         <?php $num++; ?>
                     <?php endforeach; ?>
@@ -759,7 +759,7 @@
                         <div class="mb-2">
                             <?= $num ?>. <img src="img/exchanger/<?= $bank['raid'] ?>.png" alt=""
                                               style="width: 32px; height: 16px;">
-                            <a href="/admin/exchanger/<?= $id ?>"><?= $bank['name'] ?></a>
+                            <a href="/admin/exchanger/<?= $id ?>"><?= $bank['name']['ru'] ?></a>
                         </div>
                         <?php $num++; ?>
                     <?php endforeach; ?>
