@@ -29,10 +29,10 @@ return [
             ['Мобильная связь', '/', 'menu/m-icon-ten.png'],
         ],
         'MainTable' => [
-            'baseSymbols' => ['USD', 'EUR', 'RUB', 'GBP'],
-            'allSymbols' => ['USD', 'EUR', 'RUB', 'GBP', 'GEL', 'CHF', 'CAD', 'AED', 'CNY', 'AUD', 'JPY', 'SEK'],
+            'baseSymbols' => ['RUB', 'USD', 'EUR', 'GBP', 'GEL'],
+            'allSymbols' => ['RUB', 'USD', 'EUR', 'GBP', 'CHF', 'CAD', 'AED', 'CNY', 'AUD', 'JPY', 'SEK'],
             'actualSec' => 3600,
-            'removeSec' => 86400*7
+            'removeSec' => 86400 * 7
         ],
         'BestExchangers' => [
             'symbols' => ['USD', 'EUR', 'RUB', 'GBP', 'GEL']
@@ -54,10 +54,10 @@ return [
         'AUD' => '&#1423;',
         'JPY' => '&#1423;',
         'SEK' => '&#1423;',
-        
+
         'RUB USD' => 'ք',
         'RUB EUR' => 'ք',
-        
+
         'BTC' => '$',
         'ETH' => '$',
         'USDT' => '$',
@@ -73,7 +73,7 @@ return [
         'AVAX' => '$',
         'HIT' => '$',
         'MATIC' => '$',
-        
+
         'Gold' => '&#1423;'
     ]
 ];

@@ -162,7 +162,7 @@
                             <?php foreach ($languages as $lng => $lngFull): ?>
                                 <a href="<?= $lng ?>" class="header-lang-block-item">
                                 <span class="header-lang-block-item-icon">
-                                    <img src="img/lang/<?= $lng ?>.png" alt="<?= $lng ?>">
+                                    <img src="img/lang/<?= $lng ?>.svg" alt="<?= $lng ?>">
                                 </span>
                                     <span class="header-lang-block-item-text">
                                 <?= $lngFull ?>

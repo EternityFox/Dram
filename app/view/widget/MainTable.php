@@ -43,8 +43,8 @@ $etNames = ['cash' => 'Наличный', 'noncash' => 'Безналичный',
                             <?= $lang($etNames[$exchangeType]) ?>
                         </span>
                         <div class="table-point-item-icon">
-                            <img src="img/point-gray.png" alt="">
-                            <img src="img/point-white.png" alt="">
+                            <img src="img/point-gray.svg" alt="">
+                            <img src="img/point-white.svg" alt="">
                         </div>
                     </div>
 
@@ -78,8 +78,8 @@ $etNames = ['cash' => 'Наличный', 'noncash' => 'Безналичный',
                             <?= $lang($ctNames[$courseType]) ?>
                         </span>
                         <div class="table-point-item-icon">
-                            <img src="img/point-gray.png" alt="">
-                            <img src="img/point-white.png" alt="">
+                            <img src="img/point-gray.svg" alt="">
+                            <img src="img/point-white.svg" alt="">
                         </div>
                     </div>
                     <div class="table-point-item-list">

@@ -208,11 +208,11 @@ class MainTable extends Widget
                 }
             }
         }
-        if (!$isMobile && 4 !== count($symbols)) {
+        if (!$isMobile && 5 !== count($symbols)) {
             foreach ($this->config('baseSymbols') as $name) {
                 if (!in_array($name, $symbols)) {
                     $symbols[] = $name;
-                    if (4 === count($symbols)) {
+                    if (5 === count($symbols)) {
                         break;
                     }
                 }
