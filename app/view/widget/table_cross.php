@@ -1,13 +1,13 @@
 <?php
-    $tableNames = ['Банки', 'Обменники', 'Обменники (Уст.)'];
-    $showHeaders = true;
+$tableNames = ['Банки', 'Обменники', 'Обменники (Уст.)'];
+$showHeaders = true;
 ?>
 <div class="table-all d-flex flex-row">
     <div class="bank-info-all-item">
         <?php foreach ($table as $tableNum => $data): ?>
-            <div class="bank-names-col p-0<?= (2 == $tableNum ?' gray-bank' :'') ?>">
+            <div class="bank-names-col p-0<?= (2 == $tableNum ? ' gray-bank' : '') ?>">
                 <div class="table-row active table-bg">
-                    <div class="table-item one head<?= (2 == $tableNum ?'' :' active') ?>">
+                    <div class="table-item one head<?= (2 == $tableNum ? '' : ' active') ?>">
                         <div class="table-item-arrow">
                             <img src="img/table-arrow.png" alt="">
                         </div>
@@ -17,8 +17,9 @@
                         </div>
                     </div>
                 </div>
-                <?php $i = 0; foreach ($data as $exch): ?>
-                    <div class="table-row<?= (2 == $tableNum ?'' :' active') ?>">
+                <?php $i = 0;
+                foreach ($data as $exch): ?>
+                    <div class="table-row<?= (2 == $tableNum ? '' : ' active') ?>">
                         <div class="table-item one">
                             <div class="table-item-number">
                                 <?= ++$i ?>
@@ -54,7 +55,9 @@
                                 <div class="table-entry-item-input">
                                     <span class="table-entry-item-input-placeholder"></span>
                                     <input type="number" value="1"
-                                           data-symbol-num="<?= $i ?>" id="ursuminput" <?php if (0 === $i) { echo 'class="hovered-input"'; }; ?>>
+                                           data-symbol-num="<?= $i ?>" id="ursuminput" <?php if (0 === $i) {
+                                        echo 'class="hovered-input"';
+                                    }; ?>>
                                     <div class="table-entry-item-input-clear d-none">
                                         <img src="img/clear.svg" alt="">
                                     </div>
@@ -89,9 +92,9 @@
                                     </div>
                                 </div>
                                 <?php
-                                    $classMap = [['four', 'five'], ['six', 'seven'], ['eight', 'nine'], ['ten', 'eleven']];
-                                    $currentClass = $classMap[$i][0];
-                                    $nextClass = $classMap[$i][1];
+                                $classMap = [['four', 'five'], ['six', 'seven'], ['eight', 'nine'], ['ten', 'eleven'], ['twelve', 'thirteen'], ['fourteen', 'fifteen'], ['sixteen', 'seventeen'], ['eighteen', 'nineteen'], ['twenty', 'twenty_one'], ['twenty_two', 'twenty_three'], ['twenty_four', 'twenty_five']];
+                                $currentClass = $classMap[$i][0];
+                                $nextClass = $classMap[$i][1];
                                 ?>
                                 <div class="table-items">
                                     <div class="table-item <?= $currentClass ?>"<?= ($showHeaders ? ' data-sort="' . $currentClass . '"' : '') ?>>
@@ -113,12 +116,12 @@
         </div>
         <div class="banks-info scrollable-row p-0">
             <?php foreach ($table as $tableNum => $data): ?>
-                <div class="bank-value<?= (2 == $tableNum ?' gray-bank' :'') ?>">
+                <div class="bank-value<?= (2 == $tableNum ? ' gray-bank' : '') ?>">
                     <?php if ($tableNum != 0): ?>
                         <div class="table-row active items-head">
                             <?php foreach ($activeSymbols as $i => $symbol): ?>
                                 <?php
-                                $classMap = [['four', 'five'], ['six', 'seven'], ['eight', 'nine'], ['ten', 'eleven']];
+                                $classMap = [['four', 'five'], ['six', 'seven'], ['eight', 'nine'], ['ten', 'eleven'], ['twelve', 'thirteen'], ['fourteen', 'fifteen'], ['sixteen', 'seventeen'], ['eighteen', 'nineteen'], ['twenty', 'twenty_one'], ['twenty_two', 'twenty_three'], ['twenty_four', 'twenty_five']];
                                 $currentClass = $classMap[$i][0];
                                 $nextClass = $classMap[$i][1];
                                 ?>
@@ -137,10 +140,11 @@
                             <?php endforeach ?>
                         </div>
                     <?php endif; ?>
-                    <?php $i = 0; foreach ($data as $exch): ?>
-                        <div class="table-row<?= (2 == $tableNum ?'' :' active') ?> table-items-row">
+                    <?php $i = 0;
+                    foreach ($data as $exch): ?>
+                        <div class="table-row<?= (2 == $tableNum ? '' : ' active') ?> table-items-row">
                             <?php $num = 0 ?>
-                            <?php $nums = [['four', 'five'], ['six', 'seven'], ['eight', 'nine'], ['ten', 'eleven']] ?>
+                            <?php $nums = [['four', 'five'], ['six', 'seven'], ['eight', 'nine'], ['ten', 'eleven'], ['twelve', 'thirteen'],['fourteen','fifteen'],['sixteen','seventeen'],['eighteen','nineteen'],['twenty','twenty_one'],['twenty_two','twenty_three'],['twenty_four','twenty_five']] ?>
                             <?php foreach ($activeSymbols as $i => $symbol): ?>
                                 <div class="table-items">
                                     <div class="table-item <?= $nums[$num][0] ?>">

@@ -4,7 +4,7 @@ let Table = {
         normal: [[4, 12], [6, 11], [7, 9], [10, 8]],
         bold: [[5, 14], [6, 13], [6, 11], [7, 8]]
     },
-    symbolColumns: [['four', 'five'], ['six', 'seven'], ['eight', 'nine'], ['ten', 'eleven']],
+    symbolColumns: [['four', 'five'], ['six', 'seven'], ['eight', 'nine'], ['ten', 'eleven'], ['twelve', 'thirteen'], ['fourteen', 'fifteen'], ['sixteen', 'seventeen'], ['eighteen', 'nineteen'], ['twenty', 'twenty_one'], ['twenty_two', 'twenty_three'], ['twenty_four', 'twenty_five']],
     inverseSorting: ['four', 'six', 'eight', 'ten'],
     sortedBy: 'zerofalse',
     disabled: true,

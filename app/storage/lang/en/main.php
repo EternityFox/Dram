@@ -82,7 +82,6 @@ return [
     'Конвертер валют' => 'Currency Converter',
     'Наличные' => 'Cash',
     'Безналичные' => 'Non-cash',
-    'Карты' => 'Cards',
     'У меня есть' => 'I Have',
     'Получу' => 'I Will Get',
     'Евро' => 'Euro',
@@ -92,8 +91,8 @@ return [
     'Австралийский доллар' => 'Australian Dollar',
     'Японская йена' => 'Japanese Yen',
     'Лучший курс' => 'Best Rate',
-    'Банки' => 'Banks',
     'Обменные пункты' => 'Exchange Offices',
+    'Обменные курсы' => 'Exchange rates',
 
 
 
