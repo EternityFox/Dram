@@ -22,7 +22,7 @@
                             ? [' red', $data['diff']]
                             : [' green', "+{$data['diff']}"];
                     ?>
-                    <div class="tab-course exchange-course-inner-item<?= $active ? ' active' : '' ?><?= $num > 6 ? ' last-item' : '' ?>" data-currency="<?= $data['symbol'] ?>" data-price="<?= $data['price'] ?>">
+                    <div class="tab-course exchange-course-inner-item<?= $active ? ' active' : '' ?><?= $num > 6 ? ' last-item last-active' : '' ?>" data-currency="<?= $data['symbol'] ?>" data-price="<?= $data['price'] ?>">
                         <div class="tab-inner-icon">
                             <img src="<?= App::$url ?>/img/currency/<?= $data['symbol'] ?>.svg" alt="">
                         </div>
@@ -46,11 +46,11 @@
                     <?php $active = false; ?>
                 <?php endforeach ?>
             </div>
-            <div class="exchange-course-btn">
-                <div class="exchange-course-btn-title">
+            <div class="exchange-course-btn active">
+                <div class="exchange-course-btn-title d-none">
                     <?= $lang('Показать всё') ?>
                 </div>
-                <div class="exchange-course-btn-title d-none">
+                <div class="exchange-course-btn-title">
                     <?= $lang('Скрыть') ?>
                 </div>
                 <div class="exchange-course-btn-icon">

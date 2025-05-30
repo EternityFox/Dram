@@ -1,6 +1,7 @@
 <?php declare(strict_types=1);
 
 namespace App\Model;
+
 use Core\Model;
 
 /**
@@ -44,7 +45,7 @@ class Currency extends Model
     public function getImage(): string
     {
         return $this->img
-            ?: ($this->symbol . (2 === $this->type ? '.svg' : '.png'));
+            ?: ($this->symbol . (2 === $this->type ? '.svg' : (1 === $this->type ? '.svg' : '.png')));
     }
 
     /**
