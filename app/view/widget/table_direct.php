@@ -93,7 +93,7 @@ $showHeaders = true;
                                     </div>
                                 </div>
                                 <?php
-                                $classMap = [['four', 'five'], ['six', 'seven'], ['eight', 'nine'], ['ten', 'eleven']];
+                                $classMap = [['four', 'five'], ['six', 'seven'], ['eight', 'nine'], ['ten', 'eleven'], ['twelve', 'thirteen'],['fourteen','fifteen'],['sixteen','seventeen'],['eighteen','nineteen'],['twenty','twenty_one'],['twenty_two','twenty_three'],['twenty_four','twenty_five']];
                                 $currentClass = $classMap[$i][0];
                                 $nextClass = $classMap[$i][1];
                                 ?>
@@ -122,7 +122,7 @@ $showHeaders = true;
                         <div class="table-row active items-head">
                             <?php foreach ($activeSymbols as $i => $symbol): ?>
                                 <?php
-                                $classMap = [['four', 'five'], ['six', 'seven'], ['eight', 'nine'], ['ten', 'eleven']];
+                                $classMap = [['four', 'five'], ['six', 'seven'], ['eight', 'nine'], ['ten', 'eleven'], ['twelve', 'thirteen'],['fourteen','fifteen'],['sixteen','seventeen'],['eighteen','nineteen'],['twenty','twenty_one'],['twenty_two','twenty_three'],['twenty_four','twenty_five']];
                                 $currentClass = $classMap[$i][0];
                                 $nextClass = $classMap[$i][1];
                                 ?>
@@ -145,7 +145,7 @@ $showHeaders = true;
                     foreach ($data as $exch): ?>
                         <div class="table-row<?= (2 == $tableNum ? '' : ' active') ?> table-items-row">
                             <?php $num = 0 ?>
-                            <?php $nums = [['four', 'five'], ['six', 'seven'], ['eight', 'nine'], ['ten', 'eleven']] ?>
+                            <?php $nums = [['four', 'five'], ['six', 'seven'], ['eight', 'nine'], ['ten', 'eleven'], ['twelve', 'thirteen'], ['fourteen', 'fifteen'], ['sixteen', 'seventeen'], ['eighteen', 'nineteen'], ['twenty', 'twenty_one'], ['twenty_two', 'twenty_three'], ['twenty_four', 'twenty_five']] ?>
                             <?php foreach ($activeSymbols as $symbol): ?>
                                 <div class="table-items">
                                     <div class="table-item <?= $nums[$num][0] ?>">

@@ -227,7 +227,7 @@ section {
 }
 
 .container {
-    max-width: 1000px;
+    max-width: 1200px;
 }
 
 .flex-btn {
@@ -257,7 +257,8 @@ section {
 .header-bars img {
     width: 17px;
 }
-.header-lang-block-item-icon img{
+
+.header-lang-block-item-icon img {
     width: 16px;
 }
 
@@ -565,7 +566,8 @@ section {
     z-index: 50;
     top: 40px;
 }
-.tab-content .tab-inner-icon img{
+
+.tab-content .tab-inner-icon img {
     width: 26px;
 }
 
@@ -1142,7 +1144,14 @@ section {
 .banks-info-wrap .table-bg .table-items .table-item.five,
 .banks-info-wrap .table-bg .table-items .table-item.seven,
 .banks-info-wrap .table-bg .table-items .table-item.nine,
-.banks-info-wrap .table-bg .table-items .table-item.eleven {
+.banks-info-wrap .table-bg .table-items .table-item.eleven,
+.banks-info-wrap .table-bg .table-items .table-item.thirteen,
+.banks-info-wrap .table-bg .table-items .table-item.fifteen,
+.banks-info-wrap .table-bg .table-items .table-item.seventeen,
+.banks-info-wrap .table-bg .table-items .table-item.nineteen,
+.banks-info-wrap .table-bg .table-items .table-item.twenty_one,
+.banks-info-wrap .table-bg .table-items .table-item.twenty_three,
+.banks-info-wrap .table-bg .table-items .table-item.twenty_five {
     margin-right: 8px;
 }
 
@@ -1273,7 +1282,21 @@ section {
 .eight,
 .nine,
 .ten,
-.eleven {
+.eleven,
+.twelve,
+.thirteen,
+.fourteen,
+.fifteen,
+.sixteen,
+.seventeen,
+.eighteen,
+.nineteen,
+.twenty,
+.twenty_one,
+.twenty_two,
+.twenty_three,
+.twenty_four,
+.twenty_five {
     padding: 0;
 }
 
@@ -1284,7 +1307,21 @@ section {
 .eight .table-item-number,
 .nine .table-item-number,
 .ten .table-item-number,
-.eleven .table-item-number {
+.eleven .table-item-number,
+.twelve .table-item-number,
+.thirteen .table-item-number,
+.fourteen .table-item-number,
+.fifteen .table-item-number,
+.sixteen .table-item-number,
+.seventeen .table-item-number,
+.eighteen .table-item-number,
+.nineteen .table-item-number,
+.twenty .table-item-number,
+.twenty_one .table-item-number,
+.twenty_two .table-item-number,
+.twenty_three .table-item-number,
+.twenty_four .table-item-number,
+.twenty_five .table-item-number {
     width: 100%;
 }
 
