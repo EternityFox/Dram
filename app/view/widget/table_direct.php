@@ -71,7 +71,7 @@ $showHeaders = true;
                                         <?= $symbol ?>
                                     </div>
                                     <div class="table-entry-item-inner-arrow">
-                                        <img src="img/entry-arrow.png" alt="">
+                                        <img src="img/point-gray.svg" alt="">
                                     </div>
                                     <div class="table-entry-list">
                                         <?php foreach ($symbols as $subsymbol): ?>

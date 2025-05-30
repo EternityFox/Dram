@@ -78,6 +78,23 @@ return [
     'Бюракан' => 'Byurakan',
     'Ошакан' => 'Oshakan',
     'Талин' => 'Talin',
+    'Курсы' => 'Exchange Rates',
+    'Конвертер валют' => 'Currency Converter',
+    'Наличные' => 'Cash',
+    'Безналичные' => 'Non-cash',
+    'Карты' => 'Cards',
+    'У меня есть' => 'I Have',
+    'Получу' => 'I Will Get',
+    'Евро' => 'Euro',
+    'Канадский доллар' => 'Canadian Dollar',
+    'Дирхам ОАЭ' => 'UAE Dirham',
+    'Китайский юань' => 'Chinese Yuan',
+    'Австралийский доллар' => 'Australian Dollar',
+    'Японская йена' => 'Japanese Yen',
+    'Лучший курс' => 'Best Rate',
+    'Банки' => 'Banks',
+    'Обменные пункты' => 'Exchange Offices',
+
 
 
 
