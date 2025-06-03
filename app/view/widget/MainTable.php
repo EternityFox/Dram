@@ -35,6 +35,7 @@ $etNames = ['cash' => 'Наличный', 'noncash' => 'Безналичный',
             </div>
 
             <div class="table-point d-lg-flex flex-column">
+                <!--
                 <div class="city-container disabled-city-select">
                     <img src="img/pin.svg" alt="" width="12px">
                     <select class="city-dropdown" disabled>
@@ -44,6 +45,7 @@ $etNames = ['cash' => 'Наличный', 'noncash' => 'Безналичный',
                         <option value="dilijan"><?= $lang('Дилижан') ?></option>
                     </select>
                 </div>
+                -->
                 <div class="d-flex flex-wrap w-100">
                     <div id="exchangeType"
                          class="table-point-container"

@@ -825,7 +825,8 @@ section {
     padding: 54px 0 2px;
     z-index: 11;
     background: #FFF;
-    top: -55px;
+    /*top: -55px;*/
+    top: -1px;
     width: 30%;
 }
 
@@ -2667,8 +2668,10 @@ th {
     }
 
     .table-flex {
-        padding: 20px 0 3px;
-        top: -20px;
+        padding: 55px 0 3px;
+        /*padding: 20px 0 3px;
+        top: -20px;*/
+        top: -1px;
     }
 
     .table-point-container {
@@ -2807,15 +2810,19 @@ th {
 
 @media screen and (max-width: 500px) {
     .banks-info-wrap {
-        margin-top: -166px;
+        /*margin-top: -166px;*/
+        margin-top: -130px;
     }
 
     .table-bg {
-        top: 164px;
+        /*top: 164px;*/
+        top: 129px;
     }
 
     .banks-info-wrap .table-bg {
-        padding: 60px 0 0 0;
+        /*padding: 60px 0 0 0;
+        top: -1px;*/
+        padding: 24px 0 0 0;
         top: -1px;
     }
 
@@ -2824,8 +2831,10 @@ th {
     }
 
     .table-flex {
-        padding: 4px 0 3px;
-        top: -4px;
+        /*padding: 4px 0 3px;
+        top: -4px;*/
+        padding: 5px 0 3px;
+        top: -1px;
     }
 
     .city-container {
@@ -2923,7 +2932,8 @@ th {
 
 @media screen and (max-width: 350px) {
     .table-flex {
-        padding: 20px 0 6px;
+        /*padding: 20px 0 6px;*/
+        padding: 5px 0 6px;
     }
 
     .bank-info-all-item, .banks-info-wrap, .table-flex {
