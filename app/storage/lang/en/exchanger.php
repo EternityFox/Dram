@@ -183,4 +183,5 @@ return [
     'Комитас 34' => 'Komitas 34',
     'Comfarea' => 'Comfarea',
     'Шаавет cупермаркет' => 'Shahavet supermarket',
+    'Հրաչյա Առաքելյան' => 'Հրաչյա Առաքելյան',
 ];
