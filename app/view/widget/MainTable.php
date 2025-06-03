@@ -34,61 +34,72 @@ $etNames = ['cash' => 'Наличный', 'noncash' => 'Безналичный',
                 </div>
             </div>
 
-            <div class="table-point d-lg-flex">
-                <div id="exchangeType"
-                     class="table-point-container"
-                     data-active="<?= $exchangeType ?>">
-                    <div class="table-point-item active">
+            <div class="table-point d-lg-flex flex-column">
+                <div class="city-container disabled-city-select">
+                    <img src="img/pin.svg" alt="" width="12px">
+                    <select class="city-dropdown" disabled>
+                        <option selected><?= $lang('Выбрать город') ?></option>
+                        <option value="sevan"><?= $lang('Севан') ?></option>
+                        <option value="yerevan"><?= $lang('Ереван') ?></option>
+                        <option value="dilijan"><?= $lang('Дилижан') ?></option>
+                    </select>
+                </div>
+                <div class="d-flex flex-wrap w-100">
+                    <div id="exchangeType"
+                         class="table-point-container"
+                         data-active="<?= $exchangeType ?>">
+                        <div class="table-point-item active">
                         <span>
                             <?= $lang($etNames[$exchangeType]) ?>
                         </span>
-                        <div class="table-point-item-icon">
-                            <img src="img/point-gray.svg" alt="">
-                            <img src="img/point-white.svg" alt="">
+                            <div class="table-point-item-icon">
+                                <img src="img/point-gray.svg" alt="">
+                                <img src="img/point-white.svg" alt="">
+                            </div>
                         </div>
-                    </div>
 
-                    <div class="table-point-item-list">
-                        <a href="#tableTop" class="table-point-item-list-item"
-                           data-type="cash"
-                        ><?= $lang('Наличный') ?></a>
-                        <a href="#tableTop" class="table-point-item-list-item"
-                           data-type="noncash"
-                        ><?= $lang('Безналичный') ?></a>
-                        <a href="#tableTop" class="table-point-item-list-item"
-                           data-type="card"
-                        ><?= $lang('По картам') ?></a>
+                        <div class="table-point-item-list">
+                            <a href="#tableTop" class="table-point-item-list-item"
+                               data-type="cash"
+                            ><?= $lang('Наличный') ?></a>
+                            <a href="#tableTop" class="table-point-item-list-item"
+                               data-type="noncash"
+                            ><?= $lang('Безналичный') ?></a>
+                            <a href="#tableTop" class="table-point-item-list-item"
+                               data-type="card"
+                            ><?= $lang('По картам') ?></a>
 
-                        <div class="table-point-item-list-item">
-                            <div class="custom-control custom-switch">
-                                <input type="checkbox" class="custom-control-input" id="wholeSale">
-                                <label class="custom-control-label" for="wholeSale">
-                                    <?= $lang('Оптовые цены') ?>
-                                </label>
+                            <div class="table-point-item-list-item">
+                                <div class="custom-control custom-switch">
+                                    <input type="checkbox" class="custom-control-input" id="wholeSale">
+                                    <label class="custom-control-label" for="wholeSale">
+                                        <?= $lang('Оптовые цены') ?>
+                                    </label>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <div id="courseType"
-                     class="table-point-container"
-                     data-active="<?= $courseType ?>">
-                    <div class="table-point-item">
+                    <div id="courseType"
+                         class="table-point-container"
+                         data-active="<?= $courseType ?>">
+                        <div class="table-point-item">
                         <span>
                             <?= $lang($ctNames[$courseType]) ?>
                         </span>
-                        <div class="table-point-item-icon">
-                            <img src="img/point-gray.svg" alt="">
-                            <img src="img/point-white.svg" alt="">
+                            <div class="table-point-item-icon">
+                                <img src="img/point-gray.svg" alt="">
+                                <img src="img/point-white.svg" alt="">
+                            </div>
                         </div>
-                    </div>
-                    <div class="table-point-item-list">
-                        <a href="#tableTop" class="table-point-item-list-item"
-                           data-type="direct"
-                        ><?= $lang('Прямой') ?></a>
-                        <a href="#tableTop" class="table-point-item-list-item"
-                           data-type="cross"
-                        ><?= $lang('Кросс-курс') ?></a>
+                        <div class="table-point-item-list">
+                            <a href="#tableTop" class="table-point-item-list-item"
+                               data-type="direct"
+                            ><?= $lang('Прямой') ?></a>
+                            <a href="#tableTop" class="table-point-item-list-item"
+                               data-type="cross"
+                            ><?= $lang('Кросс-курс') ?></a>
+                        </div>
                     </div>
                 </div>
             </div>

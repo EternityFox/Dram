@@ -230,6 +230,51 @@ section {
     max-width: 1200px;
 }
 
+#table .table-flex .table-flex-item {
+    width: 90%;
+}
+
+.city-container {
+    width: 100%;
+    border: 1px solid #EBEBEB;
+    border-radius: 30px;
+    padding: 8px 14px;
+    margin-bottom: 16px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    font-size: 14px;
+}
+
+.city-container .city-dropdown {
+    background-image: url(../img/point-gray.svg);
+    background-repeat: no-repeat;
+    background-position: right center;
+    background-size: 16px 12px;
+    transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    width: 170px;
+    padding: 0 20px;
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.disabled-city-select {
+    border: 1px solid #ccc;
+    background-color: #f9f9f9;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.disabled-city-select .city-dropdown {
+    background-color: #f9f9f9;
+}
+
+
 .flex-btn {
     display: inline-flex;
     align-items: center;
@@ -780,7 +825,7 @@ section {
     padding: 54px 0 2px;
     z-index: 11;
     background: #FFF;
-    top: -8px;
+    top: -55px;
     width: 30%;
 }
 
@@ -840,6 +885,7 @@ section {
     position: relative;
     transition: 0.3s;
     cursor: pointer;
+    width: 100%;
 }
 
 .button-transparent {
@@ -921,6 +967,7 @@ section {
     position: relative;
     padding-bottom: 5px;
     z-index: 2;
+    width: 47%;
 }
 
 
@@ -1115,7 +1162,7 @@ section {
 }
 
 .banks-info-wrap .table-bg {
-    top: -12px;
+    top: -4px;
     background: #ffffff;
     padding: 12.4px 0 0 0;
     z-index: 11;
@@ -2250,6 +2297,10 @@ th {
 }
 
 @media screen and (max-width: 768px) {
+    .city-container .city-dropdown {
+        width: 230px;
+    }
+
     .plate-block {
         margin-top: 0;
         padding-top: 20px;
@@ -2510,7 +2561,7 @@ th {
 .table-bg {
     position: -webkit-sticky;
     position: sticky;
-    top: 106px;
+    top: 114px;
     z-index: 5;
     border-radius: 30px 0 0 30px;
 }
@@ -2601,6 +2652,10 @@ th {
 }
 
 @media screen and (max-width: 768px) {
+    .city-container {
+        margin-bottom: 7px;
+    }
+
     .table-point {
         flex-direction: column;
         align-items: center;
@@ -2613,15 +2668,11 @@ th {
 
     .table-flex {
         padding: 20px 0 3px;
-        top: -23px;
+        top: -20px;
     }
 
-    .table-point-container, .table-point-item {
-        width: 100px;
-    }
-
-    #courseType {
-        margin-left: 0;
+    .table-point-container {
+        width: 48%;
     }
 
     .tabs_holder_ul {
@@ -2740,6 +2791,10 @@ th {
 }
 
 @media screen and (max-width: 640px) {
+    .table-point-container {
+        width: 47%;
+    }
+
     .tab-btn-item {
         font-size: 12px;
         padding: 8px 15px;
@@ -2751,6 +2806,49 @@ th {
 }
 
 @media screen and (max-width: 500px) {
+    .banks-info-wrap {
+        margin-top: -166px;
+    }
+
+    .table-bg {
+        top: 164px;
+    }
+
+    .banks-info-wrap .table-bg {
+        padding: 60px 0 0 0;
+        top: -1px;
+    }
+
+    .table-point {
+        gap: 0;
+    }
+
+    .table-flex {
+        padding: 4px 0 3px;
+        top: -4px;
+    }
+
+    .city-container {
+        margin-bottom: 4px;
+    }
+
+    #exchangeType {
+        margin: 12px 0;
+    }
+
+    .city-container {
+        font-size: 11px;
+    }
+
+    .table-point-container {
+        width: 100%;
+        margin-left: 0 !important;
+    }
+
+    .city-container .city-dropdown {
+        width: 110px;
+    }
+
     .extra-block .seven {
         display: none;
     }
@@ -2767,6 +2865,9 @@ th {
 }
 
 @media screen and (max-width: 400px) {
+    .city-container .city-dropdown {
+        width: 90px;
+    }
     .clue-mob {
         width: 60%;
     }
