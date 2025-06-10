@@ -11,7 +11,22 @@ class AdminController extends Controller
 {
     protected function actionIndex()
     {
-
+// Создание таблицы pages, если она не существует
+        $checkTable = App::db()->query("SELECT name FROM sqlite_master WHERE type='table' AND name='pages'")->fetch();
+        if (!$checkTable) {
+            App::db()->query("
+            CREATE TABLE pages (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,              
+                slug TEXT NOT NULL UNIQUE,
+                content TEXT NOT NULL,
+                seo_title TEXT,
+                seo_description TEXT,
+                seo_keywords TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ");
+        }
         $query = App::db()->query("PRAGMA table_info(settings)");
         $columns = $query->fetchAll(PDO::FETCH_ASSOC);
 
@@ -365,4 +380,147 @@ class AdminController extends Controller
         return hash('sha512', $str . '*@#^$&');
     }
 
+    // Отображение списка страниц
+    protected function actionPages()
+    {
+        $query = App::db()->query("SELECT * FROM pages ORDER BY created_at DESC");
+        $pages = $query->fetchAll();
+
+        $settings = App::db()->query("SELECT * FROM settings")->fetch();
+        $menu['top'] = include_once(__DIR__ . '/../../../storage/menu/top.php');
+        $menuLeft = include_once(__DIR__ . '/../../../storage/menu/left.php');
+        $menu['left']['hidden'] = $menuLeft['hidden'];
+        unset($menuLeft['hidden']);
+        $menu['left']['basic'] = $menuLeft;
+        $navigations = App::db()->query("SELECT * FROM navigation")->fetchAll();
+
+        return [
+            'site/admin_pages',
+            [
+                'pages' => $pages,
+                'settings' => $settings,
+                'menu' => $menu,
+                'navigations' => $navigations,
+            ]
+        ];
+    }
+
+    protected function actionCreatePage()
+    {
+        if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+            $slug = $_POST['slug'];
+            $content = $_POST['content']; // Сохраняем содержимое без фильтрации PHP
+            $seo_title = $_POST['seo_title'];
+            $seo_description = $_POST['seo_description'];
+            $seo_keywords = $_POST['seo_keywords'];
+
+            // Базовая санитизация (например, проверка на опасные конструкции)
+            if (preg_match('/(eval|system|exec|shell_exec|passthru|phpinfo)/i', $content)) {
+                return ['site/admin_create_page', ['error' => 'Обнаружены запрещенные PHP-функции']];
+            }
+
+            $stmt = App::db()->prepare("INSERT INTO pages (slug, content, seo_title, seo_description, seo_keywords) VALUES (?, ?, ?, ?, ?)");
+            $stmt->execute([$slug, $content, $seo_title, $seo_description, $seo_keywords]);
+
+            header('Location: /admin/pages');
+            return true;
+        }
+
+        $settings = App::db()->query("SELECT * FROM settings")->fetch();
+        $menu['top'] = include_once(__DIR__ . '/../../../storage/menu/top.php');
+        $menuLeft = include_once(__DIR__ . '/../../../storage/menu/left.php');
+        $menu['left']['hidden'] = $menuLeft['hidden'];
+        unset($menuLeft['hidden']);
+        $menu['left']['basic'] = $menuLeft;
+        $navigations = App::db()->query("SELECT * FROM navigation")->fetchAll();
+
+        return [
+            'site/admin_create_page',
+            [
+                'settings' => $settings,
+                'menu' => $menu,
+                'navigations' => $navigations,
+            ]
+        ];
+    }
+
+    // Редактирование страницы
+    protected function actionEditPage($id)
+    {
+        $stmt = App::db()->prepare("SELECT * FROM pages WHERE id = ?");
+        $stmt->execute([$id]);
+        $page = $stmt->fetch();
+
+        if (!$page) {
+            return $this->actionNotFound();
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+            $slug = $_POST['slug'];
+            $content = $_POST['content']; // Сохраняем содержимое без фильтрации PHP
+            $seo_title = $_POST['seo_title'];
+            $seo_description = $_POST['seo_description'];
+            $seo_keywords = $_POST['seo_keywords'];
+
+            // Базовая санитизация
+            if (preg_match('/(eval|system|exec|shell_exec|passthru|phpinfo)/i', $content)) {
+                return ['site/admin_edit_page', ['error' => 'Обнаружены запрещенные PHP-функции', 'page' => $page]];
+            }
+
+            $stmt = App::db()->prepare("UPDATE pages SET slug = ?, content = ?, seo_title = ?, seo_description = ?, seo_keywords = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?");
+            $stmt->execute([$slug, $content, $seo_title, $seo_description, $seo_keywords, $id]);
+
+            header('Location: /admin/pages');
+            return true;
+        }
+
+        $settings = App::db()->query("SELECT * FROM settings")->fetch();
+        $menu['top'] = include_once(__DIR__ . '/../../../storage/menu/top.php');
+        $menuLeft = include_once(__DIR__ . '/../../../storage/menu/left.php');
+        $menu['left']['hidden'] = $menuLeft['hidden'];
+        unset($menuLeft['hidden']);
+        $menu['left']['basic'] = $menuLeft;
+        $navigations = App::db()->query("SELECT * FROM navigation")->fetchAll();
+
+        return [
+            'site/admin_edit_page',
+            [
+                'page' => $page,
+                'settings' => $settings,
+                'menu' => $menu,
+                'navigations' => $navigations,
+            ]
+        ];
+    }
+
+    // Удаление страницы
+    protected function actionDeletePage($id)
+    {
+        $stmt = App::db()->prepare("DELETE FROM pages WHERE id = ?");
+        $stmt->execute([$id]);
+
+        header('Location: /admin/pages');
+        return true;
+    }
+
+    // Метод для обработки 404
+    protected function actionNotFound()
+    {
+        $settings = App::db()->query("SELECT * FROM settings")->fetch();
+        $menu['top'] = include_once(__DIR__ . '/../../../storage/menu/top.php');
+        $menuLeft = include_once(__DIR__ . '/../../../storage/menu/left.php');
+        $menu['left']['hidden'] = $menuLeft['hidden'];
+        unset($menuLeft['hidden']);
+        $menu['left']['basic'] = $menuLeft;
+        $navigations = App::db()->query("SELECT * FROM navigation")->fetchAll();
+
+        return [
+            'site/404',
+            [
+                'settings' => $settings,
+                'menu' => $menu,
+                'navigations' => $navigations,
+            ]
+        ];
+    }
 }

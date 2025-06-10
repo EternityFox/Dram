@@ -49,12 +49,14 @@ class MainTable extends Widget
 
     protected string $refreshTime;
 
+    protected array $settings = [];
+
     /**
      * @param string|null $course
      * @param string|null $type
      */
     public function __construct(
-        ?string $course = null, ?string $type = null
+        ?string $course = null, ?string $type = null,  array $settings = []
     )
     {
         if (!$course || !in_array($course, static::$courseTypes))
@@ -67,6 +69,7 @@ class MainTable extends Widget
         $this->exchangeType = $type;
         $this->typeId = static::$exchangeTypes[$type];
         $this->activeSymbols = $this->createSymbols();
+        $this->settings = $settings;
     }
 
     /**
@@ -257,6 +260,7 @@ class MainTable extends Widget
             App::currency()->get($data['activeSymbols'])
         );
         $data['symbols'] = App::currency();
+        $data['settings'] = $this->settings;
 
         return $data;
     }

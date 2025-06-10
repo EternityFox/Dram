@@ -3,12 +3,19 @@
         <div class="row">
             <div class="col-lg-9">
                 <div class="left-block">
-                    <div class="banner def-box banner-desktop">
-                        <?= random_elem($settings['banner_head'], $settings['banner_head_2'], $settings['banner_head_3']) ?>
-                    </div>
-                    <div class="banner def-box banner-mobile">
-                        <?= random_elem($settings['banner_head_mobile'], $settings['banner_head_mobile_2'],) ?>
-                    </div>
+                    <?php $bannerDesktop = random_elem($settings['banner_head'], $settings['banner_head_2'], $settings['banner_head_3']); ?>
+                    <?php if (!empty(trim($bannerDesktop))) : ?>
+                        <div class="banner def-box banner-desktop">
+                            <?= $bannerDesktop ?>
+                        </div>
+                    <?php endif; ?>
+
+                    <?php $bannerMobile = random_elem($settings['banner_head_mobile'], $settings['banner_head_mobile_2']); ?>
+                    <?php if (!empty(trim($bannerMobile))) : ?>
+                        <div class="banner def-box banner-mobile">
+                            <?= $bannerMobile ?>
+                        </div>
+                    <?php endif; ?>
 
                     <?= $mainTable->render() ?>
 

@@ -44,6 +44,15 @@ $showHeaders = true;
                     </div>
                 <?php endforeach ?>
             </div>
+            <?php if ($tableNum == 0): ?>
+                <?php
+                $bannerMid = random_elem($settings['banner_middle_1'], $settings['banner_middle_2']);
+                if (!empty(trim($bannerMid))): ?>
+                    <div class="table-row banner-middle" style="text-align: center; padding: 15px 0;">
+                        <?= $bannerMid ?>
+                    </div>
+                <?php endif; ?>
+            <?php endif; ?>
         <?php endforeach ?>
     </div>
     <div class="banks-info-wrap">
