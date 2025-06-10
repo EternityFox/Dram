@@ -5,8 +5,9 @@
     <!-- <meta name="viewport" content="width=device-width, initial-scale=1"> -->
     <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="description"
-          content="dram.am - Финансовый маркетплейс в Армении (Курсы валют, Кредиты, Вклады, Банковские карты).">
-    <meta name="keywords" content="Курс валют в Армении, kurs rubli dram dollar, exchange in Armenia">
+          content="<?= (isset($lang) && isset($meta['description'])) ? htmlspecialchars($lang($meta['description'])) : htmlspecialchars('dram.am - Финансовый маркетплейс в Армении (Курсы валют, Кредиты, Вклады, Банковские карты).') ?>">
+    <meta name="keywords"
+          content="<?= (isset($lang) && isset($meta['keywords'])) ? htmlspecialchars($lang($meta['keywords'])) : htmlspecialchars('Курс валют в Армении, kurs rubli dram dollar, exchange in Armenia') ?>">
     <meta property="og:image" content="img/site_preview_s.jpg"/>
     <meta name="robots" content="">
     <meta name="Author" content="Copyright by Georgi Selmidis">
@@ -37,7 +38,8 @@
     <link rel="stylesheet" href="dist/slick/slick-theme.css">
     <link rel="stylesheet" href="css/main.css?<?= mt_rand(1, 999999) ?>">
 
-    <title><?= $title[$lang->getLang()] ?></title>
+    <title><?= htmlspecialchars($title[$lang->getLang()] ?? $lang($title)) ?></title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js"></script>
 
     <!-- Google AdSense -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2241706448393061"
@@ -49,6 +51,8 @@
             type="text/javascript"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <script src="js/bootstrap.min.js"></script>
+
+    </script>
 
 </head>
 

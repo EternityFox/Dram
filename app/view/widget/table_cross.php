@@ -43,6 +43,15 @@ $showHeaders = true;
                     </div>
                 <?php endforeach ?>
             </div>
+            <?php if ($tableNum == 0): ?>
+                <?php
+                $bannerMid = random_elem($settings['banner_middle_1'], $settings['banner_middle_2']);
+                if (!empty(trim($bannerMid))): ?>
+                    <div class="table-row banner-middle" style="text-align: center; padding: 15px 0;">
+                        <?= $bannerMid ?>
+                    </div>
+                <?php endif; ?>
+            <?php endif; ?>
         <?php endforeach ?>
     </div>
     <div class="banks-info-wrap">
@@ -144,7 +153,7 @@ $showHeaders = true;
                     foreach ($data as $exch): ?>
                         <div class="table-row<?= (2 == $tableNum ? '' : ' active') ?> table-items-row">
                             <?php $num = 0 ?>
-                            <?php $nums = [['four', 'five'], ['six', 'seven'], ['eight', 'nine'], ['ten', 'eleven'], ['twelve', 'thirteen'],['fourteen','fifteen'],['sixteen','seventeen'],['eighteen','nineteen'],['twenty','twenty_one'],['twenty_two','twenty_three'],['twenty_four','twenty_five']] ?>
+                            <?php $nums = [['four', 'five'], ['six', 'seven'], ['eight', 'nine'], ['ten', 'eleven'], ['twelve', 'thirteen'], ['fourteen', 'fifteen'], ['sixteen', 'seventeen'], ['eighteen', 'nineteen'], ['twenty', 'twenty_one'], ['twenty_two', 'twenty_three'], ['twenty_four', 'twenty_five']] ?>
                             <?php foreach ($activeSymbols as $i => $symbol): ?>
                                 <div class="table-items">
                                     <div class="table-item <?= $nums[$num][0] ?>">

@@ -12,6 +12,7 @@ return [
     'routes' => [
 //        '.*' => 'site/notFound',
         '' => 'site/index',
+        'page/(?<slug>[^/]+)' => 'site/page',
         'bank/(?<id>\d+)' => 'site/bank',
         'exchanger/(?<id>\d+)' => 'site/exchanger',
         '(?<lang>ru|en|am)' => 'site/index',
@@ -37,6 +38,10 @@ return [
         'admin' => [
 //            '.*' => 'admin/index',
             '' => 'admin/index',
+            'pages' => 'admin/pages',
+            'create-page' => 'admin/createPage',
+            'edit-page/(?<id>\d+)' => 'admin/editPage',
+            'delete-page/(?<id>\d+)' => 'admin/deletePage',
             'bank/(?<id>\d+)' => 'admin/bank',
             'exchanger/(?<id>\d+)' => 'admin/exchanger',
         ],

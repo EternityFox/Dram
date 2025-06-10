@@ -13,6 +13,12 @@
                     </div>
                 </div>
             </div>
+            <div class="card mt-4 toggle">
+                <h5 class="card-header">Страницы</h5>
+                <div class="card-body" style="display: none;">
+                    <a href="/admin/pages" class="btn btn-primary">Управление страницами</a>
+                </div>
+            </div>
             <?php $i = 0; ?>
             <div class="card admin-banners toggle mt-4">
                 <h5 class="card-header">Меню навигации</h5>

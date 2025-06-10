@@ -44,7 +44,7 @@ class SiteController extends Controller
         return [
             'site/index',
             [
-                'mainTable' => new MainTable($course, $type),
+                'mainTable' => new MainTable($course, $type, $settings),
                 'bestExchangers' => new BestExchangers,
                 'intlCourses' => new IntlCourses($settings),
                 'converter' => new Converter('cash', 'buy', 'direct', 'USD', 'AMD', $settings),
@@ -1081,5 +1081,56 @@ HTML;
         echo "<pre>";
         print_r($newExchangers);
         echo "</pre>";
+    }
+    protected function actionPage($slug)
+    {
+        $stmt = App::db()->prepare("SELECT * FROM pages WHERE slug = ?");
+        $stmt->execute([$slug]);
+        $page = $stmt->fetch();
+
+        if (!$page) {
+            return $this->actionNotFound();
+        }
+
+        $title = $page['seo_title'] ?: "";
+        $meta = [
+            'description' => $page['seo_description'] ?? 'Default description',
+            'keywords' => $page['seo_keywords'] ?? 'Default keywords',
+        ];
+
+        $lang = App::lang();
+
+        // Безопасная обработка PHP-кода
+        $content = $page['content'];
+        if (preg_match('/<\?(php|=)/i', $content)) { // Учитываем <?php и <?=
+            // Создаем временный файл для выполнения PHP
+            $tempFile = tempnam(sys_get_temp_dir(), 'page_');
+            file_put_contents($tempFile, $content);
+            ob_start();
+            include $tempFile;
+            $content = ob_get_clean();
+            unlink($tempFile);
+        }
+
+        $settings = App::db()->query("SELECT * FROM settings")->fetch();
+        $menu['top'] = include_once(__DIR__ . '/../../../storage/menu/top.php');
+        $menuLeft = include_once(__DIR__ . '/../../../storage/menu/left.php');
+        $menu['left']['hidden'] = $menuLeft['hidden'];
+        unset($menuLeft['hidden']);
+        $menu['left']['basic'] = $menuLeft;
+        $navigations = App::db()->query("SELECT * FROM navigation")->fetchAll();
+
+        return [
+            'site/page',
+            [
+                'title' => $title,
+                'content' => $content,
+                'meta' => $meta,
+                'settings' => $settings,
+                'menu' => $menu,
+                'navigations' => $navigations,
+                'lang' => $lang,
+            ]
+        ];
     }
 }
