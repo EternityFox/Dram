@@ -46,8 +46,8 @@ $showHeaders = true;
             <?php if ($tableNum == 0): ?>
                 <?php
                 $bannerMid = random_elem($settings['banner_middle_1'] ?? '', $settings['banner_middle_2'] ?? '');
-                if (is_string($bannerMid) && trim(strip_tags($bannerMid)) !== ''): ?>
-                    <div class="banner def-box banner-mobile text-center" style="padding: 30px 30%;min-width: 350%; height: 200px;  display: none;">
+                if (!empty($bannerMid)): ?>
+                    <div class="banner def-box banner-mobile banner-middle">
                         <?= $bannerMid ?>
                     </div>
                 <?php endif; ?>
@@ -181,8 +181,8 @@ $showHeaders = true;
                 <?php if ($tableNum == 0): ?>
                     <?php
                     $bannerMid = random_elem($settings['banner_middle_1'] ?? '', $settings['banner_middle_2'] ?? '');
-                    if (is_string($bannerMid) && trim(strip_tags($bannerMid)) !== ''): ?>
-                        <div class="banner def-box banner-mobile text-center" style="padding: 30px 30%;min-width: 350%; height: 200px; display: none;">
+                    if (!empty($bannerMid)): ?>
+                        <div class="banner def-box banner-mobile banner-middle">
                         </div>
                     <?php endif; ?>
                 <?php endif; ?>
