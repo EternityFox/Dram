@@ -494,6 +494,18 @@ section {
 
 }
 
+.banner-middle {
+    padding: 30px 30%!important;
+    min-width: 350%;
+    height: 200px;
+    box-shadow: none!important;
+    background: transparent!important;
+    display: none;
+}
+.banner-middle img{
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+}
+
 .header-notif-block-inner-btn {
     display: flex;
     align-items: center;
@@ -2868,6 +2880,9 @@ th {
 }
 
 @media screen and (max-width: 450px) {
+    .banner-middle {
+        min-width: 230%;
+    }
     .extra-block .six, .extra-block .seven {
         display: none;
     }
@@ -2877,6 +2892,7 @@ th {
     .city-container .city-dropdown {
         width: 90px;
     }
+
     .clue-mob {
         width: 60%;
     }
@@ -2931,6 +2947,9 @@ th {
 }
 
 @media screen and (max-width: 350px) {
+    .banner-middle {
+        min-width: 200%;
+    }
     .table-flex {
         /*padding: 20px 0 6px;*/
         padding: 5px 0 6px;
