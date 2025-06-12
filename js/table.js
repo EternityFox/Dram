@@ -448,7 +448,7 @@ let Table = {
 
     toggleSubTable: function () {
         let row = $(this);
-        let index = row.closest('.bank-names-col').index();
+        let index = row.closest('.bank-names-col').index('.bank-info-all-item .bank-names-col');
         row.toggleClass('active');
         row.closest('.bank-names-col').find('.table-row').not(row.closest('.table-row')).toggleClass('active');
         let bankValueContainer = $('#table .banks-info-wrap .bank-value').eq(index);
