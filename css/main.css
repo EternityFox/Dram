@@ -497,7 +497,7 @@ section {
 .banner-middle {
     padding: 30px 30%!important;
     min-width: 350%;
-    height: 200px;
+    height: 200px!important;
     box-shadow: none!important;
     background: transparent!important;
     display: none!important;
@@ -2881,6 +2881,8 @@ th {
 
 @media screen and (max-width: 450px) {
     .banner-middle {
+        padding: 30px 15%!important;
+        height: 120px !important;
         min-width: 230%;
     }
     .extra-block .six, .extra-block .seven {
@@ -2948,6 +2950,7 @@ th {
 
 @media screen and (max-width: 350px) {
     .banner-middle {
+        height: 110px !important;
         min-width: 200%;
     }
     .table-flex {
