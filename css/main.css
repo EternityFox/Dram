@@ -495,7 +495,6 @@ section {
 }
 
 .banner-middle {
-    padding: 30px 30%!important;
     min-width: 350%;
     height: 200px!important;
     box-shadow: none!important;
@@ -503,6 +502,7 @@ section {
 }
 .banner-middle img{
     box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
 }
 
 .header-notif-block-inner-btn {
@@ -2880,9 +2880,9 @@ th {
 
 @media screen and (max-width: 450px) {
     .banner-middle {
-        padding: 30px 15%!important;
-        height: 120px !important;
-        min-width: 230%;
+        padding: 30px 0!important;
+        height: 140px !important;
+        min-width: 220%;
     }
     .extra-block .six, .extra-block .seven {
         display: none;
@@ -2890,6 +2890,9 @@ th {
 }
 
 @media screen and (max-width: 400px) {
+    .banner-middle {
+        height: 130px !important;
+    }
     .city-container .city-dropdown {
         width: 90px;
     }
@@ -2949,8 +2952,8 @@ th {
 
 @media screen and (max-width: 350px) {
     .banner-middle {
-        height: 110px !important;
-        min-width: 200%;
+        height: 120px !important;
+        min-width: 198%!important;
     }
     .table-flex {
         /*padding: 20px 0 6px;*/
