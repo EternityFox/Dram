@@ -184,4 +184,5 @@ return [
     'Comfarea' => 'Comfarea',
     'Шаавет cупермаркет' => 'Shahavet supermarket',
     'Հրաչյա Առաքելյան' => 'Հրաչյա Առաքելյան',
+    'Chinar Home Адонц' => 'Chinar Home Adonts',
 ];

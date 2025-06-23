@@ -500,7 +500,6 @@ section {
     height: 200px!important;
     box-shadow: none!important;
     background: transparent!important;
-    display: none!important;
 }
 .banner-middle img{
     box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
