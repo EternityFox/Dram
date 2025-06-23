@@ -186,5 +186,5 @@ return [
     'Comfarea' => 'Comfarea',
     'Шаавет cупермаркет' => 'Շահավետ սուպերմարկետ',
     'Հրաչյա Առաքելյան' => 'Հրաչյա Առաքելյան',
-    'Chinar Home Адонц' => 'Chinar Home Ադոնց',
+    'Chinar Home Адонц' => '"CHINAR HOME" ԱԴՈՆՑ',
 ];

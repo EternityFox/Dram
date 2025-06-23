@@ -18,12 +18,12 @@ $showHeaders = true;
                         </div>
                     </div>
                 </div>
-                <?php $i = 0;
-                foreach ($data as $exch): ?>
+                <?php
+                foreach ($data as $idx => $exch): ?>
                     <div class="table-row<?= (2 == $tableNum ? '' : ' active') ?>">
                         <div class="table-item one">
                             <div class="table-item-number">
-                                <?= ++$i ?>
+                                <?= ++$idx ?>
                             </div>
                             <div class="table-item-icon">
                                 <?php
@@ -42,17 +42,17 @@ $showHeaders = true;
                             </div>
                         </div>
                     </div>
+                    <?php if ($idx === count($data) && $tableNum == 0): ?>
+                        <?php
+                        $bannerMid = random_elem($settings['banner_middle_1'] ?? '', $settings['banner_middle_2'] ?? '');
+                        if (!empty($bannerMid)): ?>
+                            <div class="banner def-box banner-mobile banner-middle">
+                                <?= $bannerMid ?>
+                            </div>
+                        <?php endif; ?>
+                    <?php endif; ?>
                 <?php endforeach ?>
             </div>
-            <?php if ($tableNum == 0): ?>
-                <?php
-                $bannerMid = random_elem($settings['banner_middle_1'] ?? '', $settings['banner_middle_2'] ?? '');
-                if (!empty($bannerMid)): ?>
-                    <div class="banner def-box banner-mobile banner-middle">
-                        <?= $bannerMid ?>
-                    </div>
-                <?php endif; ?>
-            <?php endif; ?>
         <?php endforeach ?>
     </div>
     <div class="banks-info-wrap">
@@ -150,8 +150,8 @@ $showHeaders = true;
                             <?php endforeach ?>
                         </div>
                     <?php endif; ?>
-                    <?php $i = 0;
-                    foreach ($data as $exch): ?>
+                    <?php
+                    foreach ($data as $idx => $exch): ?>
                         <div class="table-row<?= (2 == $tableNum ? '' : ' active') ?> table-items-row">
                             <?php $num = 0 ?>
                             <?php $nums = [['four', 'five'], ['six', 'seven'], ['eight', 'nine'], ['ten', 'eleven'], ['twelve', 'thirteen'], ['fourteen', 'fifteen'], ['sixteen', 'seventeen'], ['eighteen', 'nineteen'], ['twenty', 'twenty_one'], ['twenty_two', 'twenty_three'], ['twenty_four', 'twenty_five']] ?>
@@ -177,16 +177,16 @@ $showHeaders = true;
                                 <?php ++$num ?>
                             <?php endforeach ?>
                         </div>
+                        <?php if ($idx === count($data) - 1 && $tableNum == 0): ?>
+                            <?php
+                            $bannerMid = random_elem($settings['banner_middle_1'] ?? '', $settings['banner_middle_2'] ?? '');
+                            if (!empty($bannerMid)): ?>
+                                <div class="banner def-box banner-mobile banner-middle">
+                                </div>
+                            <?php endif; ?>
+                        <?php endif; ?>
                     <?php endforeach ?>
                 </div>
-                <?php if ($tableNum == 0): ?>
-                    <?php
-                    $bannerMid = random_elem($settings['banner_middle_1'] ?? '', $settings['banner_middle_2'] ?? '');
-                    if (!empty($bannerMid)): ?>
-                        <div class="banner def-box banner-mobile banner-middle">
-                        </div>
-                    <?php endif; ?>
-                <?php endif; ?>
             <?php endforeach ?>
         </div>
     </div>
