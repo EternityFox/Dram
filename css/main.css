@@ -496,11 +496,12 @@ section {
 
 .banner-middle {
     min-width: 350%;
-    height: 200px!important;
-    box-shadow: none!important;
-    background: transparent!important;
+    height: 200px !important;
+    box-shadow: none !important;
+    background: transparent !important;
 }
-.banner-middle img{
+
+.banner-middle img {
     box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
     border-radius: 10px;
 }
@@ -620,7 +621,7 @@ section {
     left: 0;
     height: 95%;
     z-index: 50;
-    top: 40px;
+    top: 50px;
 }
 
 .tab-content .tab-inner-icon img {
@@ -727,6 +728,7 @@ section {
 
 .content {
     padding-top: 30px;
+    margin-top: 30px;
 
 }
 
@@ -1874,13 +1876,14 @@ section {
 
 
 .footer {
+    display: none;
     background: #fff;
     margin-top: 30px;
     padding: 18px 0 42px 0;
     border-radius: 20px;
     box-shadow: 0 0 10px rgba(162, 162, 162, 0.13);
     color: #C9C9C9;
-    z-index: 60;
+    z-index: 40;
     position: relative;
 }
 
@@ -2309,6 +2312,21 @@ th {
 }
 
 @media screen and (max-width: 768px) {
+    header .header-row {
+        position: fixed;
+        height: 50px;
+        right: 0;
+        left: 0;
+        padding: 20px 1rem;
+        top: 0;
+        background: #ffffff;
+        box-shadow: 0 2px 4px 0 #08090a14;
+    }
+
+    .header-menu-block{
+        position: fixed;
+    }
+
     .city-container .city-dropdown {
         width: 230px;
     }
@@ -2327,7 +2345,7 @@ th {
     }
 
     .header-menu-block {
-        top: 55px;
+        top: 50px;
     }
 
 
@@ -2758,6 +2776,7 @@ th {
 
     .nav-icons {
         gap: 8px;
+        margin-top: 20px;
     }
 
     .table-entry-item {
@@ -2821,20 +2840,16 @@ th {
 
 @media screen and (max-width: 500px) {
     .banks-info-wrap {
-        /*margin-top: -166px;*/
         margin-top: -130px;
     }
 
     .table-bg {
-        /*top: 164px;*/
-        top: 129px;
+        top: 170px;
     }
 
     .banks-info-wrap .table-bg {
-        /*padding: 60px 0 0 0;
-        top: -1px;*/
         padding: 24px 0 0 0;
-        top: -1px;
+        top: 40px;
     }
 
     .table-point {
@@ -2842,10 +2857,8 @@ th {
     }
 
     .table-flex {
-        /*padding: 4px 0 3px;
-        top: -4px;*/
         padding: 5px 0 3px;
-        top: -1px;
+        top: 40px;
     }
 
     .city-container {
@@ -2880,10 +2893,11 @@ th {
 
 @media screen and (max-width: 450px) {
     .banner-middle {
-        padding: 30px 0!important;
+        padding: 30px 0 !important;
         height: 140px !important;
         min-width: 220%;
     }
+
     .extra-block .six, .extra-block .seven {
         display: none;
     }
@@ -2893,6 +2907,7 @@ th {
     .banner-middle {
         height: 130px !important;
     }
+
     .city-container .city-dropdown {
         width: 90px;
     }
@@ -2953,8 +2968,9 @@ th {
 @media screen and (max-width: 350px) {
     .banner-middle {
         height: 120px !important;
-        min-width: 198%!important;
+        min-width: 198% !important;
     }
+
     .table-flex {
         /*padding: 20px 0 6px;*/
         padding: 5px 0 6px;
