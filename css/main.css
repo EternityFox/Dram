@@ -2310,7 +2310,9 @@ th {
 
 
 }
-
+.header-profile, a[href="/loans"],a[href="/deposits"], a[href="/cards"], a[href="/news"], a[href="/mortgage"], a[href="/leasing"], a[href="/gas"], a[href="/investing"], a[href="/insurance"]{
+    display: none;
+}
 @media screen and (max-width: 768px) {
     .table-entry-item-input input, .table-point-item{
         border: none;
@@ -2318,9 +2320,7 @@ th {
     .table-entry-item-inner{
         margin: 17px 0 17px;
     }
-    a[href="/loans"],a[href="/deposits"], a[href="/cards"], a[href="/news"], a[href="/mortgage"], a[href="/leasing"], a[href="/gas"], a[href="/investing"], a[href="/insurance"]{
-        display: none;
-    }
+
     header .header-row {
         position: fixed;
         height: 50px;

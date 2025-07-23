@@ -23,6 +23,7 @@ return [
         'about' => 'site/about',
         'plate-number-search.*' => 'site/numberSearch',
         'faq' => 'site/faq',
+        'fuel' => 'site/fuel',
         'contacts' => 'site/contacts',
         'advertising' => 'site/advertising',
         '(?<course>direct|cross)(/(?<type>cash|noncash|card)).*' => 'site/index',
