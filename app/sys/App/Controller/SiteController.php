@@ -194,31 +194,6 @@ class SiteController extends Controller
         return $this->staticPage('about');
     }
 
-    protected function actionNumberSearch()
-    {
-        $query = App::db()->query("SELECT * FROM settings");
-        $settings = $query->fetch();
-
-        $menu['top'] = include_once(__DIR__ . '/../../../storage/menu/top.php');
-        $menuLeft = include_once(__DIR__ . '/../../../storage/menu/left.php');
-
-        $menu['left']['hidden'] = $menuLeft['hidden'];
-
-        unset($menuLeft['hidden']);
-
-        $menu['left']['basic'] = $menuLeft;
-        $navigations = App::db()->query("SELECT * FROM navigation")->fetchAll();
-
-        return [
-            'site/number_search',
-            [
-                'settings' => $settings,
-                'menu' => $menu,
-                'navigations' => $navigations,
-            ]
-        ];
-    }
-
     protected function actionFaq()
     {
 
@@ -1082,6 +1057,46 @@ HTML;
         print_r($newExchangers);
         echo "</pre>";
     }
+
+    protected function actionNumberSearch()
+    {
+        $query = App::db()->query("SELECT * FROM settings");
+        $settings = $query->fetch();
+
+        $menu['top'] = include_once(__DIR__ . '/../../../storage/menu/top.php');
+        $menuLeft = include_once(__DIR__ . '/../../../storage/menu/left.php');
+
+        $menu['left']['hidden'] = $menuLeft['hidden'];
+
+        unset($menuLeft['hidden']);
+
+        $menu['left']['basic'] = $menuLeft;
+        $navigations = App::db()->query("SELECT * FROM navigation")->fetchAll();
+
+        return [
+            'site/number_search',
+            [
+                'settings' => $settings,
+                'menu' => $menu,
+                'navigations' => $navigations,
+            ]
+        ];
+    }
+
+    protected function actionFuel()
+    {
+        $settings = App::db()->query("SELECT * FROM settings")->fetch();
+        $menu['top'] = include_once(__DIR__ . '/../../../storage/menu/top.php');
+        $menuLeft = include_once(__DIR__ . '/../../../storage/menu/left.php');
+        $menu['left']['hidden'] = $menuLeft['hidden'];
+        unset($menuLeft['hidden']);
+        $menu['left']['basic'] = $menuLeft;
+        return ['site/table_fuel', [
+            'settings' => $settings,
+            'menu' => $menu,
+        ]];
+    }
+
     protected function actionPage($slug)
     {
         $stmt = App::db()->prepare("SELECT * FROM pages WHERE slug = ?");
