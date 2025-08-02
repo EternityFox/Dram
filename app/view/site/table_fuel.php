@@ -1,67 +1,57 @@
 <section class="content">
     <div class="container">
-        <?php
-        $fuelCompanies = [
-            ['key' => 'SevGaz', 'name' => 'SevGaz', 'icon' => 'sevgaz.png', 'updated' => '20:54 30 Сент.'],
-            ['key' => 'GasOil', 'name' => 'Gas Oil', 'icon' => 'gasoil.png', 'updated' => '16:30 30 Сент.'],
-            ['key' => 'Fresh', 'name' => 'Fresh', 'icon' => 'fresh.png', 'updated' => '15:11 30 Сент.'],
-        ];
-
-        $fuelTypes = [
-            'Бензин 92',
-            'Бензин 95',
-            'Бензин 98',
-            'Дизель',
-            'LPG (автогаз)'
-        ];
-
-        $fuelData = [
-            'SevGaz' => [190, 175, 160, 150, 140],
-            'GasOil' => [210, 180, 170, 160, 150],
-            'Fresh' => [255, 200, 190, 180, 170],
-        ];
-        ?>
-
         <section class="fuel-comparison">
-            <!-- Фиксированная колонка с компаниями -->
-            <div class="companies-column">
-                <?php foreach ($fuelCompanies as $c): ?>
-                    <div class="company-item">
-                        <img src="img/<?= $c['icon'] ?>" alt="<?= $c['name'] ?>">
-                        <div class="company-text">
-                            <div class="company-name"><?= $c['name'] ?></div>
-                            <div class="company-updated"><?= $c['updated'] ?></div>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
-            </div>
-
-            <!-- Скроллируемая область с данными -->
-            <div class="data-column">
-                <!-- Заголовки типов топлива -->
-                <div class="header-row">
-                    <?php foreach ($fuelTypes as $type): ?>
-                        <div class="fuel-type-header"><?= $type ?></div>
-                    <?php endforeach; ?>
-                    <div class="fuel-type-header">Кол-во</div>
-                </div>
-
-                <!-- Строки с ценами -->
-                <?php foreach ($fuelCompanies as $c): ?>
-                    <div class="data-row" data-company="<?= $c['key'] ?>">
-                        <?php foreach ($fuelData[$c['key']] as $price): ?>
-                            <div class="price-item" data-base-price="<?= $price ?>">
-                                <?= $price ?> AMD
-                            </div>
+            <div class="fuel-table">
+                <table>
+                    <thead>
+                    <tr>
+                        <th class="sticky"></th>
+                        <?php foreach ($fuelTypes as $type): ?>
+                            <th>
+                                <div class="fuel-type-header">
+                                    <?= htmlspecialchars($type) ?>
+                                    <div class="fuel-table-entry-item-input">
+                                        <span class="fuel-table-entry-item-input-placeholder"></span>
+                                        <input type="number" value="1" id="fuel-ursuminput">
+                                        <div class="fuel-table-entry-item-input-clear">
+                                            <img src="img/clear.svg" alt="">
+                                        </div>
+                                    </div>
+                                </div>
+                            </th>
                         <?php endforeach; ?>
-                        <div class="quantity-cell">
-                            <input type="number" class="quantity" value="1" min="1">
-                        </div>
-                    </div>
-                <?php endforeach; ?>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <?php foreach ($fuelCompanies as $c): ?>
+                        <tr>
+                            <td class="sticky">
+                                <a href="/fuel-company/<?= $c['id'] ?>">
+                                    <div class="company-item">
+                                        <img src="img/fuel/<?= htmlspecialchars($c['logo']) ?>"
+                                             alt="<?= htmlspecialchars($c['name']) ?>">
+                                        <div class="company-text">
+                                            <div class="company-name"><?= htmlspecialchars($c['name']) ?></div>
+                                            <div class="company-updated"><?= htmlspecialchars(date('H:i d M', strtotime($c['updated']))) ?></div>
+                                        </div>
+                                    </div>
+                                </a>
+                            </td>
+                            <?php foreach ($fuelTypes as $type): ?>
+                                <td>
+                                    <div class="price-item-fuel"
+                                         data-base-price="<?= isset($fuelData[$c['slug']][$type]) ? htmlspecialchars($fuelData[$c['slug']][$type]) : 'N/A' ?>">
+                                        <?= isset($fuelData[$c['slug']][$type]) ? htmlspecialchars($fuelData[$c['slug']][$type]) . ' AMD' : 'N/A' ?>
+                                    </div>
+                                </td>
+                            <?php endforeach; ?>
+                        </tr>
+                    <?php endforeach; ?>
+                    </tbody>
+                </table>
             </div>
         </section>
-
+        <script src="js/jquery-3.4.1.min.js"></script>
         <script src="js/fuel.js?<?= mt_rand() ?>"></script>
     </div>
 </section>
