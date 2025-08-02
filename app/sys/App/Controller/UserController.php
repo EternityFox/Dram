@@ -11,6 +11,7 @@ class UserController extends Controller
 {
     protected function actionCompanyDashboard()
     {
+        $settings = App::db()->query("SELECT * FROM settings")->fetch();
         $md = false;
         if (isset($_COOKIE['app_token'])) {
             $token = $_COOKIE['app_token'];

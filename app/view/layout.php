@@ -177,7 +177,7 @@
                         </div>
                     </div>
                 </div>
-                <a href="#" class="header-profile">
+                <a href="/login" class="header-profile">
                     <img src="img/profile.png" alt="">
                 </a>
             </div>
