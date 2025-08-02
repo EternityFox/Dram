@@ -14,6 +14,26 @@
                 </div>
             </div>
             <div class="card mt-4 toggle">
+                <h5 class="card-header">Компании</h5>
+                <div class="card-body" style="display: none;">
+                    <a href="/admin/manage-companies" class="btn btn-primary">Управление компаниями</a>
+                </div>
+            </div>
+
+            <div class="card mt-4 toggle">
+                <h5 class="card-header">Пользователи</h5>
+                <div class="card-body" style="display: none;">
+                    <a href="/admin/manage-users" class="btn btn-primary">Управление пользователями</a>
+                </div>
+            </div>
+
+            <div class="card mt-4 toggle">
+                <h5 class="card-header">Типы топлива</h5>
+                <div class="card-body" style="display: none;">
+                    <a href="/admin/manage-fuel-types" class="btn btn-primary">Управление типами топлива</a>
+                </div>
+            </div>
+            <div class="card mt-4 toggle">
                 <h5 class="card-header">Страницы</h5>
                 <div class="card-body" style="display: none;">
                     <a href="/admin/pages" class="btn btn-primary">Управление страницами</a>

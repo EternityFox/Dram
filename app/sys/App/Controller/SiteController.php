@@ -86,6 +86,48 @@ class SiteController extends Controller
             ]
         ];
     }
+    protected function actionFuelCompany($id)
+    {
+        $settings = App::db()->query("SELECT * FROM settings")->fetch();
+        $menu['top'] = include_once(__DIR__ . '/../../../storage/menu/top.php');
+        $menuLeft = include_once(__DIR__ . '/../../../storage/menu/left.php');
+        $menu['left']['hidden'] = $menuLeft['hidden'];
+        unset($menuLeft['hidden']);
+        $menu['left']['basic'] = $menuLeft;
+
+        // Извлечение данных о топливной компании из базы данных
+        $stmt = App::db()->prepare("SELECT * FROM fuel_companies WHERE id = ?");
+        $stmt->execute([$id]);
+        $fuelCompanyInfo = $stmt->fetch();
+
+        if (!$fuelCompanyInfo) {
+            return $this->actionNotFound();
+        }
+
+        // Подготовка данных для представления
+        $address = $fuelCompanyInfo['address'] ?? '-';
+        $phones = json_decode($fuelCompanyInfo['phones'], true) ?? [];
+        $emails = json_decode($fuelCompanyInfo['emails'], true) ?? [];
+        $website = $fuelCompanyInfo['website'] ?? '';
+        $socials = json_decode($fuelCompanyInfo['socials'], true) ?? [];
+        $workingHours = json_decode($fuelCompanyInfo['working_hours'], true) ?? [];
+
+        return [
+            'site/fuel_company',
+            [
+                'settings' => $settings,
+                'menu' => $menu,
+                'fuelCompanyInfo' => $fuelCompanyInfo,
+                'address' => $address,
+                'phones' => $phones,
+                'emails' => $emails,
+                'website' => $website,
+                'socials' => $socials,
+                'workingHours' => $workingHours,
+                'id' => $id,
+            ]
+        ];
+    }
 
     protected function actionExchanger($id)
     {
@@ -1091,9 +1133,33 @@ HTML;
         $menu['left']['hidden'] = $menuLeft['hidden'];
         unset($menuLeft['hidden']);
         $menu['left']['basic'] = $menuLeft;
+
+        // Fetch fuel types from the database
+        $fuelTypesStmt = App::db()->query("SELECT id, name FROM fuel_types");
+        $fuelTypes = $fuelTypesStmt->fetchAll(\PDO::FETCH_KEY_PAIR); // Maps id => name
+
+        // Fetch fuel companies from the database
+        $companiesStmt = App::db()->query("SELECT id, slug, name, logo, updated_at AS updated FROM fuel_companies");
+        $fuelCompanies = $companiesStmt->fetchAll();
+
+        // Fetch fuel data from the database
+        $fuelDataStmt = App::db()->query("
+            SELECT fc.slug, ft.name AS fuel_type, fd.price 
+            FROM fuel_data fd 
+            JOIN fuel_companies fc ON fd.company_id = fc.id
+            JOIN fuel_types ft ON fd.fuel_type_id = ft.id
+        ");
+        $fuelData = [];
+        while ($row = $fuelDataStmt->fetch()) {
+            $fuelData[$row['slug']][$row['fuel_type']] = $row['price'];
+        }
+
         return ['site/table_fuel', [
             'settings' => $settings,
             'menu' => $menu,
+            'fuelCompanies' => $fuelCompanies,
+            'fuelData' => $fuelData,
+            'fuelTypes' => array_values($fuelTypes),
         ]];
     }
 

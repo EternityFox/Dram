@@ -27,6 +27,76 @@ class AdminController extends Controller
             )
         ");
         }
+        // Проверка и создание таблицы users
+        $checkTable = App::db()->query("SELECT name FROM sqlite_master WHERE type='table' AND name='users'")->fetch();
+        if (!$checkTable) {
+            App::db()->query("
+                CREATE TABLE users (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    login TEXT NOT NULL UNIQUE,
+                    password TEXT NOT NULL,
+                    email TEXT,
+                    company_id INTEGER,
+                    role TEXT NOT NULL DEFAULT 'user',
+                    app_token TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (company_id) REFERENCES fuel_companies(id)
+                )
+            ");
+        }
+
+        // Проверка и создание таблицы fuel_types
+        $checkTable = App::db()->query("SELECT name FROM sqlite_master WHERE type='table' AND name='fuel_types'")->fetch();
+        if (!$checkTable) {
+            App::db()->query("
+                CREATE TABLE fuel_types (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT NOT NULL UNIQUE,
+                    description TEXT
+                )
+            ");
+        }
+
+        // Проверка и создание таблицы fuel_companies
+        $checkTable = App::db()->query("SELECT name FROM sqlite_master WHERE type='table' AND name='fuel_companies'")->fetch();
+        if (!$checkTable) {
+            App::db()->query("
+                CREATE TABLE fuel_companies (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    slug TEXT NOT NULL UNIQUE,                   
+                    name TEXT NOT NULL,
+                    address TEXT,
+                    phones TEXT,
+                    emails TEXT,
+                    working_hours TEXT,
+                    website TEXT,
+                    socials TEXT,
+                    latitude DECIMAL(10, 8),
+                    longitude DECIMAL(10, 8),
+                    logo TEXT, -- Добавлено поле для логотипа
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ");
+        }
+
+        // Проверка и создание таблицы fuel_data
+        $checkTable = App::db()->query("SELECT name FROM sqlite_master WHERE type='table' AND name='fuel_data'")->fetch();
+        if (!$checkTable) {
+            App::db()->query("
+                CREATE TABLE fuel_data (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    company_id INTEGER NOT NULL,
+                    fuel_type_id INTEGER NOT NULL,
+                    price DECIMAL(10, 2) NOT NULL,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (company_id) REFERENCES fuel_companies(id),
+                    FOREIGN KEY (fuel_type_id) REFERENCES fuel_types(id)
+                )
+            ");
+        }
+
         $query = App::db()->query("PRAGMA table_info(settings)");
         $columns = $query->fetchAll(PDO::FETCH_ASSOC);
 
@@ -232,6 +302,8 @@ class AdminController extends Controller
         unset($menuLeft['hidden']);
 
         $menu['left']['basic'] = $menuLeft;
+        $companies = App::db()->query("SELECT * FROM fuel_companies")->fetchAll(PDO::FETCH_ASSOC);
+        $fuelTypes = App::db()->query("SELECT * FROM fuel_types")->fetchAll(PDO::FETCH_ASSOC);
         $navigations = App::db()->query("SELECT * FROM navigation")->fetchAll();
         return [
             'site/admin',
@@ -239,8 +311,171 @@ class AdminController extends Controller
                 'settings' => $settings,
                 'navigations' => $navigations,
                 'menu' => $menu,
+                'companies' => $companies,
+                'fuelTypes' => $fuelTypes,
             ]
         ];
+    }
+
+    protected function actionManageCompanies()
+    {
+        $md = false;
+        $query = App::db()->query("SELECT * FROM settings");
+        $settings = $query->fetch();
+        if (isset($_COOKIE['app_token'])) {
+            $token = $_COOKIE['app_token'];
+            if (self::hash($settings['login'] . $settings['password']) == $token) {
+                $md = true;
+            }
+        }
+        if (!$md) {
+            header('Location: /login');
+            return false;
+        }
+
+        $companies = App::db()->query("SELECT * FROM fuel_companies")->fetchAll(PDO::FETCH_ASSOC);
+
+        if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+            if (isset($_POST['create_company'])) {
+                $phones = json_encode($_POST['phones'] ?? [], JSON_UNESCAPED_UNICODE);
+                $emails = json_encode($_POST['emails'] ?? [], JSON_UNESCAPED_UNICODE);
+                $workingHours = json_encode($_POST['working_hours'] ?? [], JSON_UNESCAPED_UNICODE);
+                $socials = json_encode($_POST['socials'] ?? [], JSON_UNESCAPED_UNICODE);
+                $stmt = App::db()->prepare("INSERT INTO fuel_companies (name, slug, address, phones, emails, working_hours, website, socials, latitude, longitude) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                $stmt->execute([$_POST['name'], $_POST['slug'], $_POST['address'], $phones, $emails, $workingHours, $_POST['website'], $socials, $_POST['latitude'], $_POST['longitude']]);
+            } elseif (isset($_POST['edit_company'])) {
+                $companyId = $_POST['company_id'];
+                $phones = json_encode($_POST['phones'] ?? [], JSON_UNESCAPED_UNICODE);
+                $emails = json_encode($_POST['emails'] ?? [], JSON_UNESCAPED_UNICODE);
+                $workingHours = json_encode($_POST['working_hours'] ?? [], JSON_UNESCAPED_UNICODE);
+                $socials = json_encode($_POST['socials'] ?? [], JSON_UNESCAPED_UNICODE);
+                $stmt = App::db()->prepare("UPDATE fuel_companies SET name = ?, slug = ?, address = ?, phones = ?, emails = ?, working_hours = ?, website = ?, socials = ?, latitude = ?, longitude = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?");
+                $stmt->execute([$_POST['name'], $_POST['slug'], $_POST['address'], $phones, $emails, $workingHours, $_POST['website'], $socials, $_POST['latitude'], $_POST['longitude'], $companyId]);
+            } elseif (isset($_POST['delete_company'])) {
+                $companyId = (int)$_POST['company_id'];
+                $stmt = App::db()->prepare("DELETE FROM fuel_companies WHERE id = ?");
+                $stmt->execute([$companyId]);
+                $stmt = App::db()->prepare("DELETE FROM users WHERE company_id = ?");
+                $stmt->execute([$companyId]);
+                $stmt = App::db()->prepare("DELETE FROM fuel_data WHERE company_id = ?");
+                $stmt->execute([$companyId]);
+            }
+            header('Location: /admin/manage-companies');
+            return true;
+        }
+
+        $settings['menu']['top'] = file_get_contents(__DIR__ . '/../../../storage/menu/top.php');
+        $settings['menu']['left'] = file_get_contents(__DIR__ . '/../../../storage/menu/left.php');
+        $menu['top'] = include_once(__DIR__ . '/../../../storage/menu/top.php');
+        $menuLeft = include_once(__DIR__ . '/../../../storage/menu/left.php');
+        $menu['left']['hidden'] = $menuLeft['hidden'];
+        unset($menuLeft['hidden']);
+        $menu['left']['basic'] = $menuLeft;
+
+        return ['site/admin_manage_companies', ['settings' => $settings, 'menu' => $menu, 'companies' => $companies]];
+    }
+
+    protected function actionManageUsers()
+    {
+        $md = false;
+        $query = App::db()->query("SELECT * FROM settings");
+        $settings = $query->fetch();
+        if (isset($_COOKIE['app_token'])) {
+            $token = $_COOKIE['app_token'];
+            if (self::hash($settings['login'] . $settings['password']) == $token) {
+                $md = true;
+            }
+        }
+        if (!$md) {
+            header('Location: /login');
+            return false;
+        }
+
+        $users = App::db()->query("SELECT u.*, fc.name AS company_name FROM users u LEFT JOIN fuel_companies fc ON u.company_id = fc.id")->fetchAll(PDO::FETCH_ASSOC);
+        $companies = App::db()->query("SELECT id, name FROM fuel_companies")->fetchAll(PDO::FETCH_ASSOC);
+        $settings['menu']['top'] = file_get_contents(__DIR__ . '/../../../storage/menu/top.php');
+        $settings['menu']['left'] = file_get_contents(__DIR__ . '/../../../storage/menu/left.php');
+        $menu['top'] = include_once(__DIR__ . '/../../../storage/menu/top.php');
+        $menuLeft = include_once(__DIR__ . '/../../../storage/menu/left.php');
+        $menu['left']['hidden'] = $menuLeft['hidden'];
+        unset($menuLeft['hidden']);
+        $menu['left']['basic'] = $menuLeft;
+        if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+            if (isset($_POST['create_user'])) {
+                $password = self::hash($_POST['password']);
+                $companyId = $_POST['company_id'] === '' ? null : (int)$_POST['company_id'];
+                $appToken = self::hash($_POST['login'] . $_POST['password']);
+                $stmt = App::db()->prepare("INSERT INTO users (login, password, email, role, company_id, app_token) VALUES (?, ?, ?, ?, ?, ?)");
+                $stmt->execute([$_POST['login'], $password, $_POST['email'], $_POST['role'], $companyId, $appToken]);
+            } elseif (isset($_POST['edit_user'])) {
+                $userId = (int)$_POST['user_id'];
+                $password = $_POST['password'] ? self::hash($_POST['password']) : App::db()->query("SELECT password FROM users WHERE id = ?", [$userId])->fetchColumn();
+                $companyId = $_POST['company_id'] === '' ? null : (int)$_POST['company_id'];
+                $appToken = self::hash($_POST['login'] . $_POST['password']);
+                $stmt = App::db()->prepare("UPDATE users SET login = ?, password = ?, email = ?, role = ?, company_id = ?, app_token = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?");
+                $stmt->execute([$_POST['login'], $password, $_POST['email'], $_POST['role'], $companyId, $appToken, $userId]);
+            } elseif (isset($_POST['delete_user'])) {
+                $userId = (int)$_POST['user_id'];
+                $stmt = App::db()->prepare("DELETE FROM users WHERE id = ?");
+                $stmt->execute([$userId]);
+            }
+            header('Location: /admin/manage-users');
+            return true;
+        }
+
+        return ['site/admin_manage_users', ['settings' => $settings, 'menu' => $menu, 'users' => $users, 'companies' => $companies]];
+    }
+
+    protected function actionManageFuelTypes()
+    {
+        $md = false;
+        $query = App::db()->query("SELECT * FROM settings");
+        $settings = $query->fetch();
+        if (isset($_COOKIE['app_token'])) {
+            $token = $_COOKIE['app_token'];
+            if (self::hash($settings['login'] . $settings['password']) == $token) {
+                $md = true;
+            }
+        }
+        if (!$md) {
+            header('Location: /login');
+            return false;
+        }
+
+        $fuelTypes = App::db()->query("SELECT * FROM fuel_types")->fetchAll(PDO::FETCH_ASSOC);
+
+        if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+            if (isset($_POST['create_fuel_type'])) {
+                $stmt = App::db()->prepare("INSERT INTO fuel_types (name, description) VALUES (?, ?)");
+                $stmt->execute([$_POST['name'], $_POST['description']]);
+            } elseif (isset($_POST['edit_fuel_type'])) {
+                $fuelTypeId = $_POST['fuel_type_id'];
+                $name = $_POST['name'] ?? ''; // Ensure name is provided
+                if (empty($name)) {
+                    return ['site/admin_manage_fuel_types', ['settings' => $settings, 'menu' => $menu, 'fuelTypes' => $fuelTypes, 'error' => 'Название не может быть пустым']];
+                }
+                $stmt = App::db()->prepare("UPDATE fuel_types SET name = ?, description = ? WHERE id = ?");
+                $stmt->execute([$_POST['name'], $_POST['description'], $fuelTypeId]);
+            } elseif (isset($_POST['delete_fuel_type'])) {
+                $fuelTypeId = (int)$_POST['fuel_type_id']; // Ensure integer conversion
+                $stmt = App::db()->prepare("DELETE FROM fuel_types WHERE id = ?");
+                $stmt->execute([$fuelTypeId]);
+                $stmt = App::db()->prepare("DELETE FROM fuel_data WHERE fuel_type_id = ?");
+                $stmt->execute([$fuelTypeId]);
+            }
+            header('Location: /admin/manage-fuel-types');
+            return true;
+        }
+
+        $settings['menu']['top'] = file_get_contents(__DIR__ . '/../../../storage/menu/top.php');
+        $settings['menu']['left'] = file_get_contents(__DIR__ . '/../../../storage/menu/left.php');
+        $menu['top'] = include_once(__DIR__ . '/../../../storage/menu/top.php');
+        $menuLeft = include_once(__DIR__ . '/../../../storage/menu/left.php');
+        $menu['left']['hidden'] = $menuLeft['hidden'];
+        unset($menuLeft['hidden']);
+        $menu['left']['basic'] = $menuLeft;
+
+        return ['site/admin_manage_fuel_types', ['settings' => $settings, 'menu' => $menu, 'fuelTypes' => $fuelTypes]];
     }
 
     protected function actionBank($id)
@@ -342,38 +577,6 @@ class AdminController extends Controller
         ];
     }
 
-
-    protected function actionLogin()
-    {
-        $md = false;
-        $query = App::db()->query("SELECT login, password FROM settings");
-        $cred = $query->fetch();
-
-
-        if (isset($_COOKIE['app_token'])) {
-            $token = $_COOKIE['app_token'];
-            if (self::hash($cred['login'] . $cred['password']) == $token) {
-                $md = true;
-            }
-        }
-
-        if ($md) {
-            header('Location: /admin/');
-            return true;
-        }
-
-        if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-            if ($cred['login'] == $_POST['login'] && $cred['password'] == $_POST['password']) {
-                setcookie('app_token', self::hash($cred['login'] . $cred['password']), time() + 60 * 60 * 24 * 30);
-            } else {
-                return ['site/login', ['error' => 'Invalid login or password']];
-            }
-
-            header('Location: /admin/');
-        }
-
-        return ['site/login'];
-    }
 
     public static function hash($str): ?string
     {
