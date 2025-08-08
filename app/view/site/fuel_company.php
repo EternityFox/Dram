@@ -1,5 +1,5 @@
 <section class="content">
-    <div class="container">
+    <div class="container fuel-companion">
         <div class="d-flex flex-column flex-lg-row align-items-start align-items-lg-center gap-3 gap-lg-4 mb-4">
             <div>
                 <a href="/"
@@ -70,7 +70,7 @@
                                         <a class="d-flex items-center gap-2" href="<?= htmlspecialchars($website) ?>"
                                            target="_blank">
                                             <svg viewBox="0 0 24 24" width="24px" height="24px" fill="none">
-                                                <path d="M12 21C13.995 20.9999 15.9335 20.3372 17.511 19.116C19.0886 17.8948 20.2159 16.1843 20.716 14.253M12 21C10.005 20.9999 8.06654 20.3372 6.48898 19.116C4.91141 17.8948 3.78408 16.1843 3.284 14.253M12 21C14.485 21 16.5 16.97 16.5 12C16.5 7.03 14.485 3 12 3M12 21C9.515 21 7.5 16.97 7.5 12C7.5 7.03 9.515 3 12 3M20.716 14.253C20.901 13.533 21 12.778 21 12C21.0025 10.4521 20.6039 8.92999 19.843 7.582M20.716 14.253C18.0492 15.7314 15.0492 16.5048 12 16.5C8.838 16.5 5.867 15.685 3.284 14.253M3.284 14.253C3.09475 13.517 2.99933 12.76 3 12C3 10.395 3.42 8.887 4.157 7.582M12 3C13.5962 2.99933 15.1639 3.42336 16.5422 4.22856C17.9205 5.03377 19.0597 6.19117 19.843 7.582M12 3C10.4038 2.99933 8.83608 3.42336 7.45781 4.22856C6.07954 5.03377 4.94031 6.19117 4.157 7.582M19.843 7.582C17.6657 9.46793 14.8805 10.5041 12 10.5C9.002 10.5 6.26 9.4 4.157 7.582"
+                                                <path d="M12 21C13.995 20.9999 15.9335 20.3372 17.511 19.116C19.0886 17.8948 20.2159 16.1843 20.716 14.253M12 21C10.005 20.9999 8.06654 20.3372 6.48898 19.116C4.91141 17.8948 3.78408 16.1843 3.284 14.253M12 21C14.485 21 16.5 16.97 16.5 12C16.5 7.03 14.485 3 12 3M12 21C9.515 21 7.5 16.97 7.5 12C7.5 7.03 9.515 3 12 3M20.716 14.253C20.901 13.533 21 12.778 21 12C21.0025 10.4521 20.6039 8.92999 19.843 7.582M20.716 14.253C18.0492 15.7314 15.0492 16.5048 12 16.5C8.838 16.5 5.867 15.685 3.284 14.253M3.284 14.253C3.09475 13.517 2.99933 12.76 3 12C3 10.395 3.42 8.887 4.157 7.582M12 3C13.5962 2.99933 15.1639 3.42336 16.5422 4.22856C17.9205 5.03377 19.0597 6.19117 19.843 7.582M12 3C10.4038 2.99933 8.83608 3.42336 7.45781 4.22856C6.07954 5.03377 4.94031 6.19117 4.157 7.582"
                                                       stroke="#0155eb" stroke-width="1.5" stroke-linecap="round"
                                                       stroke-linejoin="round"></path>
                                             </svg>
@@ -105,7 +105,9 @@
                                             <?php endforeach; ?>
                                         </div>
                                     <?php endif; ?>
-                                </div>
+                                    <div class="ya-share2 d-flex justify-content-end" data-curtain data-color-scheme="blackwhite" data-limit="0" data-more-button-type="short" data-services="vkontakte,telegram,twitter,whatsapp"></div>
+
+                            </div>
                             </div>
                         </div>
 
@@ -137,6 +139,26 @@
                 </span>
                                     <?php endforeach; ?>
                                 </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 background-gray p-4">
+                            <h4 class="text-primary fw-bold mb-3"><?= $lang('Цены на топливо') ?></h4>
+                            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
+                                <?php foreach ($fuelPrices as $price): ?>
+                                    <div class="col">
+                                        <div class="price-card bg-white p-3 rounded-3 shadow-sm border border-light">
+                                            <h6 class="text-muted mb-2"><?= $lang(htmlspecialchars($price['name'])) ?></h6>
+                                            <div class="d-flex align-items-baseline gap-2">
+                                                <span class="display-6 fw-bold text-success"><?= htmlspecialchars($price['price']) ?> ֏</span>
+                                            </div>
+                                            <small class="text-secondary"><?= $lang('Обновлено') . ": " . date('H:i d.m.Y', strtotime($price['updated_at'])) ?></small>
+                                        </div>
+                                    </div>
+                                <?php endforeach; ?>
+                                <?php if (empty($fuelPrices)): ?>
+                                    <div class="col-12 text-center text-muted"><?= $lang('Цены не указаны') ?></div>
+                                <?php endif; ?>
                             </div>
                         </div>
 

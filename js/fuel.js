@@ -1,36 +1,4 @@
-/*normal: [[6, 14], [10, 11], [12, 10], [14, 8]],
-    bold: [[7, 14], [10, 13], [10, 11], [13, 8]]*/
 $(document).ready(function () {
-    if ($('.fuel-table-entry-item-input-placeholder').length) {
-        var typed = new Typed('.fuel-table-entry-item-input-placeholder', {
-            strings: ['5 L', '20 L', '10 L'],
-            typeSpeed: 120,
-            backSpeed: 60,
-            loop: true,
-            showCursor: false,
-        });
-    }
-
-    $('.fuel-table-entry-item-input').click(function () {
-        $(this).find('.fuel-table-entry-item-input-placeholder').fadeOut(0);
-        $(this).find('#fuel-ursuminput').css({"color": "#111"});
-        $(this).find('input').val('');
-    });
-
-    $(".fuel-table-entry-item-input input").focusout(function () {
-        if ($(this).val() == '') {
-            $(this).find('#fuel-ursuminput').css({"color": "transparent"});
-            $(this).closest('.fuel-table-entry-item-input').find('.fuel-table-entry-item-input-placeholder').fadeIn(0);
-            $(this).val(1);
-            updatePrices($(this)); // Обновляем цены при сбросе на 1
-        }
-    });
-
-    $('.fuel-table-entry-item-input-clear').click(function () {
-        $(this).closest('.fuel-table-entry-item-input').find('input').val('');
-        $(this).closest('.fuel-table-entry-item-input').find('input').focus();
-    });
-
     // Обработчик ввода количества для обновления цен
     $('.fuel-table-entry-item-input input').on('input', function () {
         var quantity = parseInt($(this).val()) || 1; // Убеждаемся, что значение не меньше 1
@@ -62,11 +30,11 @@ $(document).ready(function () {
         });
 
         // Находим лучшую цену (максимальную) на основе базовых цен в текущей колонке
-        var bestBasePrice = -Infinity; // Инициализируем как отрицательную бесконечность для поиска максимума
+        var bestBasePrice = +Infinity; // Инициализируем как отрицательную бесконечность для поиска максимума
         $('.fuel-comparison tbody tr').each(function () {
             var priceItem = $(this).find('td').eq(columnIndex).find('.price-item-fuel');
-            var basePrice = parseFloat(priceItem.data('base-price')) || 0;
-            if (basePrice > bestBasePrice) {
+            var basePrice = parseFloat(priceItem.data('base-price')) || '-';
+            if (basePrice < bestBasePrice) {
                 bestBasePrice = basePrice;
             }
         });
@@ -74,9 +42,9 @@ $(document).ready(function () {
         // Обновляем цены и выделяем лучшую в текущей колонке
         $('.fuel-comparison tbody tr').each(function () {
             var priceItem = $(this).find('td').eq(columnIndex).find('.price-item-fuel');
-            var basePrice = parseFloat(priceItem.data('base-price')) || 0;
-            var totalPrice = (basePrice * quantity).toFixed(2);
-            priceItem.text(totalPrice + ' AMD');
+            var basePrice = parseFloat(priceItem.data('base-price')) || '-';
+            var totalPrice = basePrice === '-' ? '-' : (basePrice * quantity) + ' ֏';
+            priceItem.text(totalPrice);
             adjustFontSize(priceItem); // Корректируем размер шрифта
 
             // Выделяем элементы с лучшей базовой ценой (максимальной)
@@ -105,11 +73,4 @@ $(document).ready(function () {
             }
         });
     }
-
-    $('.fuel-table-entry-item-input input').hover(function () {
-        let el = $(this);
-        if (!el.hasClass('hovered-input')) {
-            $('.hovered-input').removeClass('hovered-input');
-        }
-    });
 });

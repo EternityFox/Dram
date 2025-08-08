@@ -10,10 +10,43 @@
 
         <form action="/user/company" method="POST" enctype="multipart/form-data">
             <input type="hidden" name="save_company" value="1">
+
+            <div class="card-section" data-section="fuel-prices">
+                <h3 class="section-toggle" onclick="toggleSection('fuel-prices')">
+                    <i class="fas fa-chevron-down"></i> Установка цен
+                    <span class="last-update">Последнее обновление: <?= $lastUpdate ? date('H:i d.m.Y', strtotime($lastUpdate)) : 'Нет данных' ?></span>
+                </h3>
+                <div class="section-content">
+                    <div class="best-prices-block">
+                        <h4>Лучшие цены</h4>
+                        <?php foreach ($fuelTypes as $fuelType): ?>
+                            <div class="best-price-item">
+                                <span><?= htmlspecialchars($fuelType['name']) ?>:</span>
+                                <span><?= isset($bestPrices[$fuelType['id']]) && $bestPrices[$fuelType['id']] !== 'N/A' ? htmlspecialchars($bestPrices[$fuelType['id']]) . ' ֏' : 'N/A' ?></span>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                    <div class="form-group">
+                        <div id="fuelPricesGroup">
+                            <?php foreach ($fuelTypes as $index => $fuelType): ?>
+                                <div class="input-group">
+                                    <select class="form-select" name="fuel_type[]" required>
+                                        <option value="<?= $fuelType['id'] ?>" <?= isset($fuelData[$fuelType['id']]) ? 'selected' : '' ?>><?= htmlspecialchars($fuelType['name']) ?></option>
+                                    </select>
+                                    <input type="number" class="form-control" name="fuel_price[]" value="<?= htmlspecialchars($fuelData[$fuelType['id']] ?? '') ?>" placeholder="Цена в AMD" step="0.01" required>
+                                    <button type="button" class="remove-btn" onclick="this.parentElement.remove()">✖</button>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                        <button type="button" class="add-btn" onclick="addFuelPrice()">Добавить</button>
+                    </div>
+                </div>
+            </div>
+
             <input type="hidden" id="latitude" name="latitude" value="<?= htmlspecialchars($company['latitude'] ?? 40.1772) ?>">
             <input type="hidden" id="longitude" name="longitude" value="<?= htmlspecialchars($company['longitude'] ?? 44.5035) ?>">
 
-            <div class="card-section" data-section="company-data">
+            <div class="card-section collapsed" data-section="company-data">
                 <h3 class="section-toggle" onclick="toggleSection('company-data')">
                     <i class="fas fa-chevron-right"></i> Данные компании
                 </h3>
@@ -115,28 +148,6 @@
                         <?php if ($company['logo']): ?>
                             <img src="img/fuel/<?= htmlspecialchars($company['logo']) ?>" alt="Логотип" class="logo-preview">
                         <?php endif; ?>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card-section" data-section="fuel-prices">
-                <h3 class="section-toggle" onclick="toggleSection('fuel-prices')">
-                    <i class="fas fa-chevron-down"></i> Установка цен
-                </h3>
-                <div class="section-content">
-                    <div class="form-group">
-                        <div id="fuelPricesGroup">
-                            <?php foreach ($fuelTypes as $index => $fuelType): ?>
-                                <div class="input-group">
-                                    <select class="form-select" name="fuel_type[]" required>
-                                        <option value="<?= $fuelType['id'] ?>" <?= isset($fuelData[$fuelType['id']]) ? 'selected' : '' ?>><?= htmlspecialchars($fuelType['name']) ?></option>
-                                    </select>
-                                    <input type="number" class="form-control" name="fuel_price[]" value="<?= htmlspecialchars($fuelData[$fuelType['id']] ?? '') ?>" placeholder="Цена в AMD" step="0.01" required>
-                                    <button type="button" class="remove-btn" onclick="this.parentElement.remove()">✖</button>
-                                </div>
-                            <?php endforeach; ?>
-                        </div>
-                        <button type="button" class="add-btn" onclick="addFuelPrice()">Добавить</button>
                     </div>
                 </div>
             </div>
