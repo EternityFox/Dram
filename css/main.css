@@ -2075,7 +2075,7 @@ section {
     border: 0;
     outline: none;
     font-family: 'GL-Nummernschild-Eng', sans-serif;
-    font-size: 159px;
+    font-size: 135px;
     text-transform: uppercase;
     width: 100%;
     overflow: hidden;
@@ -2288,6 +2288,9 @@ th {
     white-space: nowrap;
 }
 
+.fuel-comparison .sticky {
+    max-width: 180px;
+}
 .fuel-comparison td.sticky,
 .fuel-comparison th.sticky {
     z-index: 1;
@@ -2323,6 +2326,7 @@ th {
     border: 1px solid #E3E3E3;
     border-radius: 8px;
     height: 40px;
+    width: 40px;
 }
 
 .fuel-comparison .company-text {
@@ -2419,6 +2423,9 @@ a[href="/loans"], a[href="/deposits"], a[href="/cards"], a[href="/news"], a[href
 }
 
 @media screen and (max-width: 768px) {
+    .fuel-comparison .sticky {
+        max-width: 140px;
+    }
     .fuel-comparison .sticky-header-row {
         top: 49px;
     }
@@ -3896,4 +3903,73 @@ font-size: 1rem;
 .dashboard-container .card-section .section-content {
     max-height: 9999px;
     transition: max-height 0.5s ease, padding 0.3s ease;
+}
+
+.dashboard-container .last-update {
+    font-size: 0.9rem;
+    color: #666;
+    margin-left: 1rem;
+    font-style: italic;
+}
+
+.dashboard-container .best-prices-block {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    border: 1px solid #eee;
+}
+
+.dashboard-container .best-prices-block h4 {
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+    color: #2c3e50;
+}
+
+.dashboard-container .best-price-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.3rem;
+    font-size: 0.9rem;
+}
+
+.dashboard-container .best-price-item span:first-child {
+    font-weight: 500;
+    color: #34495e;
+}
+
+.dashboard-container .best-price-item span:last-child {
+    color: #27ae60;
+}
+
+.fuel-companion .fuel-prices-block {
+    background: #f9f9f9;
+    border-radius: 10px;
+    border: 1px solid #e0e0e0;
+    transition: box-shadow 0.3s ease;
+}
+
+.fuel-companion .fuel-prices-block:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.fuel-companion .price-card {
+    transition: transform 0.2s ease;
+}
+
+.fuel-companion .price-card:hover {
+    transform: translateY(-5px);
+}
+
+.fuel-companion .price-card .display-6 {
+    font-size: 1.5rem;
+    line-height: 1;
+}
+
+.fuel-companion .price-card .text-success {
+    color: #28a745 !important;
+}
+
+.fuel-companion .price-card .text-secondary {
+    font-size: 0.75rem;
 }

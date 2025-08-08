@@ -88,7 +88,9 @@ class SiteController extends Controller
     }
     protected function actionFuelCompany($id)
     {
-        $settings = App::db()->query("SELECT * FROM settings")->fetch();
+        $query = App::db()->query("SELECT * FROM settings");
+        $settings = $query->fetch();
+        $navigations = App::db()->query("SELECT * FROM navigation")->fetchAll();
         $menu['top'] = include_once(__DIR__ . '/../../../storage/menu/top.php');
         $menuLeft = include_once(__DIR__ . '/../../../storage/menu/left.php');
         $menu['left']['hidden'] = $menuLeft['hidden'];
@@ -103,6 +105,16 @@ class SiteController extends Controller
         if (!$fuelCompanyInfo) {
             return $this->actionNotFound();
         }
+
+        // Fetch fuel prices for the company
+        $fuelPricesStmt = App::db()->prepare("
+            SELECT ft.name, fd.price, fd.updated_at
+            FROM fuel_data fd
+            JOIN fuel_types ft ON fd.fuel_type_id = ft.id
+            WHERE fd.company_id = ?
+        ");
+        $fuelPricesStmt->execute([$id]);
+        $fuelPrices = $fuelPricesStmt->fetchAll(\PDO::FETCH_ASSOC);
 
         // Подготовка данных для представления
         $address = $fuelCompanyInfo['address'] ?? '-';
@@ -125,6 +137,8 @@ class SiteController extends Controller
                 'socials' => $socials,
                 'workingHours' => $workingHours,
                 'id' => $id,
+                'navigations' => $navigations,
+                'fuelPrices' => $fuelPrices,
             ]
         ];
     }
@@ -1104,16 +1118,12 @@ HTML;
     {
         $query = App::db()->query("SELECT * FROM settings");
         $settings = $query->fetch();
-
+        $navigations = App::db()->query("SELECT * FROM navigation")->fetchAll();
         $menu['top'] = include_once(__DIR__ . '/../../../storage/menu/top.php');
         $menuLeft = include_once(__DIR__ . '/../../../storage/menu/left.php');
-
         $menu['left']['hidden'] = $menuLeft['hidden'];
-
         unset($menuLeft['hidden']);
-
         $menu['left']['basic'] = $menuLeft;
-        $navigations = App::db()->query("SELECT * FROM navigation")->fetchAll();
 
         return [
             'site/number_search',
@@ -1127,7 +1137,9 @@ HTML;
 
     protected function actionFuel()
     {
-        $settings = App::db()->query("SELECT * FROM settings")->fetch();
+        $query = App::db()->query("SELECT * FROM settings");
+        $settings = $query->fetch();
+        $navigations = App::db()->query("SELECT * FROM navigation")->fetchAll();
         $menu['top'] = include_once(__DIR__ . '/../../../storage/menu/top.php');
         $menuLeft = include_once(__DIR__ . '/../../../storage/menu/left.php');
         $menu['left']['hidden'] = $menuLeft['hidden'];
@@ -1135,23 +1147,33 @@ HTML;
         $menu['left']['basic'] = $menuLeft;
 
         // Fetch fuel types from the database
-        $fuelTypesStmt = App::db()->query("SELECT id, name FROM fuel_types");
+        $fuelTypesStmt = App::db()->query("SELECT id, name FROM fuel_types ORDER BY id");
         $fuelTypes = $fuelTypesStmt->fetchAll(\PDO::FETCH_KEY_PAIR); // Maps id => name
 
-        // Fetch fuel companies from the database
-        $companiesStmt = App::db()->query("SELECT id, slug, name, logo, updated_at AS updated FROM fuel_companies");
+        // Fetch fuel companies with their latest updated_at from fuel_data
+        $companiesStmt = App::db()->query("
+            SELECT fc.id, fc.slug, fc.name, fc.logo AS company_updated
+            FROM fuel_companies fc
+            LEFT JOIN fuel_data fd ON fc.id = fd.company_id
+            GROUP BY fc.id, fc.slug, fc.name, fc.logo, fc.updated_at
+            ORDER BY fd.updated_at DESC
+        ");
         $fuelCompanies = $companiesStmt->fetchAll();
 
-        // Fetch fuel data from the database
+        // Fetch fuel data with updated_at
         $fuelDataStmt = App::db()->query("
-            SELECT fc.slug, ft.name AS fuel_type, fd.price 
+            SELECT fc.slug, ft.name AS fuel_type, fd.price, fd.updated_at
             FROM fuel_data fd 
             JOIN fuel_companies fc ON fd.company_id = fc.id
             JOIN fuel_types ft ON fd.fuel_type_id = ft.id
+            ORDER BY fd.updated_at DESC
         ");
         $fuelData = [];
         while ($row = $fuelDataStmt->fetch()) {
-            $fuelData[$row['slug']][$row['fuel_type']] = $row['price'];
+            $fuelData[$row['slug']][$row['fuel_type']] = [
+                'price' => $row['price'],
+                'updated_at' => $row['updated_at']
+            ];
         }
 
         return ['site/table_fuel', [
@@ -1160,6 +1182,7 @@ HTML;
             'fuelCompanies' => $fuelCompanies,
             'fuelData' => $fuelData,
             'fuelTypes' => array_values($fuelTypes),
+            'navigations' => $navigations,
         ]];
     }
 

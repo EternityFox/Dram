@@ -47,6 +47,7 @@
     <!-- Yandex.RTB -->
     <script>window.yaContextCb = window.yaContextCb || []</script>
     <script src="https://yandex.ru/ads/system/context.js" async></script>
+    <script src="https://yastatic.net/share2/share.js" async></script>
     <script src="https://api-maps.yandex.ru/2.1/?apikey=93e925f4-cf14-4f88-b5a7-38bbb050f665&lang=ru_RU"
             type="text/javascript"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>

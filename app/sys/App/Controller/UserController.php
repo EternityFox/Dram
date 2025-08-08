@@ -60,7 +60,7 @@ class UserController extends Controller
             if (isset($_FILES['logo']) && $_FILES['logo']['error'] === UPLOAD_ERR_OK) {
                 $logoPath = uniqid() . '.' . pathinfo($_FILES['logo']['name'], PATHINFO_EXTENSION);
                 $imagePath = __DIR__ . '/../../../../img/fuel/' . $logoPath;
-                move_uploaded_file($_FILES['logo']['tmp_name'],$imagePath);
+                move_uploaded_file($_FILES['logo']['tmp_name'], $imagePath);
             }
 
             // Обновляем адрес и координаты с карты
@@ -77,7 +77,7 @@ class UserController extends Controller
             if (!empty($_POST['fuel_type']) && !empty($_POST['fuel_price'])) {
                 foreach ($_POST['fuel_type'] as $index => $fuelId) {
                     if (!empty($_POST['fuel_price'][$index])) {
-                        $stmt = App::db()->prepare("INSERT INTO fuel_data (company_id, fuel_type_id, price) VALUES (?, ?, ?)");
+                        $stmt = App::db()->prepare("INSERT INTO fuel_data (company_id, fuel_type_id, price, updated_at) VALUES (?, ?, ?, NOW())");
                         $stmt->execute([$companyId, $fuelId, (float)$_POST['fuel_price'][$index]]);
                     }
                 }
@@ -90,14 +90,33 @@ class UserController extends Controller
         // Получение типов топлива, отсортированных по id
         $fuelTypes = App::db()->query("SELECT id, name FROM fuel_types ORDER BY id ASC")->fetchAll(PDO::FETCH_ASSOC);
 
-        // Получение текущих цен
+        // Получение текущих цен для компании
         $fuelData = [];
+        $lastUpdate = null;
         if ($company) {
+            $stmt = App::db()->prepare("SELECT fuel_type_id, price, updated_at FROM fuel_data WHERE company_id = ? ORDER BY updated_at DESC LIMIT 1");
+            $stmt->execute([$company['id']]);
+            $lastUpdateRow = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($lastUpdateRow) {
+                $lastUpdate = $lastUpdateRow['updated_at'];
+            }
             $stmt = App::db()->prepare("SELECT fuel_type_id, price FROM fuel_data WHERE company_id = ?");
             $stmt->execute([$company['id']]);
             while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
                 $fuelData[$row['fuel_type_id']] = $row['price'];
             }
+        }
+
+        // Получение лучших цен для каждого типа топлива
+        $bestPrices = [];
+        $stmt = App::db()->query("
+            SELECT ft.id AS fuel_type_id, MIN(fd.price) AS min_price
+            FROM fuel_types ft
+            LEFT JOIN fuel_data fd ON ft.id = fd.fuel_type_id
+            GROUP BY ft.id
+        ");
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $bestPrices[$row['fuel_type_id']] = $row['min_price'] ?: 'N/A';
         }
 
         $settings['menu']['top'] = file_get_contents(__DIR__ . '/../../../storage/menu/top.php');
@@ -108,7 +127,15 @@ class UserController extends Controller
         unset($menuLeft['hidden']);
         $menu['left']['basic'] = $menuLeft;
 
-        return ['user/company_dashboard', ['settings' => $settings, 'menu' => $menu, 'company' => $company, 'fuelTypes' => $fuelTypes, 'fuelData' => $fuelData]];
+        return ['user/company_dashboard', [
+            'settings' => $settings,
+            'menu' => $menu,
+            'company' => $company,
+            'fuelTypes' => $fuelTypes,
+            'fuelData' => $fuelData,
+            'bestPrices' => $bestPrices,
+            'lastUpdate' => $lastUpdate
+        ]];
     }
 
     public static function hash($str): ?string
