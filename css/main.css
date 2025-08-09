@@ -3973,3 +3973,37 @@ font-size: 1rem;
 .fuel-companion .price-card .text-secondary {
     font-size: 0.75rem;
 }
+
+.tabbar {
+    padding: 4px 0;
+    border-top: 1px solid #e0e0e0;
+}
+
+.tabbar .tab-item {
+    font-size: 0.75rem;
+    color: #333;
+    transition: color 0.3s;
+}
+
+.tabbar .tab-item img {
+    margin-bottom: 2px;
+}
+
+.tabbar .tab-label {
+    font-size: 0.65rem;
+    margin-top: 4px;
+}
+
+.tabbar .tab-item.active {
+    color: #3aabff!important;
+}
+.tabbar .tab-item.active img{
+    filter: invert(0.5) sepia(1) saturate(5) hue-rotate(175deg);
+}
+
+.tabbar .tab-item:hover {
+    color: #1DA1F2;
+}
+.tabbar.fixed-bottom{
+    bottom: -1px;
+}

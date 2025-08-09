@@ -343,6 +343,36 @@
             </div>
         </div>
     </footer>
+    <div class="tabbar fixed-bottom bg-white d-md-none shadow">
+        <div class="d-flex justify-content-around py-1">
+            <a href="/" class="tab-item d-flex flex-column align-items-center text-decoration-none text-dark"
+               data-page="/">
+                <img src="img/home.svg" alt="Главная" width="20" height="20">
+                <small class="tab-label"><?= $lang('Главная') ?></small>
+            </a>
+            <a href="/converter" class="tab-item d-flex flex-column align-items-center text-decoration-none text-dark"
+               data-page="converter">
+                <img src="img/calculator.svg" alt="Конвертер" width="20" height="20">
+                <small class="tab-label"><?= $lang('Конвертер') ?></small>
+            </a>
+            <a href="/charts" class="tab-item d-flex flex-column align-items-center text-decoration-none text-dark"
+               data-page="charts">
+                <img src="img/chart.svg" alt="Графики" width="20" height="20">
+                <small class="tab-label"><?= $lang('Графики') ?></small>
+            </a>
+            <a href="/plate-number-search"
+               class="tab-item d-flex flex-column align-items-center text-decoration-none text-dark"
+               data-page="plate-number">
+                <img src="img/auto.svg" alt="Госномера" width="20" height="20">
+                <small class="tab-label"><?= $lang('Госномера') ?></small>
+            </a>
+            <a href="/login" class="tab-item d-flex flex-column align-items-center text-decoration-none text-dark"
+               data-page="login">
+                <img src="img/user.svg" alt="Аккаунт" width="20" height="20">
+                <small class="tab-label"><?= $lang('Аккаунт') ?></small>
+            </a>
+        </div>
+    </div>
 </div>
 <script src="js/jquery-3.4.1.min.js"></script>
 <script src="js/jquery.sort-elements.js"></script>
@@ -363,6 +393,15 @@
     }
 
     gtag('js', new Date());
+
+    const currentPath = window.location.pathname;
+
+    document.querySelectorAll('.tab-item').forEach(item => {
+        const page = item.getAttribute('data-page');
+        if (currentPath === "/" + page || (page === '/' && currentPath === '/')) {
+            item.classList.add('active');
+        }
+    });
 
     gtag('config', 'G-ZQBN7XLQME');
 </script>
