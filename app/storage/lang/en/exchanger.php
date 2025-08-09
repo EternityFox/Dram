@@ -186,4 +186,5 @@ return [
     'Հրաչյա Առաքելյան' => 'Հրաչյա Առաքելյան',
     'Chinar Home Адонц' => 'Chinar Home Adonts',
     'Опера Норк' => 'Opera Nork',
+    'IT MOBILE' => 'IT MOBILE',
 ];
