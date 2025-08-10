@@ -727,13 +727,11 @@ section {
 
 
 .content {
-    padding-top: 30px;
+    padding-top: 24px;
     margin-top: 20px;
 
 }
 
-.left-block {
-}
 
 .banner {
     box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
@@ -762,10 +760,11 @@ section {
     line-height: 120%;
 }
 
-.table {
-    margin-bottom: 0;
+.table, .fuel-comparison, .search-number-block {
     position: relative;
+    margin: 24px 0;
 }
+
 
 .table-title {
     margin-top: 28px;
@@ -3975,7 +3974,7 @@ font-size: 1rem;
 }
 
 .tabbar {
-    padding: 4px 0;
+    padding: 10px 12px 12px;
     border-top: 1px solid #e0e0e0;
 }
 

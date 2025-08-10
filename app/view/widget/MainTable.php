@@ -8,7 +8,7 @@ $etNames = ['cash' => 'Наличный', 'noncash' => 'Безналичный',
     <!--    </p>-->
     <!--    <div class="table-flex table-title">-->
     <div class="row table-title">
-        <div class="col-7 text-right refresh-time-container">
+        <div class="col-7 text-right refresh-time-container d-none">
             <a href="/"><?= $lang('Обновить') ?></a>
             <div id="refresh-time" class="d-none"><?= $refreshTime ?></div>
             <span class="refresh-time"><?= $refreshTime ?></span>
