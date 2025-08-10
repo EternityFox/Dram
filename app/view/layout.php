@@ -355,10 +355,10 @@
                 <img src="img/calculator.svg" alt="Конвертер" width="20" height="20">
                 <small class="tab-label"><?= $lang('Конвертер') ?></small>
             </a>
-            <a href="/charts" class="tab-item d-flex flex-column align-items-center text-decoration-none text-dark"
-               data-page="charts">
-                <img src="img/chart.svg" alt="Графики" width="20" height="20">
-                <small class="tab-label"><?= $lang('Графики') ?></small>
+            <a href="/fuel" class="tab-item d-flex flex-column align-items-center text-decoration-none text-dark"
+               data-page="fuel">
+                <img src="img/fuel.svg" alt="Топливо" width="20" height="20">
+                <small class="tab-label"><?= $lang('Топливо') ?></small>
             </a>
             <a href="/plate-number-search"
                class="tab-item d-flex flex-column align-items-center text-decoration-none text-dark"

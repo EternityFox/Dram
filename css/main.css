@@ -727,7 +727,7 @@ section {
 
 
 .content {
-    padding-top: 24px;
+    padding-top: 20px;
     margin-top: 20px;
 
 }
@@ -762,7 +762,7 @@ section {
 
 .table, .fuel-comparison, .search-number-block {
     position: relative;
-    margin: 24px 0;
+    margin: 20px 0;
 }
 
 
@@ -2266,6 +2266,7 @@ th {
 .fuel-comparison .fuel-table {
     overflow-x: auto;
     height: calc(100vh - 100px);
+    padding-bottom: 80px;
 }
 
 .fuel-comparison table {
@@ -2422,8 +2423,11 @@ a[href="/loans"], a[href="/deposits"], a[href="/cards"], a[href="/news"], a[href
 }
 
 @media screen and (max-width: 768px) {
+    .fuel-comparison .company-name {
+        font-size: 12px;
+    }
     .fuel-comparison .sticky {
-        max-width: 140px;
+        max-width: 150px;
     }
     .fuel-comparison .sticky-header-row {
         top: 49px;
@@ -3974,7 +3978,7 @@ font-size: 1rem;
 }
 
 .tabbar {
-    padding: 10px 12px 12px;
+    padding: 12px 12px 16px;
     border-top: 1px solid #e0e0e0;
 }
 
