@@ -19,35 +19,37 @@ $showHeaders = true;
                 </div>
                 <?php
                 foreach ($data as $idx => $exch): ?>
-                    <div class="table-row<?= (2 == $tableNum ? '' : ' active') ?>">
-                        <div class="table-item one">
-                            <div class="table-item-number">
-                                <?= ++$idx ?>
-                            </div>
-                            <div class="table-item-icon">
-                                <?php
-                                $img = str_replace('32x32', 'exchanger-icon', $exch['logo']);
-                                $img = str_replace('svg', 'webp', $exch['logo'])
-                                ?>
-                                <img src="img/exchanger/<?= $img ?>" alt=""
-                                     style="width: 24px; height: 24px;">
-                            </div>
-                            <div class="table-item-slogan">
-                                <div class="d-flex flex-column">
-                                    <?= (0 === $tableNum ? '<a href="/bank/' . $exch['id'] . '" data-maxlen="15">' . $lang("exchanger>{$exch['name']}") . '</a>'
-                                        : '<a href="/exchanger/' . $exch['id'] . '" data-maxlen="15">' . $lang("exchanger>{$exch['name']}") . '</a>') ?>
-                                    <span class="table-item-data"><?= $exch['date'] ?></span>
+                    <?php if ($exch['id'] !== 171): ?>
+                        <div class="table-row<?= (2 == $tableNum ? '' : ' active') ?>">
+                            <div class="table-item one">
+                                <div class="table-item-number">
+                                    <?= ++$idx ?>
+                                </div>
+                                <div class="table-item-icon">
+                                    <?php
+                                    $img = str_replace('32x32', 'exchanger-icon', $exch['logo']);
+                                    $img = str_replace('svg', 'webp', $exch['logo'])
+                                    ?>
+                                    <img src="img/exchanger/<?= $img ?>" alt=""
+                                         style="width: 24px; height: 24px;">
+                                </div>
+                                <div class="table-item-slogan">
+                                    <div class="d-flex flex-column">
+                                        <?= (0 === $tableNum ? '<a href="/bank/' . $exch['id'] . '" data-maxlen="15">' . $lang("exchanger>{$exch['name']}") . '</a>'
+                                            : '<a href="/exchanger/' . $exch['id'] . '" data-maxlen="15">' . $lang("exchanger>{$exch['name']}") . '</a>') ?>
+                                        <span class="table-item-data"><?= $exch['date'] ?></span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    <?php if ($idx === count($data) && $tableNum == 0): ?>
-                        <?php
-                        $bannerMid = random_elem($settings['banner_middle_1'] ?? '', $settings['banner_middle_2'] ?? '');
-                        if (!empty($bannerMid)): ?>
-                            <div class="banner def-box banner-mobile banner-middle">
-                                <?= $bannerMid ?>
-                            </div>
+                        <?php if ($idx === count($data) && $tableNum == 0): ?>
+                            <?php
+                            $bannerMid = random_elem($settings['banner_middle_1'] ?? '', $settings['banner_middle_2'] ?? '');
+                            if (!empty($bannerMid)): ?>
+                                <div class="banner def-box banner-mobile banner-middle">
+                                    <?= $bannerMid ?>
+                                </div>
+                            <?php endif; ?>
                         <?php endif; ?>
                     <?php endif; ?>
                 <?php endforeach ?>
@@ -160,37 +162,39 @@ $showHeaders = true;
                     <?php endif; ?>
                     <?php
                     foreach ($data as $idx => $exch): ?>
-                        <div class="table-row<?= (2 == $tableNum ? '' : ' active') ?> table-items-row">
-                            <?php $num = 0 ?>
-                            <?php $nums = [['four', 'five'], ['six', 'seven'], ['eight', 'nine'], ['ten', 'eleven'], ['twelve', 'thirteen'], ['fourteen', 'fifteen'], ['sixteen', 'seventeen'], ['eighteen', 'nineteen'], ['twenty', 'twenty_one'], ['twenty_two', 'twenty_three'], ['twenty_four', 'twenty_five']] ?>
-                            <?php foreach ($activeSymbols as $i => $symbol): ?>
-                                <div class="table-items">
-                                    <div class="table-item <?= $nums[$num][0] ?>">
-                                        <p class="table-item-number"
-                                           data-price="<?= arrayGet($exch, ['courses', "{$crossSymbols[$i*2][0]}/{$crossSymbols[$i*2][1]}", 'price']) ?>"
-                                           data-reverse-price="<?= arrayGet($exch, ['courses', $symbol, 'ws_price']) ?>"
-                                           data-reverse="<?= arrayGet($exch, ['courses', $symbol, 'ws_price']) ?>"
-                                        ><?= arrayGet($exch, ['courses', $symbol, 'price']) ?>
-                                        </p>
+                        <?php if ($exch['id'] !== 171): ?>
+                            <div class="table-row<?= (2 == $tableNum ? '' : ' active') ?> table-items-row">
+                                <?php $num = 0 ?>
+                                <?php $nums = [['four', 'five'], ['six', 'seven'], ['eight', 'nine'], ['ten', 'eleven'], ['twelve', 'thirteen'], ['fourteen', 'fifteen'], ['sixteen', 'seventeen'], ['eighteen', 'nineteen'], ['twenty', 'twenty_one'], ['twenty_two', 'twenty_three'], ['twenty_four', 'twenty_five']] ?>
+                                <?php foreach ($activeSymbols as $i => $symbol): ?>
+                                    <div class="table-items">
+                                        <div class="table-item <?= $nums[$num][0] ?>">
+                                            <p class="table-item-number"
+                                               data-price="<?= arrayGet($exch, ['courses', "{$crossSymbols[$i*2][0]}/{$crossSymbols[$i*2][1]}", 'price']) ?>"
+                                               data-reverse-price="<?= arrayGet($exch, ['courses', $symbol, 'ws_price']) ?>"
+                                               data-reverse="<?= arrayGet($exch, ['courses', $symbol, 'ws_price']) ?>"
+                                            ><?= arrayGet($exch, ['courses', $symbol, 'price']) ?>
+                                            </p>
+                                        </div>
+                                        <div class="table-item <?= $nums[$num][1] ?>">
+                                            <p class="table-item-number"
+                                               data-price="<?= arrayGet($exch, ['courses', "{$crossSymbols[$i*2+1][0]}/{$crossSymbols[$i*2+1][1]}", 'price']) ?>"
+                                               data-reverse-price="<?= arrayGet($exch, ['courses', $symbol, 'ws_price']) ?>"
+                                               data-reverse="<?= arrayGet($exch, ['courses', $symbol, 'ws_price']) ?>"
+                                            ><?= arrayGet($exch, ['courses', $symbol, 'price']) ?>
+                                            </p>
+                                        </div>
                                     </div>
-                                    <div class="table-item <?= $nums[$num][1] ?>">
-                                        <p class="table-item-number"
-                                           data-price="<?= arrayGet($exch, ['courses', "{$crossSymbols[$i*2+1][0]}/{$crossSymbols[$i*2+1][1]}", 'price']) ?>"
-                                           data-reverse-price="<?= arrayGet($exch, ['courses', $symbol, 'ws_price']) ?>"
-                                           data-reverse="<?= arrayGet($exch, ['courses', $symbol, 'ws_price']) ?>"
-                                        ><?= arrayGet($exch, ['courses', $symbol, 'price']) ?>
-                                        </p>
+                                    <?php ++$num ?>
+                                <?php endforeach ?>
+                            </div>
+                            <?php if ($idx === count($data) - 1 && $tableNum == 0): ?>
+                                <?php
+                                $bannerMid = random_elem($settings['banner_middle_1'] ?? '', $settings['banner_middle_2'] ?? '');
+                                if (!empty($bannerMid)): ?>
+                                    <div class="banner def-box banner-mobile banner-middle">
                                     </div>
-                                </div>
-                                <?php ++$num ?>
-                            <?php endforeach ?>
-                        </div>
-                        <?php if ($idx === count($data) - 1 && $tableNum == 0): ?>
-                            <?php
-                            $bannerMid = random_elem($settings['banner_middle_1'] ?? '', $settings['banner_middle_2'] ?? '');
-                            if (!empty($bannerMid)): ?>
-                                <div class="banner def-box banner-mobile banner-middle">
-                                </div>
+                                <?php endif; ?>
                             <?php endif; ?>
                         <?php endif; ?>
                     <?php endforeach ?>

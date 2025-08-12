@@ -30,7 +30,7 @@ return [
         ],
         'MainTable' => [
             'baseSymbols' => ['RUB', 'USD', 'EUR', 'GBP', 'GEL'],
-            'allSymbols' => ['RUB', 'USD', 'EUR', 'GBP', 'CHF', 'CAD', 'AED', 'CNY', 'AUD', 'JPY', 'SEK'],
+            'allSymbols' => ['RUB', 'USD', 'EUR', 'GBP', 'GEL', 'CHF', 'CAD', 'AED', 'CNY', 'AUD', 'JPY', 'SEK'],
             'actualSec' => 3600,
             'removeSec' => 86400 * 7
         ],
