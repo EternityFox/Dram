@@ -400,6 +400,7 @@ class AdminController extends Controller
         $menu['left']['hidden'] = $menuLeft['hidden'];
         unset($menuLeft['hidden']);
         $menu['left']['basic'] = $menuLeft;
+
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             if (isset($_POST['create_user'])) {
                 $password = self::hash($_POST['password']);
@@ -409,9 +410,14 @@ class AdminController extends Controller
                 $stmt->execute([$_POST['login'], $password, $_POST['email'], $_POST['role'], $companyId, $appToken]);
             } elseif (isset($_POST['edit_user'])) {
                 $userId = (int)$_POST['user_id'];
-                $password = $_POST['password'] ? self::hash($_POST['password']) : App::db()->query("SELECT password FROM users WHERE id = ?", [$userId])->fetchColumn();
+                $password = $_POST['password'] ? self::hash($_POST['password']) : null;
+                if (!$_POST['password']) {
+                    $stmt = App::db()->prepare("SELECT password FROM users WHERE id = ?");
+                    $stmt->execute([$userId]);
+                    $password = $stmt->fetchColumn();
+                }
                 $companyId = $_POST['company_id'] === '' ? null : (int)$_POST['company_id'];
-                $appToken = self::hash($_POST['login'] . $_POST['password']);
+                $appToken = self::hash($_POST['login'] . ($_POST['password'] ?: $password));
                 $stmt = App::db()->prepare("UPDATE users SET login = ?, password = ?, email = ?, role = ?, company_id = ?, app_token = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?");
                 $stmt->execute([$_POST['login'], $password, $_POST['email'], $_POST['role'], $companyId, $appToken, $userId]);
             } elseif (isset($_POST['delete_user'])) {
