@@ -1152,7 +1152,7 @@ HTML;
 
         // Fetch fuel companies with their latest updated_at from fuel_data
         $companiesStmt = App::db()->query("
-            SELECT fc.id, fc.slug, fc.name, fc.logo
+            SELECT fc.id, fc.slug, fc.name, fc.logo, max(fd.updated_at) as latest_update, fc.updated_at as company_updated
             FROM fuel_companies fc
             LEFT JOIN fuel_data fd ON fc.id = fd.company_id
             GROUP BY fc.id, fc.slug, fc.name, fc.logo, fc.updated_at
