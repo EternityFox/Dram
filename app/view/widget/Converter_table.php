@@ -1,31 +1,31 @@
 <?php
-    $currencyPrices = $exchangersSorted ? $banksAndExchangersSorted : $banksSorted;
+$currencyPrices = $exchangersSorted ? $banksAndExchangersSorted : $banksSorted;
+//    echo "<pre>";
+//    print_r($currencyPrices);
+//    echo "</pre>";
+
+$currencyPricesData = [];
+
+foreach ($currencyPrices as $currency => $exch) {
+    $currencyPricesData[$currency] = $exch[0]['price'];
+}
+
+echo "<input type='hidden' name='currencyPrices' data-currency-prices='" . json_encode($currencyPricesData) . "'>";
+
+if ('cross' == $tableType) {
+    $currencyPricesCrossSell = $exchangersSortedCrossSell ? $banksAndExchangersSortedCrossSell : $banksSortedCrossSell;
 //    echo "<pre>";
 //    print_r($currencyPrices);
 //    echo "</pre>";
 
     $currencyPricesData = [];
 
-    foreach ($currencyPrices as $currency => $exch) {
+    foreach ($currencyPricesCrossSell as $currency => $exch) {
         $currencyPricesData[$currency] = $exch[0]['price'];
     }
 
-    echo "<input type='hidden' name='currencyPrices' data-currency-prices='" . json_encode($currencyPricesData) . "'>";
-
-    if ('cross' == $tableType) {
-        $currencyPricesCrossSell = $exchangersSortedCrossSell ? $banksAndExchangersSortedCrossSell : $banksSortedCrossSell;
-//    echo "<pre>";
-//    print_r($currencyPrices);
-//    echo "</pre>";
-
-        $currencyPricesData = [];
-
-        foreach ($currencyPricesCrossSell as $currency => $exch) {
-            $currencyPricesData[$currency] = $exch[0]['price'];
-        }
-
-        echo "<input type='hidden' name='currencyPricesCrossSell' data-currency-prices-cross-sell='" . json_encode($currencyPricesData) . "'>";
-    }
+    echo "<input type='hidden' name='currencyPricesCrossSell' data-currency-prices-cross-sell='" . json_encode($currencyPricesData) . "'>";
+}
 
 //    $currencyPricesSell = $exchangersSortedSell ? $banksAndExchangersSortedSell : $banksSortedSell;
 ////        echo "<pre>";
@@ -55,37 +55,38 @@
         </div>
         <?php $num = 0; ?>
         <?php foreach ($banksAndExchangersSorted[$tableCurrency] as $data) : ?>
+            <?php if ($data['name'] !== "Ардшининвестбанк"): ?>
+                <?php $num++; ?>
+                <div class="exchange-table-item">
+                    <div class="exchange-table-item-number">
+                        <?= $num ?>
+                    </div>
 
-            <?php $num++; ?>
-            <div class="exchange-table-item">
-                <div class="exchange-table-item-number">
-                    <?= $num ?>
-                </div>
-
-                <div class="exchange-table-item-img">
-                    <?php
+                    <div class="exchange-table-item-img">
+                        <?php
                         $img = str_replace('svg', 'webp', $data['logo']);
-                    ?>
-                    <img src="<?= App::$url ?>/img/exchanger/<?= $img ?>" alt="">
-                </div>
+                        ?>
+                        <img src="<?= App::$url ?>/img/exchanger/<?= $img ?>" alt="">
+                    </div>
 
-                <div class="exchange-table-item-sub-title table-item-slogan">
-                    <?= $data['name'] ?>
-                    <?php if ('exchanger' == $data['type']) : ?>
-                        <span> (<?= $lang("Обменник") ?>)</span>
-                    <?php endif ?>
-                </div>
+                    <div class="exchange-table-item-sub-title table-item-slogan">
+                        <?= $data['name'] ?>
+                        <?php if ('exchanger' == $data['type']) : ?>
+                            <span> (<?= $lang("Обменник") ?>)</span>
+                        <?php endif ?>
+                    </div>
 
-                <!--                            --><?php //if ('exchanger' == $data['type']) : ?>
-                <!--                                <div class="exchange-table-item-slogan">-->
-                <!--                                    (--><?php //= $lang("Обменник") ?><!--)-->
-                <!--                                </div>-->
-                <!--                            --><?php //endif ?>
+                    <!--                            --><?php //if ('exchanger' == $data['type']) : ?>
+                    <!--                                <div class="exchange-table-item-slogan">-->
+                    <!--                                    (--><?php //= $lang("Обменник") ?><!--)-->
+                    <!--                                </div>-->
+                    <!--                            --><?php //endif ?>
 
-                <div class="exchange-table-item-text" data-price="<?= $data['price'] ?>">
-                    <?= $data['price'] ?>
+                    <div class="exchange-table-item-text" data-price="<?= $data['price'] ?>">
+                        <?= $data['price'] ?>
+                    </div>
                 </div>
-            </div>
+            <?php endif ?>
         <?php endforeach ?>
         <!--                    <div class="exchange-table-item">-->
         <!--                        <div class="exchange-table-item-number">-->
@@ -175,27 +176,29 @@
 
     <?php $num = 0; ?>
     <?php foreach ($banksSorted[$tableCurrency] as $data) : ?>
-        <?php $num++; ?>
-        <div class="exchange-table-item">
-            <div class="exchange-table-item-number">
-                <?= $num ?>
-            </div>
+        <?php if ($data['name'] !== "Ардшининвестбанк"): ?>
+            <?php $num++; ?>
+            <div class="exchange-table-item">
+                <div class="exchange-table-item-number">
+                    <?= $num ?>
+                </div>
 
-            <div class="exchange-table-item-img">
-                <?php
-                $img = str_replace('svg', 'webp', $data['logo']);
-                ?>
-                <img src="<?= App::$url ?>/img/exchanger/<?= $img ?>" alt="666">
-            </div>
+                <div class="exchange-table-item-img">
+                    <?php
+                    $img = str_replace('svg', 'webp', $data['logo']);
+                    ?>
+                    <img src="<?= App::$url ?>/img/exchanger/<?= $img ?>" alt="666">
+                </div>
 
-            <div class="exchange-table-item-sub-title table-item-slogan">
-                <?= $data['name'] ?>
-            </div>
+                <div class="exchange-table-item-sub-title table-item-slogan">
+                    <?= $data['name'] ?>
+                </div>
 
-            <div class="exchange-table-item-text" data-price="<?= $data['price'] ?>">
-                <?= $data['price'] ?>
+                <div class="exchange-table-item-text" data-price="<?= $data['price'] ?>">
+                    <?= $data['price'] ?>
+                </div>
             </div>
-        </div>
+        <?php endif; ?>
     <?php endforeach ?>
 </div>
 <?php if ('cross' == $tableType) : ?>

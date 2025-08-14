@@ -77,7 +77,7 @@ class UserController extends Controller
             if (!empty($_POST['fuel_type']) && !empty($_POST['fuel_price'])) {
                 foreach ($_POST['fuel_type'] as $index => $fuelId) {
                     if (!empty($_POST['fuel_price'][$index])) {
-                        $stmt = App::db()->prepare("INSERT INTO fuel_data (company_id, fuel_type_id, price, updated_at) VALUES (?, ?, ?, NOW())");
+                        $stmt = App::db()->prepare("INSERT INTO fuel_data (company_id, fuel_type_id, price, updated_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)");
                         $stmt->execute([$companyId, $fuelId, (float)$_POST['fuel_price'][$index]]);
                     }
                 }
@@ -110,11 +110,11 @@ class UserController extends Controller
         // Получение лучших цен для каждого типа топлива
         $bestPrices = [];
         $stmt = App::db()->query("
-            SELECT ft.id AS fuel_type_id, MIN(fd.price) AS min_price
-            FROM fuel_types ft
-            LEFT JOIN fuel_data fd ON ft.id = fd.fuel_type_id
-            GROUP BY ft.id
-        ");
+        SELECT ft.id AS fuel_type_id, MIN(fd.price) AS min_price
+        FROM fuel_types ft
+        LEFT JOIN fuel_data fd ON ft.id = fd.fuel_type_id
+        GROUP BY ft.id
+    ");
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             $bestPrices[$row['fuel_type_id']] = $row['min_price'] ?: 'N/A';
         }
