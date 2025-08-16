@@ -1237,4 +1237,129 @@ HTML;
             ]
         ];
     }
+
+    protected function actionFonts()
+    {
+        $query = App::db()->query("SELECT * FROM settings");
+        $settings = $query->fetch();
+        $navigations = App::db()->query("SELECT * FROM navigation")->fetchAll();
+        $menu['top'] = include_once(__DIR__ . '/../../../storage/menu/top.php');
+        $menuLeft = include_once(__DIR__ . '/../../../storage/menu/left.php');
+        $menu['left']['hidden'] = $menuLeft['hidden'];
+        unset($menuLeft['hidden']);
+        $menu['left']['basic'] = $menuLeft;
+
+        $fonts = App::db()->query("SELECT * FROM fonts ORDER BY folder ASC, uploaded_at DESC")->fetchAll(\PDO::FETCH_ASSOC);
+        $groupedFonts = [];
+        foreach ($fonts as $font) {
+            $groupedFonts[$font['folder']][] = $font;
+        }
+
+        return [
+            'site/fonts',
+            [
+                'settings' => $settings,
+                'menu' => $menu,
+                'groupedFonts' => $groupedFonts,
+                'navigations' => $navigations,
+            ]
+        ];
+    }
+
+    protected function actionFontFamily($family)
+    {
+        $query = App::db()->query("SELECT * FROM settings");
+        $settings = $query->fetch();
+        $navigations = App::db()->query("SELECT * FROM navigation")->fetchAll();
+        $menu['top'] = include_once(__DIR__ . '/../../../storage/menu/top.php');
+        $menuLeft = include_once(__DIR__ . '/../../../storage/menu/left.php');
+        $menu['left']['hidden'] = $menuLeft['hidden'];
+        unset($menuLeft['hidden']);
+        $menu['left']['basic'] = $menuLeft;
+
+        // Use prepare and execute for the query
+        $stmt = App::db()->prepare("SELECT * FROM fonts WHERE folder = ?");
+        $stmt->execute([$family]);
+        $fonts = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        // Define variant order and weight mapping
+        $variantOrder = [
+            'Thin' => 1, 'ThinItalic' => 2,
+            'ExtraLight' => 3, 'ExtraLightItalic' => 4,
+            'Light' => 5, 'LightItalic' => 6,
+            'Regular' => 7, 'Italic' => 8,
+            'Medium' => 9, 'MediumItalic' => 10,
+            'SemiBold' => 11, 'SemiBoldItalic' => 12,
+            'Bold' => 13, 'BoldItalic' => 14,
+            'ExtraBold' => 15, 'ExtraBoldItalic' => 16,
+            'Black' => 17, 'BlackItalic' => 18,
+        ];
+
+        $weightMap = [
+            'Thin' => 'Thin 100', 'ThinItalic' => 'Thin 100 Italic',
+            'ExtraLight' => 'ExtraLight 200', 'ExtraLightItalic' => 'ExtraLight 200 Italic',
+            'Light' => 'Light 300', 'LightItalic' => 'Light 300 Italic',
+            'Regular' => 'Regular 400', 'Italic' => 'Regular 400 Italic',
+            'Medium' => 'Medium 500', 'MediumItalic' => 'Medium 500 Italic',
+            'SemiBold' => 'SemiBold 600', 'SemiBoldItalic' => 'SemiBold 600 Italic',
+            'Bold' => 'Bold 700', 'BoldItalic' => 'Bold 700 Italic',
+            'ExtraBold' => 'ExtraBold 800', 'ExtraBoldItalic' => 'ExtraBold 800 Italic',
+            'Black' => 'Black 900', 'BlackItalic' => 'Black 900 Italic',
+        ];
+
+        // Extract variant from name (e.g., "Mardoto-Thin" -> "Thin")
+        foreach ($fonts as &$font) {
+            $parts = explode('-', $font['name']);
+            $variant = end($parts); // Get the last part as the variant
+            $font['variant'] = $variant;
+        }
+        unset($font); // Unset reference
+
+        // Sort fonts based on variant order
+        usort($fonts, function($a, $b) use ($variantOrder) {
+            $orderA = $variantOrder[$a['variant']] ?? 999;
+            $orderB = $variantOrder[$b['variant']] ?? 999;
+            return $orderA <=> $orderB;
+        });
+
+        return [
+            'site/font-family',
+            [
+                'settings' => $settings,
+                'menu' => $menu,
+                'fonts' => $fonts,
+                'family' => $family,
+                'navigations' => $navigations,
+                'weightMap' => $weightMap,
+            ]
+        ];
+    }
+
+    protected function actionDownloadFontFamily($family)
+    {
+        $stmt = App::db()->prepare("SELECT * FROM fonts WHERE folder = ?");
+        $stmt->execute([$family]);
+        $fonts = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        $zip = new \ZipArchive();
+        $zipFile = tempnam(sys_get_temp_dir(), 'fonts_');
+        if ($zip->open($zipFile, \ZipArchive::CREATE) === TRUE) {
+            foreach ($fonts as $font) {
+                $filePath = __DIR__ . '/../../../../fonts/' . $font['folder'] . '/' . $font['filename'];
+                if (file_exists($filePath)) {
+                    $zip->addFile($filePath, $font['filename']);
+                }
+            }
+            $zip->close();
+
+            header('Content-Type: application/zip');
+            header('Content-Disposition: attachment; filename="' . $family . '_fonts.zip"');
+            header('Content-Length: ' . filesize($zipFile));
+            readfile($zipFile);
+            unlink($zipFile);
+        } else {
+            header('Location: /font-family/' . $family);
+        }
+        exit;
+    }
 }

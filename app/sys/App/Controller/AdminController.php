@@ -431,6 +431,144 @@ class AdminController extends Controller
 
         return ['site/admin_manage_users', ['settings' => $settings, 'menu' => $menu, 'users' => $users, 'companies' => $companies]];
     }
+    protected function actionFontsList()
+    {
+        $md = false;
+        $query = App::db()->query("SELECT * FROM settings");
+        $settings = $query->fetch();
+        if (isset($_COOKIE['app_token'])) {
+            $token = $_COOKIE['app_token'];
+            if (self::hash($settings['login'] . $settings['password']) == $token) {
+                $md = true;
+            }
+        }
+        if (!$md) {
+            header('Location: /login');
+            return false;
+        }
+
+        // Проверка и создание таблицы fonts
+        $checkTable = App::db()->query("SELECT name FROM sqlite_master WHERE type='table' AND name='fonts'")->fetch();
+        if (!$checkTable) {
+            App::db()->query("
+                CREATE TABLE fonts (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    filename TEXT NOT NULL UNIQUE,
+                    name TEXT NOT NULL,
+                    size INTEGER NOT NULL,
+                    uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    folder TEXT NOT NULL,
+                    woff_filename TEXT,
+                    woff2_filename TEXT,
+                    display_filename TEXT
+                )
+            ");
+        }
+
+        $fonts = App::db()->query("SELECT * FROM fonts ORDER BY folder ASC, uploaded_at DESC")->fetchAll(PDO::FETCH_ASSOC);
+
+        // Группировка шрифтов по папкам (семействам)
+        $groupedFonts = [];
+        foreach ($fonts as $font) {
+            $groupedFonts[$font['folder']][] = $font;
+        }
+        $settings['menu']['top'] = file_get_contents(__DIR__ . '/../../../storage/menu/top.php');
+        $settings['menu']['left'] = file_get_contents(__DIR__ . '/../../../storage/menu/left.php');
+        $menu['top'] = include_once(__DIR__ . '/../../../storage/menu/top.php');
+        $menuLeft = include_once(__DIR__ . '/../../../storage/menu/left.php');
+        $menu['left']['hidden'] = $menuLeft['hidden'];
+        unset($menuLeft['hidden']);
+        $menu['left']['basic'] = $menuLeft;
+
+        if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+            if (isset($_POST['upload_fonts'])) {
+                if (isset($_FILES['font_files']) && !empty($_FILES['font_files']['name'][0])) {
+                    $baseUploadDir = __DIR__ . '/../../../../fonts/';
+                    if (!is_dir($baseUploadDir)) {
+                        mkdir($baseUploadDir, 0755, true);
+                    }
+
+                    require_once __DIR__ . '/../../../lib/sfnt2woff.php'; // Подключение библиотеки
+
+                    $errors = [];
+                    $allowedExts = ['ttf', 'otf', 'woff', 'woff2'];
+
+                    foreach ($_FILES['font_files']['name'] as $key => $name) {
+                        $tmpName = $_FILES['font_files']['tmp_name'][$key];
+                        $fileSize = $_FILES['font_files']['size'][$key];
+                        $fileExt = strtolower(pathinfo($name, PATHINFO_EXTENSION));
+                        $baseName = pathinfo($name, PATHINFO_FILENAME);
+                        $folderName = preg_replace('/-[^-]+$/', '', $baseName);
+
+                        if (in_array($fileExt, $allowedExts)) {
+                            $newName = uniqid() . '.' . $fileExt;
+                            $folderPath = $baseUploadDir . $folderName . '/';
+                            if (!is_dir($folderPath)) {
+                                mkdir($folderPath, 0755, true);
+                            }
+                            $destPath = $folderPath . $newName;
+
+                            if (move_uploaded_file($tmpName, $destPath)) {
+                                $woffName = '';
+                                $woff2Name = '';
+                                $displayName = $newName; // По умолчанию используем оригинальный файл
+
+                                // Конвертация в WOFF с использованием sfnt2woff
+                                if (in_array($fileExt, ['ttf', 'otf'])) {
+                                    $sfnt2woff = new \xenocrat\sfnt2woff();
+                                    $sfnt = file_get_contents($destPath);
+                                    $sfnt2woff->import($sfnt);
+                                    $sfnt2woff->compression_level = 9; // Максимальный уровень сжатия
+                                    $woffData = $sfnt2woff->export();
+                                    $woffName = uniqid() . '.woff';
+                                    file_put_contents($folderPath . $woffName, $woffData);
+                                    $displayName = $woffName; // Используем WOFF для предпросмотра
+                                }
+
+                                $stmt = App::db()->prepare("INSERT INTO fonts (filename, name, size, folder, woff_filename, woff2_filename, display_filename) VALUES (?, ?, ?, ?, ?, ?, ?)");
+                                $stmt->execute([$newName, $baseName, $fileSize, $folderName, $woffName, $woff2Name, $displayName]);
+                            } else {
+                                $errors[] = "Ошибка загрузки файла: $name";
+                            }
+                        } else {
+                            $errors[] = "Недопустимый формат файла: $name (допустимы: " . implode(', ', $allowedExts) . ")";
+                        }
+                    }
+                    if (!empty($errors)) {
+                        return ['site/admin_fonts', ['settings' => $settings, 'menu' => $menu, 'groupedFonts' => $groupedFonts, 'errors' => $errors]];
+                    }
+                    header('Location: /admin/fonts-list');
+                    return true;
+                }
+            } elseif (isset($_POST['delete_font'])) {
+                $fontId = (int)$_POST['font_id'];
+                $stmt = App::db()->prepare("SELECT filename, folder, woff_filename, woff2_filename, display_filename FROM fonts WHERE id = ?");
+                $stmt->execute([$fontId]);
+                $font = $stmt->fetch();
+                if ($font) {
+                    $filePath = __DIR__ . '/../../../../fonts/' . $font['folder'] . '/' . $font['filename'];
+                    if (file_exists($filePath)) {
+                        unlink($filePath);
+                    }
+                    if ($font['woff_filename'] && file_exists(__DIR__ . '/../../../../fonts/' . $font['folder'] . '/' . $font['woff_filename'])) {
+                        unlink(__DIR__ . '/../../../../fonts/' . $font['folder'] . '/' . $font['woff_filename']);
+                    }
+                    if ($font['woff2_filename'] && file_exists(__DIR__ . '/../../../../fonts/' . $font['folder'] . '/' . $font['woff2_filename'])) {
+                        unlink(__DIR__ . '/../../../../fonts/' . $font['folder'] . '/' . $font['woff2_filename']);
+                    }
+                    $folderPath = __DIR__ . '/../../../../fonts/' . $font['folder'] . '/';
+                    if (is_dir($folderPath) && count(scandir($folderPath)) <= 2) {
+                        rmdir($folderPath);
+                    }
+                    $stmt = App::db()->prepare("DELETE FROM fonts WHERE id = ?");
+                    $stmt->execute([$fontId]);
+                }
+                header('Location: /admin/fonts-list');
+                return true;
+            }
+        }
+        return ['site/admin_fonts', ['settings' => $settings, 'menu' => $menu, 'groupedFonts' => $groupedFonts]];
+    }
 
     protected function actionManageFuelTypes()
     {
