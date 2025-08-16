@@ -105,9 +105,11 @@
                                             <?php endforeach; ?>
                                         </div>
                                     <?php endif; ?>
-                                    <div class="ya-share2 d-flex justify-content-end" data-curtain data-color-scheme="blackwhite" data-limit="0" data-more-button-type="short" data-services="vkontakte,telegram,twitter,whatsapp"></div>
+                                    <div class="ya-share2 d-flex justify-content-end" data-curtain
+                                         data-color-scheme="blackwhite" data-limit="0" data-more-button-type="short"
+                                         data-services="vkontakte,telegram,twitter,whatsapp"></div>
 
-                            </div>
+                                </div>
                             </div>
                         </div>
 
@@ -134,8 +136,8 @@
                                     ];
                                     foreach ($dayMapping as $shortDay => $fullDay): ?>
                                         <span class="d-flex align-items-center justify-content-between">
-                    <span><?= htmlspecialchars($fullDay) ?></span>
-                    <span class="font-bold"><?= htmlspecialchars($workingHours[$shortDay] ?? 'Закрыто') ?></span>
+                    <span><?= $lang(htmlspecialchars($fullDay)) ?></span>
+                    <span class="font-bold"><?= htmlspecialchars($workingHours[$shortDay] ?? $lang('Не указано')) ?></span>
                 </span>
                                     <?php endforeach; ?>
                                 </div>
