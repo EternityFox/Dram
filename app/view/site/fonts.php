@@ -35,11 +35,18 @@
                                     <img src="img/close.svg" alt="Icon close" id="clearFontSearch" class="fsw-clear"
                                          aria-label="Close">
                                 </div>
+                                <div class="col-12 mt-3">
+                                    <label for="fontSizeSlider" class="form-label"><?= $lang('Размер шрифта') ?>:
+                                        <span id="fontSizeValue">40px</span>
+                                    </label>
+                                    <input type="range" class="form-range" id="fontSizeSlider" min="10" max="100"
+                                           value="40">
+                                </div>
 
                                 <button class="fsw-more my-3" type="button"
                                         data-bs-toggle="collapse" data-bs-target="#detailsPanel"
                                         aria-expanded="false" aria-controls="detailsPanel">
-                                    <?= $lang('подробнее') ?>
+                                    <?= $lang('Подробнее') ?>
                                     <span class="fsw-caret">
                                         <img src="img/arrow-down.svg" alt="Icon arrow down">
                                     </span>
@@ -59,13 +66,6 @@
                                                  class="fsw-clear"
                                                  aria-label="Close">
                                         </div>
-                                    </div>
-                                    <div class="col-12">
-                                        <label for="fontSizeSlider" class="form-label"><?= $lang('Размер шрифта') ?>:
-                                            <span id="fontSizeValue">40px</span>
-                                        </label>
-                                        <input type="range" class="form-range" id="fontSizeSlider" min="10" max="100"
-                                               value="40">
                                     </div>
                                 </div>
                             </div>

@@ -36,6 +36,7 @@ return [
     'Шрифт' => 'Fonts',
     'Скачать все' => 'Download all',
     'Подробнее' => 'Details',
+    'Шрифты отсутствуют' => 'No fonts here',
     'Показать ещё' => 'More',
     'Города' => 'Cities',
     'Архив' => 'Archive',
