@@ -98,7 +98,7 @@ class SiteController extends Controller
         unset($menuLeft['hidden']);
         $menu['left']['basic'] = $menuLeft;
 
-        // Извлечение данных о топливной компании из базы данных
+        // Компания
         $stmt = App::db()->prepare("SELECT * FROM fuel_companies WHERE id = ?");
         $stmt->execute([$id]);
         $fuelCompanyInfo = $stmt->fetch();
@@ -107,17 +107,35 @@ class SiteController extends Controller
             return $this->actionNotFound();
         }
 
-        // Fetch fuel prices for the company
+        $editUrl = '';
+        $canEdit = false;
+        if (!empty($_COOKIE['app_token'])) {
+            $token = $_COOKIE['app_token'];
+            $uStmt = App::db()->prepare("SELECT id, role, company_id FROM users WHERE app_token = ?");
+            $uStmt->execute([$token]);
+            $authUser = $uStmt->fetch(\PDO::FETCH_ASSOC);
+            $query = App::db()->query("SELECT login, password FROM settings");
+            $adminCred = $query->fetch();
+            if ($authUser && $authUser['role'] === 'company' && (int)$authUser['company_id'] === (int)$id) {
+                $canEdit = true;
+                $editUrl = '/user/company';
+            }
+            if (self::hash($adminCred['login'] . $adminCred['password']) == $token) {
+                $canEdit = true;
+                $editUrl = '/user/company/' . (int)$id;
+            }
+        }
+
         $fuelPricesStmt = App::db()->prepare("
-            SELECT ft.name, fd.price, fd.updated_at
-            FROM fuel_data fd
-            JOIN fuel_types ft ON fd.fuel_type_id = ft.id
-            WHERE fd.company_id = ?
-        ");
+        SELECT ft.name, fd.price, fd.updated_at
+        FROM fuel_data fd
+        JOIN fuel_types ft ON fd.fuel_type_id = ft.id
+        WHERE fd.company_id = ?
+    ");
         $fuelPricesStmt->execute([$id]);
         $fuelPrices = $fuelPricesStmt->fetchAll(\PDO::FETCH_ASSOC);
 
-        // Подготовка данных для представления
+        // Подготовка данных
         $address = $fuelCompanyInfo['address'] ?? '-';
         $phones = json_decode($fuelCompanyInfo['phones'], true) ?? [];
         $emails = json_decode($fuelCompanyInfo['emails'], true) ?? [];
@@ -140,6 +158,8 @@ class SiteController extends Controller
                 'id' => $id,
                 'navigations' => $navigations,
                 'fuelPrices' => $fuelPrices,
+                'canEdit' => $canEdit,
+                'editUrl' => $editUrl,
             ]
         ];
     }
@@ -1284,7 +1304,7 @@ HTML;
         $menu['left']['basic'] = $menuLeft;
 
         $pdo = App::db();
-        $totalFamilies = (int) $pdo->query("SELECT COUNT(DISTINCT folder) FROM fonts")->fetchColumn();
+        $totalFamilies = (int)$pdo->query("SELECT COUNT(DISTINCT folder) FROM fonts")->fetchColumn();
         $groupedFonts = $this->getGroupedFonts(0, 24);
         $initialHasMore = $totalFamilies > count($groupedFonts);
 
@@ -1347,6 +1367,7 @@ HTML;
         ], JSON_UNESCAPED_UNICODE);
         exit;
     }
+
     protected function actionFontsSearch()
     {
         header('Content-Type: application/json; charset=UTF-8');
@@ -1490,5 +1511,10 @@ HTML;
             header('Location: /font-family/' . $family);
         }
         exit;
+    }
+
+    public static function hash($str): ?string
+    {
+        return hash('sha512', $str . '*@#^$&');
     }
 }

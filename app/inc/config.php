@@ -44,7 +44,8 @@ return [
         'login' => 'login/login',
         'logout' => 'login/logout',
         'user' => [
-            'company' => 'user/companyDashboard'
+            'company' => 'user/companyDashboard',
+            'company/(?<id>\d+)' => 'user/companyDashboard'
         ],
         'admin' => [
 //            '.*' => 'admin/index',
