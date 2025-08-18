@@ -431,6 +431,7 @@ class AdminController extends Controller
 
         return ['site/admin_manage_users', ['settings' => $settings, 'menu' => $menu, 'users' => $users, 'companies' => $companies]];
     }
+
     protected function actionFontsList()
     {
         $md = false;
@@ -451,18 +452,18 @@ class AdminController extends Controller
         $checkTable = App::db()->query("SELECT name FROM sqlite_master WHERE type='table' AND name='fonts'")->fetch();
         if (!$checkTable) {
             App::db()->query("
-                CREATE TABLE fonts (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    filename TEXT NOT NULL UNIQUE,
-                    name TEXT NOT NULL,
-                    size INTEGER NOT NULL,
-                    uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    folder TEXT NOT NULL,
-                    woff_filename TEXT,
-                    woff2_filename TEXT,
-                    display_filename TEXT
-                )
-            ");
+            CREATE TABLE fonts (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                filename TEXT NOT NULL UNIQUE,
+                name TEXT NOT NULL,
+                size INTEGER NOT NULL,
+                uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                folder TEXT NOT NULL,
+                woff_filename TEXT,
+                woff2_filename TEXT,
+                display_filename TEXT
+            )
+        ");
         }
 
         $fonts = App::db()->query("SELECT * FROM fonts ORDER BY folder ASC, uploaded_at DESC")->fetchAll(PDO::FETCH_ASSOC);
@@ -470,8 +471,9 @@ class AdminController extends Controller
         // Группировка шрифтов по папкам (семействам)
         $groupedFonts = [];
         foreach ($fonts as $font) {
-            $groupedFonts[$font['folder']][] = $font;
+            $groupedFonts[str_replace('\'', '', $font['folder'])][] = $font;
         }
+
         $settings['menu']['top'] = file_get_contents(__DIR__ . '/../../../storage/menu/top.php');
         $settings['menu']['left'] = file_get_contents(__DIR__ . '/../../../storage/menu/left.php');
         $menu['top'] = include_once(__DIR__ . '/../../../storage/menu/top.php');
@@ -479,6 +481,75 @@ class AdminController extends Controller
         $menu['left']['hidden'] = $menuLeft['hidden'];
         unset($menuLeft['hidden']);
         $menu['left']['basic'] = $menuLeft;
+
+        // Хелпер для имени семейной папки
+        $detectFamilyFolder = function (string $baseName): string {
+            $baseName = preg_replace('/\s+/', ' ', trim($baseName));
+            if (strpos($baseName, '-') !== false) {
+                $family = explode('-', $baseName)[0];
+                return _titleize_simple(str_replace('_', ' ', $family));
+            }
+            $baseName = str_replace('_', ' ', $baseName);
+            $tokens = preg_split('/\s+/', $baseName);
+            $styleTokens = [
+                'regular','italic','bold','semibold','light','black','medium','extrabold','ultrabold','thin',
+                'extralight','demilight','demibold','heavy','book','roman','oblique','condensed','expanded',
+                'narrow','compressed','display','caption','headline','text','mono',
+                'r','i','b','bi','u','it','md','lt','bk','sb'
+            ];
+            while (!empty($tokens) && in_array(strtolower(end($tokens)), $styleTokens, true)) {
+                array_pop($tokens);
+            }
+            if (empty($tokens)) $tokens = [$baseName];
+            $family = implode(' ', $tokens);
+            return _titleize_simple($family);
+        };
+        function _titleize_simple(string $s): string {
+            $s = mb_strtolower($s, 'UTF-8');
+            $words = preg_split('/\s+/', $s);
+            foreach ($words as &$w) {
+                if ($w === '') continue;
+                $w = mb_strtoupper(mb_substr($w, 0, 1, 'UTF-8'), 'UTF-8') . mb_substr($w, 1, null, 'UTF-8');
+            }
+            return implode(' ', $words);
+        }
+
+        // ======== новые хелперы для стандартизации имён ========
+        $__STYLE_MAP = [
+            'r'=>'Regular','reg'=>'Regular','regular'=>'Regular',
+            'i'=>'Italic','it'=>'Italic','italic'=>'Italic','oblique'=>'Oblique',
+            'b'=>'Bold','bold'=>'Bold',
+            'md'=>'Medium','medium'=>'Medium',
+            'lt'=>'Light','light'=>'Light','thin'=>'Thin','extralight'=>'ExtraLight',
+            'sb'=>'SemiBold','semibold'=>'SemiBold','demibold'=>'SemiBold',
+            'bk'=>'Book','book'=>'Book',
+            'black'=>'Black','extrabold'=>'ExtraBold','ultrabold'=>'ExtraBold'
+        ];
+        $parseFamilyAndStyle = function (string $baseName) use ($__STYLE_MAP): array {
+            $name = preg_replace('/(?:[ _-])?u$/i', '', $baseName);
+            $name = preg_replace('/[ _-]+/u', ' ', trim($name));
+            $compoundPattern = '(Thin|ExtraLight|Light|Book|Regular|Medium|SemiBold|Bold|ExtraBold|Black)';
+            if (preg_match('/\b' . $compoundPattern . '(Italic|Oblique)?$/i', $name, $m)) {
+                $style = ucfirst(strtolower($m[1])) . (!empty($m[2]) ? ucfirst(strtolower($m[2])) : '');
+                $familyRaw = trim(preg_replace('/[ _-]*' . preg_quote($m[0], '/') . '$/i', '', $name));
+                if ($familyRaw === '') $familyRaw = $name;
+                return [$familyRaw, $style];
+            }
+            if (preg_match('/\b(r|reg|regular|i|it|italic|oblique|b|bold|md|medium|lt|light|thin|extralight|sb|semibold|demibold|bk|book|black|extrabold|ultrabold)$/i', $name, $m)) {
+                $key = strtolower($m[1]);
+                $style = $__STYLE_MAP[$key] ?? 'Regular';
+                $familyRaw = trim(preg_replace('/[ _-]*' . preg_quote($m[0], '/') . '$/i', '', $name));
+                if ($familyRaw === '') $familyRaw = $name;
+                return [$familyRaw, $style];
+            }
+            return [$name, 'Regular'];
+        };
+        $buildFileName = function (string $familyRaw, string $style, string $ext): string {
+            $familyTokenized = preg_replace('/\s+/u', '_', trim($familyRaw));
+            $styleCompact = preg_replace('/\s+/u', '', $style);
+            return $familyTokenized . '-' . $styleCompact . '.' . strtolower($ext);
+        };
+        // =======================================================
 
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             if (isset($_POST['upload_fonts'])) {
@@ -488,54 +559,88 @@ class AdminController extends Controller
                         mkdir($baseUploadDir, 0755, true);
                     }
 
-                    require_once __DIR__ . '/../../../lib/sfnt2woff.php'; // Подключение библиотеки
-
+                    require_once __DIR__ . '/../../../lib/sfnt2woff.php';
                     $errors = [];
-                    $allowedExts = ['ttf', 'otf', 'woff', 'woff2'];
+                    $allowedExts = ['ttf','otf','woff','woff2'];
 
                     foreach ($_FILES['font_files']['name'] as $key => $name) {
-                        $tmpName = $_FILES['font_files']['tmp_name'][$key];
+                        $tmpName  = $_FILES['font_files']['tmp_name'][$key];
                         $fileSize = $_FILES['font_files']['size'][$key];
-                        $fileExt = strtolower(pathinfo($name, PATHINFO_EXTENSION));
+                        $fileExt  = strtolower(pathinfo($name, PATHINFO_EXTENSION));
                         $baseName = pathinfo($name, PATHINFO_FILENAME);
-                        $folderName = preg_replace('/-[^-]+$/', '', $baseName);
 
-                        if (in_array($fileExt, $allowedExts)) {
-                            $newName = uniqid() . '.' . $fileExt;
-                            $folderPath = $baseUploadDir . $folderName . '/';
-                            if (!is_dir($folderPath)) {
-                                mkdir($folderPath, 0755, true);
-                            }
-                            $destPath = $folderPath . $newName;
-
-                            if (move_uploaded_file($tmpName, $destPath)) {
-                                $woffName = '';
-                                $woff2Name = '';
-                                $displayName = $newName; // По умолчанию используем оригинальный файл
-
-                                // Конвертация в WOFF с использованием sfnt2woff
-                                if (in_array($fileExt, ['ttf', 'otf'])) {
-                                    $sfnt2woff = new \xenocrat\sfnt2woff();
-                                    $sfnt = file_get_contents($destPath);
-                                    $sfnt2woff->import($sfnt);
-                                    $sfnt2woff->compression_level = 9; // Максимальный уровень сжатия
-                                    $woffData = $sfnt2woff->export();
-                                    $woffName = uniqid() . '.woff';
-                                    file_put_contents($folderPath . $woffName, $woffData);
-                                    $displayName = $woffName; // Используем WOFF для предпросмотра
-                                }
-
-                                $stmt = App::db()->prepare("INSERT INTO fonts (filename, name, size, folder, woff_filename, woff2_filename, display_filename) VALUES (?, ?, ?, ?, ?, ?, ?)");
-                                $stmt->execute([$newName, $baseName, $fileSize, $folderName, $woffName, $woff2Name, $displayName]);
-                            } else {
-                                $errors[] = "Ошибка загрузки файла: $name";
-                            }
-                        } else {
+                        if (!in_array($fileExt, $allowedExts, true)) {
                             $errors[] = "Недопустимый формат файла: $name (допустимы: " . implode(', ', $allowedExts) . ")";
+                            continue;
                         }
+
+                        [$familyRaw, $style] = $parseFamilyAndStyle($baseName);
+                        $folderName = preg_replace('/u$/i', '', $detectFamilyFolder($familyRaw));
+                        $folderPath = $baseUploadDir . $folderName . '/';
+                        if (!is_dir($folderPath)) mkdir($folderPath, 0755, true);
+
+                        $stdFileName = $buildFileName($familyRaw, $style, $fileExt);
+                        $destPath    = $folderPath . $stdFileName;
+
+                        if (file_exists($destPath)) {
+                            $i = 2;
+                            $baseStd = pathinfo($stdFileName, PATHINFO_FILENAME);
+                            while (file_exists($folderPath . $baseStd . "($i)." . $fileExt)) $i++;
+                            $stdFileName = $baseStd . "($i)." . $fileExt;
+                            $destPath    = $folderPath . $stdFileName;
+                        }
+
+                        if (!move_uploaded_file($tmpName, $destPath)) {
+                            $errors[] = "Ошибка загрузки файла: $name";
+                            continue;
+                        }
+
+                        $woffName = '';
+                        $woff2Name = '';
+                        $displayName = $stdFileName;
+
+                        if (in_array($fileExt, ['ttf','otf'], true)) {
+                            try {
+                                $sfnt2woff = new \xenocrat\sfnt2woff();
+                                $sfnt = file_get_contents($destPath);
+                                $sfnt2woff->import($sfnt);
+                                $sfnt2woff->compression_level = 9;
+                                $woffData = $sfnt2woff->export();
+
+                                $stdBase = pathinfo($stdFileName, PATHINFO_FILENAME);
+                                $woffName = $stdBase . '.woff';
+                                $destWoff = $folderPath . $woffName;
+                                if (file_exists($destWoff)) {
+                                    $i = 2;
+                                    while (file_exists($folderPath . $stdBase . "($i).woff")) $i++;
+                                    $woffName = $stdBase . "($i).woff";
+                                    $destWoff = $folderPath . $woffName;
+                                }
+                                file_put_contents($destWoff, $woffData);
+                                $displayName = $woffName;
+                            } catch (\Throwable $e) { }
+                        }
+
+                        $stmt = App::db()->prepare("
+                        INSERT INTO fonts (filename, name, size, folder, woff_filename, woff2_filename, display_filename)
+                        VALUES (?, ?, ?, ?, ?, ?, ?)
+                    ");
+                        $stmt->execute([
+                            $stdFileName,
+                            pathinfo($stdFileName, PATHINFO_FILENAME),
+                            $fileSize,
+                            $folderName,
+                            $woffName,
+                            $woff2Name,
+                            $displayName
+                        ]);
                     }
+
                     if (!empty($errors)) {
-                        return ['site/admin_fonts', ['settings' => $settings, 'menu' => $menu, 'groupedFonts' => $groupedFonts, 'errors' => $errors]];
+                        return ['site/admin_fonts', [
+                            'settings'=>$settings,'menu'=>$menu,
+                            'groupedFonts'=>$groupedFonts,'errors'=>$errors
+                        ]];
                     }
                     header('Location: /admin/fonts-list');
                     return true;
@@ -545,21 +650,16 @@ class AdminController extends Controller
                 $stmt = App::db()->prepare("SELECT filename, folder, woff_filename, woff2_filename, display_filename FROM fonts WHERE id = ?");
                 $stmt->execute([$fontId]);
                 $font = $stmt->fetch();
+
                 if ($font) {
                     $filePath = __DIR__ . '/../../../../fonts/' . $font['folder'] . '/' . $font['filename'];
-                    if (file_exists($filePath)) {
-                        unlink($filePath);
-                    }
-                    if ($font['woff_filename'] && file_exists(__DIR__ . '/../../../../fonts/' . $font['folder'] . '/' . $font['woff_filename'])) {
-                        unlink(__DIR__ . '/../../../../fonts/' . $font['folder'] . '/' . $font['woff_filename']);
-                    }
-                    if ($font['woff2_filename'] && file_exists(__DIR__ . '/../../../../fonts/' . $font['folder'] . '/' . $font['woff2_filename'])) {
-                        unlink(__DIR__ . '/../../../../fonts/' . $font['folder'] . '/' . $font['woff2_filename']);
-                    }
+                    if (file_exists($filePath)) unlink($filePath);
+                    if ($font['woff_filename'] && file_exists(__DIR__ . '/../../../../fonts/' . $font['folder'] . '/' . $font['woff_filename'])) unlink(__DIR__ . '/../../../../fonts/' . $font['folder'] . '/' . $font['woff_filename']);
+                    if ($font['woff2_filename'] && file_exists(__DIR__ . '/../../../../fonts/' . $font['folder'] . '/' . $font['woff2_filename'])) unlink(__DIR__ . '/../../../../fonts/' . $font['folder'] . '/' . $font['woff2_filename']);
+
                     $folderPath = __DIR__ . '/../../../../fonts/' . $font['folder'] . '/';
-                    if (is_dir($folderPath) && count(scandir($folderPath)) <= 2) {
-                        rmdir($folderPath);
-                    }
+                    if (is_dir($folderPath) && count(scandir($folderPath)) <= 2) rmdir($folderPath);
+
                     $stmt = App::db()->prepare("DELETE FROM fonts WHERE id = ?");
                     $stmt->execute([$fontId]);
                 }
@@ -567,8 +667,10 @@ class AdminController extends Controller
                 return true;
             }
         }
-        return ['site/admin_fonts', ['settings' => $settings, 'menu' => $menu, 'groupedFonts' => $groupedFonts]];
+
+        return ['site/admin_fonts', ['settings'=>$settings,'menu'=>$menu,'groupedFonts'=>$groupedFonts]];
     }
+
 
     protected function actionManageFuelTypes()
     {

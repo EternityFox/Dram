@@ -19,25 +19,32 @@
 
                     <div class="card card-custom mb-5">
                         <div class="card-header card-header-custom d-flex justify-content-between align-items-center">
-                            <span>Шрифт: <?php echo htmlspecialchars($family); ?></span>
-                            <a href="/download-font/<?php echo urlencode($family); ?>" class="btn btn-custom btn-sm">Скачать все</a>
+                            <span><?= $lang('Шрифт') ?>: <?php echo htmlspecialchars($family); ?></span>
+                            <a href="/download-font/<?php echo urlencode($family); ?>" class="btn btn-custom btn-sm">
+                                <?= $lang('Скачать все') ?>
+                            </a>
                         </div>
                         <div class="card-body">
-                            <div class="row mb-4">
+                            <div class="row g-3 align-items-center mb-3 p-3">
                                 <div class="col-12">
-                                    <div class="input-group input-group-custom">
-                                        <input type="text" id="previewText" class="form-control"
-                                               placeholder="Введите текст для предпросмотра"
-                                               value="hello" aria-label="Текст для предпросмотра">
-                                        <button class="btn btn-custom" type="button" id="resetText">Сброс</button>
+                                    <div class="font-search-wrap">
+                                            <span class="fsw-icon" aria-hidden="true">
+                                                <img src="img/write.svg" alt="Icon write">
+                                            </span>
+                                        <input type="text" id="previewText" class="fsw-input"
+                                               placeholder="<?= $lang('Напишите тут') ?>" value="Դրամ.ամ"
+                                               aria-label="<?= $lang('Напишите тут') ?>">
+                                        <img src="img/close.svg" alt="Icon close" id="clearSearch" class="fsw-clear"
+                                             aria-label="Close">
                                     </div>
                                 </div>
-                            </div>
-                            <div class="slider-container">
-                                <label for="fontSizeSlider" class="form-label">Размер шрифта: <span
-                                            id="fontSizeValue">40px</span></label>
-                                <input type="range" class="form-range" id="fontSizeSlider" min="10" max="100"
-                                       value="40">
+                                <div class="col-12">
+                                    <label for="fontSizeSlider" class="form-label"><?= $lang('Размер шрифта') ?>:
+                                        <span id="fontSizeValue">40px</span>
+                                    </label>
+                                    <input type="range" class="form-range" id="fontSizeSlider" min="10" max="100"
+                                           value="40">
+                                </div>
                             </div>
 
                             <div class="row" id="fontsContainer">
@@ -49,7 +56,7 @@
                                                     <h5 class="card-title mb-3">
                                                         <?php
                                                         $variant = $font['variant'];
-                                                        echo htmlspecialchars($weightMap[$variant] ?? 'Неизвестный вариант');
+                                                        echo htmlspecialchars($weightMap[$variant] ?? $lang('Неизвестный вариант'));
                                                         ?>
                                                     </h5>
                                                     <style>
@@ -57,6 +64,7 @@
                                                             font-family: 'PreviewFont_<?php echo $font['id']; ?>';
                                                             src: url('/fonts/<?php echo htmlspecialchars($font['folder']) . '/' . htmlspecialchars($font['display_filename']) . '?v=' . time(); ?>') format('<?php echo pathinfo($font['display_filename'], PATHINFO_EXTENSION); ?>');
                                                         }
+
                                                         .preview-text-<?php echo $font['id']; ?> {
                                                             font-family: 'PreviewFont_<?php echo $font['id']; ?>', sans-serif !important;
                                                             font-size: 40px;
@@ -66,14 +74,14 @@
                                                         }
                                                     </style>
                                                     <div class="preview-text-<?php echo $font['id']; ?>"
-                                                         id="preview-<?php echo $font['id']; ?>">hello
+                                                         id="preview-<?php echo $font['id']; ?>">Դրամ.ամ
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
                                     <?php endforeach; ?>
                                 <?php else: ?>
-                                    <p class="text-center text-muted">Варианты шрифта отсутствуют.</p>
+                                    <p class="text-center text-muted"><?= $lang('Варианты шрифта отсутствуют') ?>.</p>
                                 <?php endif; ?>
                             </div>
                         </div>
@@ -129,7 +137,7 @@
 
         // Обновление текста предпросмотра с анимацией
         function updatePreviewText() {
-            const text = previewText.value.trim() || 'hello';
+            const text = previewText.value.trim() || 'Դրամ.ամ';
             fontItems.forEach(item => {
                 const preview = item.querySelector(`[id^="preview-"]`);
                 if (preview) {
@@ -157,7 +165,7 @@
         previewText.addEventListener('input', updatePreviewText);
         fontSizeSlider.addEventListener('input', updateFontSize);
         resetText.addEventListener('click', () => {
-            previewText.value = 'hello';
+            previewText.value = 'Դրամ.ամ';
             updatePreviewText();
         });
 
