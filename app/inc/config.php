@@ -37,12 +37,14 @@ return [
             'chart/(?<symbol>[A-Za-z\d%]+)' => 'site/chart',
             'converter/(?<type>cash|noncash|card)/(?<fromCurrency>[A-Z]+)/(?<toCurrency>[A-Z]+)' => 'site/converterAjax',
             'plate-search' => 'site/plateSearch',
+            'fonts/load' => 'site/fontsLoad',
+            'fonts/search' => 'site/fontsSearch',
             '.*' => 'error/ajax'
         ],
         'login' => 'login/login',
         'logout' => 'login/logout',
         'user' => [
-          'company' => 'user/companyDashboard'
+            'company' => 'user/companyDashboard'
         ],
         'admin' => [
 //            '.*' => 'admin/index',
