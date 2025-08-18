@@ -16,6 +16,18 @@
         <div class="row">
             <div class="col-lg-9">
                 <div class="left-block tab def-box">
+                    <?php if (!empty($canEdit) && !empty($editUrl)): ?>
+                        <div class="ms-lg-auto w-25">
+                            <a href="<?= htmlspecialchars($editUrl) ?>"
+                               class="btn btn-primary d-flex align-items-center justify-content-center gap-2 px-3 py-2 rounded">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                                    <path d="M3 17.25V21h3.75L19.81 7.94l-3.75-3.75L3 17.25zM21 6.75a.996.996 0 0 0 0-1.41l-2.34-2.34a.996.996 0 0 0-1.41 0l-1.83 1.83 3.75 3.75L21 6.75z"
+                                          fill="currentColor"/>
+                                </svg>
+                                <span><?= $lang('Редактировать') ?></span>
+                            </a>
+                        </div>
+                    <?php endif; ?>
                     <div class="row justify-content-between flex-wrap gap-3 p-3">
                         <div class="col background-gray p-4">
                             <div class="d-flex gap-4 flex-column">

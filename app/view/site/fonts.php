@@ -28,10 +28,10 @@
                                     <span class="fsw-icon" aria-hidden="true">
                                         <img src="img/write.svg" alt="Icon write">
                                     </span>
-
-                                    <input type="text" id="fontSearch" class="fsw-input"
-                                           placeholder="<?= $lang('Поиск армянских шрифтов') ?>"
-                                           aria-label=" <?= $lang('Поиск армянских шрифтов') ?>">
+                                    <input type="text" id="previewText" class="fsw-input"
+                                           placeholder="<?= $lang('Напишите тут') ?>"
+                                           value="Դրամ.ամ"
+                                           aria-label="<?= $lang('Напишите тут') ?>">
                                     <img src="img/close.svg" alt="Icon close" id="clearFontSearch" class="fsw-clear"
                                          aria-label="Close">
                                 </div>
@@ -52,11 +52,11 @@
                                             <span class="fsw-icon" aria-hidden="true">
                                                 <img src="img/write.svg" alt="Icon write">
                                             </span>
-                                            <input type="text" id="previewText" class="fsw-input"
-                                                   placeholder="<?= $lang('Напишите тут') ?>"
-                                                   value="Դրամ.ամ"
-                                                   aria-label="<?= $lang('Напишите тут') ?>">
-                                            <img src="img/close.svg" alt="Icon close" id="clearPreview" class="fsw-clear"
+                                            <input type="text" id="fontSearch" class="fsw-input"
+                                                   placeholder="<?= $lang('Поиск армянских шрифтов') ?>"
+                                                   aria-label=" <?= $lang('Поиск армянских шрифтов') ?>">
+                                            <img src="img/close.svg" alt="Icon close" id="clearPreview"
+                                                 class="fsw-clear"
                                                  aria-label="Close">
                                         </div>
                                     </div>
@@ -77,9 +77,11 @@
                                 include 'partials/fonts-items.php';
                                 ?>
                             </div>
-                            <div class="text-center mt-4" id="loadMoreContainer" <?php if (!$initialHasMore): ?>style="display: none;"<?php endif; ?>>
+                            <div class="text-center mt-4" id="loadMoreContainer"
+                                 <?php if (!$initialHasMore): ?>style="display: none;"<?php endif; ?>>
                                 <button id="showMore" class="btn btn-primary"><?= $lang('Показать ещё') ?></button>
-                                <div id="loader" class="spinner-border text-primary ml-2" style="display: none;" role="status">
+                                <div id="loader" class="spinner-border text-primary ml-2" style="display: none;"
+                                     role="status">
                                     <span class="visually-hidden">Loading...</span>
                                 </div>
                             </div>
@@ -175,7 +177,7 @@
         async function postJSON(url, payload) {
             const res = await fetch(url, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(payload)
             });
             // читаем как текст и пробуем парсить — чтобы не падать на случайном выводе
@@ -286,7 +288,6 @@
             updateFontSize();
         }
 
-        // «Показать ещё» — догружаем следующую страницу с учётом текущего поиска
         showMore.addEventListener('click', () => {
             if (isLoading || !hasMore) return;
             isLoading = true;

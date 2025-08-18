@@ -35,6 +35,8 @@ return [
     'Размер шрифта' => 'Font size',
     'Шрифт' => 'Fonts',
     'Скачать все' => 'Download all',
+    'Подробнее' => 'Details',
+    'Показать ещё' => 'More',
     'Города' => 'Cities',
     'Архив' => 'Archive',
     'Мир' => 'World',

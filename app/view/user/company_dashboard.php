@@ -8,7 +8,8 @@
             </div>
         <?php endif; ?>
 
-        <form action="/user/company" method="POST" enctype="multipart/form-data">
+        <form action="<?= empty($id) ? '/user/company' : '/user/company/' . $id ?>" method="POST"
+              enctype="multipart/form-data">
             <input type="hidden" name="save_company" value="1">
 
             <div class="card-section" data-section="fuel-prices">
@@ -33,8 +34,11 @@
                                     <select class="form-select" name="fuel_type[]" required>
                                         <option value="<?= $fuelType['id'] ?>" <?= isset($fuelData[$fuelType['id']]) ? 'selected' : '' ?>><?= htmlspecialchars($fuelType['name']) ?></option>
                                     </select>
-                                    <input type="number" class="form-control" name="fuel_price[]" value="<?= htmlspecialchars($fuelData[$fuelType['id']] ?? '') ?>" placeholder="Цена в AMD" step="0.01" required>
-                                    <button type="button" class="remove-btn" onclick="this.parentElement.remove()">✖</button>
+                                    <input type="number" class="form-control" name="fuel_price[]"
+                                           value="<?= htmlspecialchars($fuelData[$fuelType['id']] ?? '') ?>"
+                                           placeholder="Цена в AMD" step="0.01" required>
+                                    <button type="button" class="remove-btn" onclick="this.parentElement.remove()">✖
+                                    </button>
                                 </div>
                             <?php endforeach; ?>
                         </div>
@@ -43,8 +47,10 @@
                 </div>
             </div>
 
-            <input type="hidden" id="latitude" name="latitude" value="<?= htmlspecialchars($company['latitude'] ?? 40.1772) ?>">
-            <input type="hidden" id="longitude" name="longitude" value="<?= htmlspecialchars($company['longitude'] ?? 44.5035) ?>">
+            <input type="hidden" id="latitude" name="latitude"
+                   value="<?= htmlspecialchars($company['latitude'] ?? 40.1772) ?>">
+            <input type="hidden" id="longitude" name="longitude"
+                   value="<?= htmlspecialchars($company['longitude'] ?? 44.5035) ?>">
 
             <div class="card-section collapsed" data-section="company-data">
                 <h3 class="section-toggle" onclick="toggleSection('company-data')">
@@ -53,11 +59,14 @@
                 <div class="section-content">
                     <div class="form-group">
                         <label for="companyName">Название компании</label>
-                        <input type="text" class="form-control" id="companyName" name="name" value="<?= htmlspecialchars($company['name'] ?? '') ?>" required>
+                        <input type="text" class="form-control" id="companyName" name="name"
+                               value="<?= htmlspecialchars($company['name'] ?? '') ?>" required>
                     </div>
                     <div class="form-group">
                         <label for="companyAddress">Адрес</label>
-                        <input type="text" class="form-control" id="companyAddress" name="address" value="<?= htmlspecialchars($company['address'] ?? '') ?>" placeholder="Введите адрес или выберите на карте">
+                        <input type="text" class="form-control" id="companyAddress" name="address"
+                               value="<?= htmlspecialchars($company['address'] ?? '') ?>"
+                               placeholder="Введите адрес или выберите на карте">
                         <div class="search-form-suggestions-container hide">
                             <div id="loading-indicator" class="loading-indicator" style="display: none;">
                                 <div class="spinner"></div>
@@ -77,51 +86,73 @@
                     <div class="form-group">
                         <label>Телефоны</label>
                         <div class="dynamic-group" id="phoneGroup">
-                            <?php $phones = $company['phones'] ? json_decode($company['phones'], true) : ['']; foreach ($phones as $index => $phone): ?>
+                            <?php $phones = $company['phones'] ? json_decode($company['phones'], true) : [''];
+                            foreach ($phones as $index => $phone): ?>
                                 <div class="input-group">
-                                    <input type="text" class="form-control phone-mask" name="phones[]" value="<?= htmlspecialchars($phone) ?>" placeholder="+374 00 000 000" required>
-                                    <button type="button" class="remove-btn" onclick="this.parentElement.remove()">✖</button>
+                                    <input type="text" class="form-control phone-mask" name="phones[]"
+                                           value="<?= htmlspecialchars($phone) ?>" placeholder="+374 00 000 000"
+                                           required>
+                                    <button type="button" class="remove-btn" onclick="this.parentElement.remove()">✖
+                                    </button>
                                 </div>
                             <?php endforeach; ?>
                         </div>
-                        <button type="button" class="add-btn" onclick="addField('phoneGroup', 'phones[]', '+374 00 000 000')">Добавить</button>
+                        <button type="button" class="add-btn"
+                                onclick="addField('phoneGroup', 'phones[]', '+374 00 000 000')">Добавить
+                        </button>
                     </div>
                     <div class="form-group">
                         <label>Email-ы</label>
                         <div class="dynamic-group" id="emailGroup">
-                            <?php $emails = $company['emails'] ? json_decode($company['emails'], true) : ['']; foreach ($emails as $index => $email): ?>
+                            <?php $emails = $company['emails'] ? json_decode($company['emails'], true) : [''];
+                            foreach ($emails as $index => $email): ?>
                                 <div class="input-group">
-                                    <input type="text" class="form-control" name="emails[]" value="<?= htmlspecialchars($email) ?>" placeholder="info@company.com" required>
-                                    <button type="button" class="remove-btn" onclick="this.parentElement.remove()">✖</button>
+                                    <input type="text" class="form-control" name="emails[]"
+                                           value="<?= htmlspecialchars($email) ?>" placeholder="info@company.com"
+                                           required>
+                                    <button type="button" class="remove-btn" onclick="this.parentElement.remove()">✖
+                                    </button>
                                 </div>
                             <?php endforeach; ?>
                         </div>
-                        <button type="button" class="add-btn" onclick="addField('emailGroup', 'emails[]', 'info@company.com')">Добавить</button>
+                        <button type="button" class="add-btn"
+                                onclick="addField('emailGroup', 'emails[]', 'info@company.com')">Добавить
+                        </button>
                     </div>
                     <div class="form-group">
                         <label>Социальные сети</label>
                         <div class="dynamic-group" id="socialGroup">
-                            <?php $socials = $company['socials'] ? json_decode($company['socials'], true) : ['']; foreach ($socials as $index => $social): ?>
+                            <?php $socials = $company['socials'] ? json_decode($company['socials'], true) : [''];
+                            foreach ($socials as $index => $social): ?>
                                 <div class="input-group">
-                                    <input type="text" class="form-control" name="socials[]" value="<?= htmlspecialchars($social) ?>" placeholder="https://instagram.com/company" required>
-                                    <button type="button" class="remove-btn" onclick="this.parentElement.remove()">✖</button>
+                                    <input type="text" class="form-control" name="socials[]"
+                                           value="<?= htmlspecialchars($social) ?>"
+                                           placeholder="https://instagram.com/company" required>
+                                    <button type="button" class="remove-btn" onclick="this.parentElement.remove()">✖
+                                    </button>
                                 </div>
                             <?php endforeach; ?>
                         </div>
-                        <button type="button" class="add-btn" onclick="addField('socialGroup', 'socials[]', 'https://instagram.com/company')">Добавить</button>
+                        <button type="button" class="add-btn"
+                                onclick="addField('socialGroup', 'socials[]', 'https://instagram.com/company')">Добавить
+                        </button>
                     </div>
                     <div class="form-group">
                         <label>График работы</label>
                         <small class="form-text text-muted">Добавьте только нужные дни</small>
                         <div class="working-hours" id="workingHoursGroup">
-                            <?php $workingHours = $company['working_hours'] ? json_decode($company['working_hours'], true) : []; $days = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс']; ?>
+                            <?php $workingHours = $company['working_hours'] ? json_decode($company['working_hours'], true) : [];
+                            $days = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']; ?>
                             <?php foreach ($days as $day): if (!isset($workingHours[$day])) continue; ?>
                                 <div class="working-row">
                                     <select class="form-select" name="working_days[]" disabled>
                                         <option value="<?= $day ?>"><?= $day ?></option>
                                     </select>
-                                    <input type="text" class="form-control" name="working_times[]" value="<?= htmlspecialchars($workingHours[$day]) ?>" placeholder="9:00-18:00" required>
-                                    <button type="button" class="remove-btn" onclick="this.parentElement.remove()">✖</button>
+                                    <input type="text" class="form-control" name="working_times[]"
+                                           value="<?= htmlspecialchars($workingHours[$day]) ?>" placeholder="9:00-18:00"
+                                           required>
+                                    <button type="button" class="remove-btn" onclick="this.parentElement.remove()">✖
+                                    </button>
                                 </div>
                             <?php endforeach; ?>
                             <?php if (isset($workingHours)): ?>
@@ -130,8 +161,11 @@
                                         <select class="form-select" name="working_days[]">
                                             <option value="<?= $day ?>"><?= $day ?></option>
                                         </select>
-                                        <input type="text" class="form-control" name="working_times[]" placeholder="9:00-18:00">
-                                        <button type="button" class="remove-btn" onclick="this.parentElement.remove()">✖</button>
+                                        <input type="text" class="form-control" name="working_times[]"
+                                               placeholder="9:00-18:00">
+                                        <button type="button" class="remove-btn" onclick="this.parentElement.remove()">
+                                            ✖
+                                        </button>
                                     </div>
                                 <?php endfor; ?>
                             <?php endif; ?>
@@ -140,13 +174,15 @@
                     </div>
                     <div class="form-group">
                         <label for="website">Сайт</label>
-                        <input type="text" class="form-control" id="website" name="website" value="<?= htmlspecialchars($company['website'] ?? '') ?>">
+                        <input type="text" class="form-control" id="website" name="website"
+                               value="<?= htmlspecialchars($company['website'] ?? '') ?>">
                     </div>
                     <div class="form-group">
                         <label for="logo">Логотип</label>
                         <input type="file" class="form-control" id="logo" name="logo" accept="image/*">
                         <?php if ($company['logo']): ?>
-                            <img src="img/fuel/<?= htmlspecialchars($company['logo']) ?>" alt="Логотип" class="logo-preview">
+                            <img src="img/fuel/<?= htmlspecialchars($company['logo']) ?>" alt="Логотип"
+                                 class="logo-preview">
                         <?php endif; ?>
                     </div>
                 </div>
@@ -228,7 +264,7 @@
                     console.error('Geolocation error:', error.message);
                     initializeMap([lat, lng]);
                 },
-                { maximumAge: 60000, timeout: 5000, enableHighAccuracy: true }
+                {maximumAge: 60000, timeout: 5000, enableHighAccuracy: true}
             );
 
             function initializeMap(centerCoords) {
@@ -241,10 +277,10 @@
                 // Customize controls position
                 map.controls.get('zoomControl').options.set({
                     size: 'small',
-                    position: { top: '100px', right: '10px' }
+                    position: {top: '100px', right: '10px'}
                 });
                 map.controls.get('geolocationControl').options.set({
-                    position: { top: '50px', right: '10px' }
+                    position: {top: '50px', right: '10px'}
                 });
 
                 let placemark = new ymaps.Placemark(centerCoords, {}, {
@@ -381,7 +417,7 @@
                 // Handle map click for building selection
                 map.events.add('click', function (e) {
                     const coords = e.get('coords');
-                    ymaps.geocode(coords, { kind: 'house', results: 1 }).then(function (res) {
+                    ymaps.geocode(coords, {kind: 'house', results: 1}).then(function (res) {
                         const firstGeoObject = res.geoObjects.get(0);
                         if (firstGeoObject && map.getZoom() >= 15) {
                             const address = firstGeoObject.getAddressLine();
@@ -401,7 +437,7 @@
                                     map.balloon.close();
                                     document.removeEventListener('click', setAddressHandler);
                                 }
-                            }, { once: true });
+                            }, {once: true});
                         }
                     });
                 });
