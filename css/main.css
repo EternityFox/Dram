@@ -2424,7 +2424,8 @@ a[href="/loans"], a[href="/deposits"], a[href="/cards"], a[href="/news"], a[href
 
 @media screen and (max-width: 768px) {
     .content {
-        margin-bottom: 80px;
+        margin-bottom: 40px;
+        padding-bottom: 40px;
     }
 
     .fuel-comparison .company-name {
