@@ -729,7 +729,6 @@ section {
 .content {
     padding-top: 20px;
     margin-top: 20px;
-
 }
 
 
@@ -2424,6 +2423,10 @@ a[href="/loans"], a[href="/deposits"], a[href="/cards"], a[href="/news"], a[href
 }
 
 @media screen and (max-width: 768px) {
+    .content {
+        margin-bottom: 80px;
+    }
+
     .fuel-comparison .company-name {
         font-size: 12px;
         max-width: 85px;
