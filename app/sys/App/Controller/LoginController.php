@@ -49,9 +49,6 @@ class LoginController extends Controller
                 case 'company':
                     header('Location: /user/company/');
                     break;
-                case 'user':
-                    header('Location: /user/');
-                    break;
                 default:
                     header('Location: /');
                     break;
@@ -82,9 +79,6 @@ class LoginController extends Controller
                     case 'company':
                         header('Location: /user/company');
                         break;
-                    case 'user':
-                        header('Location: /user/');
-                        break;
                     default:
                         header('Location: /');
                         break;
@@ -92,10 +86,86 @@ class LoginController extends Controller
                 return true;
             }
 
-            return ['site/login', ['error' => 'Неверный логин или пароль', 'settings' => $settings]];
+            return ['auth/login', ['error' => 'Неверный логин или пароль', 'settings' => $settings]];
         }
 
-        return ['site/login', ['settings' => $settings]];
+        return ['auth/login', ['settings' => $settings]];
+    }
+
+    protected function actionRegister()
+    {
+        $query = App::db()->query("SELECT * FROM settings");
+        $settings = $query->fetch();
+        $settings['menu']['top'] = file_get_contents(__DIR__ . '/../../../storage/menu/top.php');
+        $settings['menu']['left'] = file_get_contents(__DIR__ . '/../../../storage/menu/left.php');
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            return ['auth/register', ['settings' => $settings]];
+        }
+
+        $login = trim((string)($_POST['login'] ?? ''));
+        $password = (string)($_POST['password'] ?? '');
+        $password_confirm = (string)($_POST['password_confirm'] ?? '');
+
+        $role = 'user';
+
+        // Простая валидация
+        $errors = [];
+
+        if ($login === '' || mb_strlen($login) < 3) {
+            $errors[] = 'Логин должен быть не короче 3 символов.';
+        }
+        // Разрешим буквы/цифры/._-
+        if (!preg_match('/^[a-zA-Z0-9._-]+$/u', $login)) {
+            $errors[] = 'Разрешены только латинские буквы, цифры и символы . _ -';
+        }
+        if (mb_strlen($password) < 6) {
+            $errors[] = 'Пароль должен быть не короче 6 символов.';
+        }
+        if ($password !== $password_confirm) {
+            $errors[] = 'Пароли не совпадают.';
+        }
+
+        // Проверка уникальности логина
+        $stmt = App::db()->prepare("SELECT id FROM users WHERE login = ?");
+        $stmt->execute([$login]);
+        if ($stmt->fetchColumn()) {
+            $errors[] = 'Пользователь с таким логином уже существует.';
+        }
+
+        if (!empty($errors)) {
+            return ['auth/register', [
+                'settings' => $settings,
+                'error' => implode('<br>', array_map('htmlspecialchars', $errors)),
+                'old' => ['login' => $login]
+            ]];
+        }
+
+        // Хеш пароля: совместим с вашей авторизацией
+        $passwordHash = self::hash($password);
+
+        // Вставка пользователя
+        $ins = App::db()->prepare("
+            INSERT INTO users (login, password, role, app_token, created_at)
+            VALUES (?, ?, ?, NULL, datetime('now'))
+        ");
+        $ok = $ins->execute([$login, $passwordHash, $role]);
+
+        if (!$ok) {
+            return ['auth/register', [
+                'settings' => $settings,
+                'error' => 'Не удалось создать пользователя. Повторите попытку позже.',
+                'old' => ['login' => $login]
+            ]];
+        }
+
+        $token = self::hash($login . $password);
+        $upd = App::db()->prepare("UPDATE users SET app_token = ? WHERE login = ?");
+        $upd->execute([$token, $login]);
+
+        setcookie('app_token', $token, time() + 60 * 60 * 24 * 30, '/');
+        header('Location: /');
+        return true;
     }
 
     public static function hash($str): ?string

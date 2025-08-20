@@ -20,5 +20,12 @@
             </div>
             <button type="submit" class="btn btn-primary"><?= $lang("Войти") ?></button>
         </form>
+
+        <div class="mt-3">
+            <p class="mb-0">
+                <?= $lang("Нет аккаунта?") ?>
+                <a href="/register"><?= $lang("Зарегистрироваться") ?></a>
+            </p>
+        </div>
     </div>
 </section>

@@ -43,6 +43,7 @@ return [
         ],
         'login' => 'login/login',
         'logout' => 'login/logout',
+        'register' => 'login/register',
         'user' => [
             'company' => 'user/companyDashboard',
             'company/(?<id>\d+)' => 'user/companyDashboard'
