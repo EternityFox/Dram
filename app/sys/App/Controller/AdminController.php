@@ -46,6 +46,26 @@ class AdminController extends Controller
             ");
         }
 
+// Проверка и создание таблицы user_requests
+        $checkTable = App::db()->query("SELECT name FROM sqlite_master WHERE type='table' AND name='user_requests'")->fetch();
+        if (!$checkTable) {
+            App::db()->query("
+        CREATE TABLE user_requests (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            subject TEXT NOT NULL,
+            message TEXT NOT NULL,
+            file_path TEXT,
+            status TEXT NOT NULL DEFAULT 'new', -- new, in_progress, done
+            answer TEXT,                        -- ответ администратора/поддержки
+            answered_at TIMESTAMP,              -- когда дан ответ
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    ");
+            App::db()->query("CREATE INDEX IF NOT EXISTS idx_user_requests_user ON user_requests(user_id)");
+            App::db()->query("CREATE INDEX IF NOT EXISTS idx_user_requests_status ON user_requests(status)");
+        }
         // Проверка и создание таблицы fuel_types
         $checkTable = App::db()->query("SELECT name FROM sqlite_master WHERE type='table' AND name='fuel_types'")->fetch();
         if (!$checkTable) {
@@ -492,10 +512,10 @@ class AdminController extends Controller
             $baseName = str_replace('_', ' ', $baseName);
             $tokens = preg_split('/\s+/', $baseName);
             $styleTokens = [
-                'regular','italic','bold','semibold','light','black','medium','extrabold','ultrabold','thin',
-                'extralight','demilight','demibold','heavy','book','roman','oblique','condensed','expanded',
-                'narrow','compressed','display','caption','headline','text','mono',
-                'r','i','b','bi','u','it','md','lt','bk','sb'
+                'regular', 'italic', 'bold', 'semibold', 'light', 'black', 'medium', 'extrabold', 'ultrabold', 'thin',
+                'extralight', 'demilight', 'demibold', 'heavy', 'book', 'roman', 'oblique', 'condensed', 'expanded',
+                'narrow', 'compressed', 'display', 'caption', 'headline', 'text', 'mono',
+                'r', 'i', 'b', 'bi', 'u', 'it', 'md', 'lt', 'bk', 'sb'
             ];
             while (!empty($tokens) && in_array(strtolower(end($tokens)), $styleTokens, true)) {
                 array_pop($tokens);
@@ -504,7 +524,8 @@ class AdminController extends Controller
             $family = implode(' ', $tokens);
             return _titleize_simple($family);
         };
-        function _titleize_simple(string $s): string {
+        function _titleize_simple(string $s): string
+        {
             $s = mb_strtolower($s, 'UTF-8');
             $words = preg_split('/\s+/', $s);
             foreach ($words as &$w) {
@@ -516,14 +537,14 @@ class AdminController extends Controller
 
         // ======== новые хелперы для стандартизации имён ========
         $__STYLE_MAP = [
-            'r'=>'Regular','reg'=>'Regular','regular'=>'Regular',
-            'i'=>'Italic','it'=>'Italic','italic'=>'Italic','oblique'=>'Oblique',
-            'b'=>'Bold','bold'=>'Bold',
-            'md'=>'Medium','medium'=>'Medium',
-            'lt'=>'Light','light'=>'Light','thin'=>'Thin','extralight'=>'ExtraLight',
-            'sb'=>'SemiBold','semibold'=>'SemiBold','demibold'=>'SemiBold',
-            'bk'=>'Book','book'=>'Book',
-            'black'=>'Black','extrabold'=>'ExtraBold','ultrabold'=>'ExtraBold'
+            'r' => 'Regular', 'reg' => 'Regular', 'regular' => 'Regular',
+            'i' => 'Italic', 'it' => 'Italic', 'italic' => 'Italic', 'oblique' => 'Oblique',
+            'b' => 'Bold', 'bold' => 'Bold',
+            'md' => 'Medium', 'medium' => 'Medium',
+            'lt' => 'Light', 'light' => 'Light', 'thin' => 'Thin', 'extralight' => 'ExtraLight',
+            'sb' => 'SemiBold', 'semibold' => 'SemiBold', 'demibold' => 'SemiBold',
+            'bk' => 'Book', 'book' => 'Book',
+            'black' => 'Black', 'extrabold' => 'ExtraBold', 'ultrabold' => 'ExtraBold'
         ];
         $parseFamilyAndStyle = function (string $baseName) use ($__STYLE_MAP): array {
             $name = preg_replace('/(?:[ _-])?u$/i', '', $baseName);
@@ -561,12 +582,12 @@ class AdminController extends Controller
 
                     require_once __DIR__ . '/../../../lib/sfnt2woff.php';
                     $errors = [];
-                    $allowedExts = ['ttf','otf','woff','woff2'];
+                    $allowedExts = ['ttf', 'otf', 'woff', 'woff2'];
 
                     foreach ($_FILES['font_files']['name'] as $key => $name) {
-                        $tmpName  = $_FILES['font_files']['tmp_name'][$key];
+                        $tmpName = $_FILES['font_files']['tmp_name'][$key];
                         $fileSize = $_FILES['font_files']['size'][$key];
-                        $fileExt  = strtolower(pathinfo($name, PATHINFO_EXTENSION));
+                        $fileExt = strtolower(pathinfo($name, PATHINFO_EXTENSION));
                         $baseName = pathinfo($name, PATHINFO_FILENAME);
 
                         if (!in_array($fileExt, $allowedExts, true)) {
@@ -580,14 +601,14 @@ class AdminController extends Controller
                         if (!is_dir($folderPath)) mkdir($folderPath, 0755, true);
 
                         $stdFileName = $buildFileName($familyRaw, $style, $fileExt);
-                        $destPath    = $folderPath . $stdFileName;
+                        $destPath = $folderPath . $stdFileName;
 
                         if (file_exists($destPath)) {
                             $i = 2;
                             $baseStd = pathinfo($stdFileName, PATHINFO_FILENAME);
                             while (file_exists($folderPath . $baseStd . "($i)." . $fileExt)) $i++;
                             $stdFileName = $baseStd . "($i)." . $fileExt;
-                            $destPath    = $folderPath . $stdFileName;
+                            $destPath = $folderPath . $stdFileName;
                         }
 
                         if (!move_uploaded_file($tmpName, $destPath)) {
@@ -599,7 +620,7 @@ class AdminController extends Controller
                         $woff2Name = '';
                         $displayName = $stdFileName;
 
-                        if (in_array($fileExt, ['ttf','otf'], true)) {
+                        if (in_array($fileExt, ['ttf', 'otf'], true)) {
                             try {
                                 $sfnt2woff = new \xenocrat\sfnt2woff();
                                 $sfnt = file_get_contents($destPath);
@@ -618,7 +639,8 @@ class AdminController extends Controller
                                 }
                                 file_put_contents($destWoff, $woffData);
                                 $displayName = $woffName;
-                            } catch (\Throwable $e) { }
+                            } catch (\Throwable $e) {
+                            }
                         }
 
                         $stmt = App::db()->prepare("
@@ -638,8 +660,8 @@ class AdminController extends Controller
 
                     if (!empty($errors)) {
                         return ['site/admin_fonts', [
-                            'settings'=>$settings,'menu'=>$menu,
-                            'groupedFonts'=>$groupedFonts,'errors'=>$errors
+                            'settings' => $settings, 'menu' => $menu,
+                            'groupedFonts' => $groupedFonts, 'errors' => $errors
                         ]];
                     }
                     header('Location: /admin/fonts-list');
@@ -668,7 +690,7 @@ class AdminController extends Controller
             }
         }
 
-        return ['site/admin_fonts', ['settings'=>$settings,'menu'=>$menu,'groupedFonts'=>$groupedFonts]];
+        return ['site/admin_fonts', ['settings' => $settings, 'menu' => $menu, 'groupedFonts' => $groupedFonts]];
     }
 
 
@@ -972,4 +994,146 @@ class AdminController extends Controller
             ]
         ];
     }
+
+    protected function guardAdmin()
+    {
+        // общий хелпер авторизации админа — такой же, как в manageUsers
+        $settings = App::db()->query("SELECT * FROM settings")->fetch();
+        $ok = false;
+        if (!empty($_COOKIE['app_token'])) {
+            $token = $_COOKIE['app_token'];
+            if (self::hash($settings['login'] . $settings['password']) === $token) $ok = true;
+        }
+        if (!$ok) {
+            header('Location: /login');
+            return false;
+        }
+
+        // меню для админки
+        $settings['menu']['top'] = file_get_contents(__DIR__ . '/../../../storage/menu/top.php');
+        $settings['menu']['left'] = file_get_contents(__DIR__ . '/../../../storage/menu/left.php');
+        $menu['top'] = include_once(__DIR__ . '/../../../storage/menu/top.php');
+        $menuLeft = include_once(__DIR__ . '/../../../storage/menu/left.php');
+        $menu['left']['hidden'] = $menuLeft['hidden'];
+        unset($menuLeft['hidden']);
+        $menu['left']['basic'] = $menuLeft;
+
+        return ['settings' => $settings, 'menu' => $menu];
+    }
+
+    protected function actionRequests()
+    {
+        $guard = $this->guardAdmin();
+        if ($guard === false) return false;
+
+        // фильтры
+        $q = trim((string)($_GET['q'] ?? ''));
+        $status = (string)($_GET['status'] ?? '');
+        $where = [];
+        $params = [];
+
+        if ($q !== '') {
+            $where[] = "(ur.subject LIKE :q OR ur.message LIKE :q OR u.login LIKE :q)";
+            $params[':q'] = "%{$q}%";
+        }
+        if (in_array($status, ['new', 'in_progress', 'done'], true)) {
+            $where[] = "ur.status = :st";
+            $params[':st'] = $status;
+        }
+        $whereSql = $where ? ('WHERE ' . implode(' AND ', $where)) : '';
+
+        $sql = "
+        SELECT ur.*, u.login
+          FROM user_requests ur
+          LEFT JOIN users u ON u.id = ur.user_id
+          $whereSql
+         ORDER BY ur.id DESC
+         LIMIT 100
+    ";
+        $stmt = App::db()->prepare($sql);
+        $stmt->execute($params);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        return ['site/admin_requests', [
+            'settings' => $guard['settings'],
+            'menu' => $guard['menu'],
+            'rows' => $rows,
+            'q' => $q,
+            'status' => $status,
+        ]];
+    }
+
+    protected function actionRequestView($id)
+    {
+        $guard = $this->guardAdmin();
+        if ($guard === false) return false;
+
+        $id = (int)$id;
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $answer = trim((string)($_POST['answer'] ?? ''));
+            $status = (string)($_POST['status'] ?? 'in_progress');
+            if (!in_array($status, ['new', 'in_progress', 'done'], true)) $status = 'in_progress';
+
+            $stmt = App::db()->prepare("
+            UPDATE user_requests
+               SET answer = ?, status = ?, answered_at = CASE WHEN ? <> '' THEN CURRENT_TIMESTAMP ELSE answered_at END
+             WHERE id = ?
+        ");
+            $stmt->execute([$answer, $status, $answer, $id]);
+
+            header('Location: /admin/request/' . $id . '?saved=1');
+            return true;
+        }
+
+        // данные заявки
+        $stmt = App::db()->prepare("
+        SELECT ur.*, u.login, u.email
+          FROM user_requests ur
+          LEFT JOIN users u ON u.id = ur.user_id
+         WHERE ur.id = ?
+        LIMIT 1
+    ");
+        $stmt->execute([$id]);
+        $req = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$req) {
+            header('Location: /admin/requests');
+            return true;
+        }
+
+        return ['site/admin_request_view', [
+            'settings' => $guard['settings'],
+            'menu' => $guard['menu'],
+            'r' => $req,
+            'saved' => !empty($_GET['saved']),
+        ]];
+    }
+
+    protected function actionRequestDelete($id)
+    {
+        $guard = $this->guardAdmin();
+        if ($guard === false) return false;
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /admin/request/' . (int)$id);
+            return true;
+        }
+
+        $id = (int)$id;
+        // сносим файл, если был
+        $stmt = App::db()->prepare("SELECT file_path FROM user_requests WHERE id = ?");
+        $stmt->execute([$id]);
+        $fp = $stmt->fetchColumn();
+        if ($fp && is_file(__DIR__ . '/../../../../' . $fp)) {
+            @unlink(__DIR__ . '/../../../../' . $fp);
+        }
+
+        $del = App::db()->prepare("DELETE FROM user_requests WHERE id = ?");
+        $del->execute([$id]);
+
+        header('Location: /admin/requests?deleted=1');
+        return true;
+    }
+
+
 }

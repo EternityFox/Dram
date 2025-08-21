@@ -49,6 +49,9 @@ class LoginController extends Controller
                 case 'company':
                     header('Location: /user/company/');
                     break;
+                case 'user':
+                    header('Location: /user/account');
+                    break;
                 default:
                     header('Location: /');
                     break;
@@ -78,6 +81,9 @@ class LoginController extends Controller
                         break;
                     case 'company':
                         header('Location: /user/company');
+                        break;
+                    case 'user':
+                        header('Location: /user/account');
                         break;
                     default:
                         header('Location: /');
@@ -164,7 +170,7 @@ class LoginController extends Controller
         $upd->execute([$token, $login]);
 
         setcookie('app_token', $token, time() + 60 * 60 * 24 * 30, '/');
-        header('Location: /');
+        header('Location: /user/account');
         return true;
     }
 
