@@ -46,7 +46,11 @@ return [
         'register' => 'login/register',
         'user' => [
             'company' => 'user/companyDashboard',
-            'company/(?<id>\d+)' => 'user/companyDashboard'
+            'company/(?<id>\d+)' => 'user/companyDashboard',
+            'account(?:/)?(?:\?.*)?' => 'account/index',
+            'account/change-password' => 'account/changePassword',
+            'account/request' => 'account/createRequest',
+            'account/delete' => 'account/deleteAccount',
         ],
         'admin' => [
 //            '.*' => 'admin/index',
@@ -61,6 +65,9 @@ return [
             'manage-users' => 'admin/manageUsers',
             'manage-fuel-types' => 'admin/manageFuelTypes',
             'fonts-list' => 'admin/fontsList',
+            'requests(?:/)?(?:\?.*)?' => 'admin/requests',
+            'request/(?<id>\d+)(?:/)?(?:\?.*)?' => 'admin/requestView',
+            'request/(?<id>\d+)/del' => 'admin/requestDelete',
         ],
 //        'bigparsebankvslsdkfjsdhfjvskdl' => 'site/bigParseBank',
 //        'bigparseexchangervslsdkfjsdhfjvskdl' => 'site/bigParseExchanger',

@@ -14,6 +14,12 @@
                 </div>
             </div>
             <div class="card mt-4 toggle">
+                <h5 class="card-header">Заявки</h5>
+                <div class="card-body" style="display: none;">
+                    <a href="/admin/requests" class="btn btn-primary">Управление заявками</a>
+                </div>
+            </div>
+            <div class="card mt-4 toggle">
                 <h5 class="card-header">Компании</h5>
                 <div class="card-body" style="display: none;">
                     <a href="/admin/manage-companies" class="btn btn-primary">Управление компаниями</a>
