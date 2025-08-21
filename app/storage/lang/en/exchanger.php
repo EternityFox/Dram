@@ -187,4 +187,5 @@ return [
     'Chinar Home Адонц' => 'Chinar Home Adonts',
     'Опера Норк' => 'Opera Nork',
     'IT MOBILE' => 'IT MOBILE',
+    '88 Սուպերմարկետ Էջմիածին' => '88 Սուպերմարկետ Էջմիածին',
 ];
