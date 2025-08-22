@@ -17,13 +17,10 @@ if (!empty($_GET['del_error'])) $toast = ['type' => 'danger', 'msg' => $_GET['de
                         <h1 class="display-6 fw-bold mb-1"><?= $lang("Личный кабинет") ?></h1>
                         <div class="text-muted">
                             <?= $lang("Добро пожаловать,") ?> <strong><?= htmlspecialchars($user['login']) ?></strong>
-                            <?php if (!empty($user['created_at'])): ?> ·
-                                <span class="small"><?= $lang("с") ?> <?= htmlspecialchars($user['created_at']) ?></span>
-                            <?php endif; ?>
                         </div>
                     </div>
                 </div>
-                <div class="col-12 col-lg-4 text-lg-end">
+                <div class="col-12 col-lg-4 text-end">
                     <a class="btn btn-light btn-outline-dark rounded-pill px-4" href="/logout"><?= $lang("Выйти") ?></a>
                 </div>
             </div>
@@ -32,16 +29,46 @@ if (!empty($_GET['del_error'])) $toast = ['type' => 'danger', 'msg' => $_GET['de
 
     <section class="content account-hero">
         <div class="container py-4">
-            <h5 class="section-title"><?= $lang("Быстрый доступ к сервисам DRAM") ?></h5>
+            <h5 class="section-title"><?= $lang("Быстрый доступ к сервисам dram") ?></h5>
             <div class="row g-3 mb-4">
                 <?php
                 $tiles = [
-                    ['/direct/cash', 'nav-icon/exchange.png', $lang("Курсы валют"), $lang("Нал/безнал/карта")],
-                    ['/converter', 'nav-icon/calculator 5.png', $lang("Конвертер валют"), $lang("Мгновенные расчёты")],
-                    ['/charts', 'nav-icon/Charts.png', $lang("Графики котировок"), $lang("Международные рынки")],
-                    ['/fuel', 'nav-icon/LPG.png', $lang("Цены на топливо"), $lang("Обновления по АЗС")],
-                    ['/fonts-list', 'nav-icon/alphabet 2.png', $lang("Шрифты"), $lang("Просмотр и скачивание")],
-                    ['/plate-number-search', 'nav-icon/plate 3.png', $lang("Номерные знаки"), $lang("Поиск доступности")],
+                    [
+                        '/direct/cash',
+                        'nav-icon/exchange.png',
+                        $lang("Курсы валют"),
+                        $lang("Актуальные курсы наличных, безналичных и карт, собранные по банкам и обменным пунктам Армении для быстрого сравнения и выбора лучшего варианта")
+                    ],
+                    [
+                        '/converter',
+                        'nav-icon/calculator 5.png',
+                        $lang("Конвертер валют"),
+                        $lang("Удобный инструмент для мгновённых расчётов обмена валют по текущему курсу — просто введите сумму и получите точный результат")
+                    ],
+                    [
+                        '/charts',
+                        'nav-icon/Charts.png',
+                        $lang("Графики котировок"),
+                        $lang("Наглядные графики динамики курсов валют и драгоценных металлов, с возможностью анализа трендов и сравнения разных периодов")
+                    ],
+                    [
+                        '/fuel',
+                        'nav-icon/LPG.png',
+                        $lang("Цены на топливо"),
+                        $lang("Регулярные обновления стоимости бензина, дизеля и газа на АЗС — следите за изменениями цен в реальном времени")
+                    ],
+                    [
+                        '/fonts-list',
+                        'nav-icon/alphabet 2.png',
+                        $lang("Каталог шрифтов"),
+                        $lang("Большая коллекция шрифтов для работы и творчества: просматривайте, скачивайте и находите нужный стиль для вашего проекта")
+                    ],
+                    [
+                        '/plate-number-search',
+                        'nav-icon/plate 3.png',
+                        $lang("Номерные знаки"),
+                        $lang("Удобный поиск по базе автомобильных номеров — проверяйте доступность и резервируйте красивые номера для вашего авто")
+                    ],
                 ];
                 foreach ($tiles as [$href, $icon, $title, $sub]): ?>
                     <div class="col-12 col-sm-6 col-lg-4">
@@ -189,15 +216,15 @@ if (!empty($_GET['del_error'])) $toast = ['type' => 'danger', 'msg' => $_GET['de
                         <?php foreach ($lastRequests as $r): ?>
                             <details class="req-item list-group-item">
                                 <summary class="req-head d-flex align-items-center justify-content-between">
-                                    <div class="d-flex align-items-center gap-3">
+                                    <div class="d-flex align-items-center gap-3 me-2">
                                         <span class="req-id">#<?= (int)$r['id'] ?></span>
                                         <span class="req-title"><?= htmlspecialchars($r['subject']) ?></span>
                                     </div>
                                     <div class="d-flex align-items-center gap-3">
-                  <span class="badge
-                    <?= $r['status'] === 'done' ? 'bg-success' : ($r['status'] === 'in_progress' ? 'bg-warning text-dark' : 'bg-secondary') ?>">
-                    <?= htmlspecialchars($r['status']) ?>
-                  </span>
+                                        <span class="badge
+                                            <?= $r['status'] === 'done' ? 'bg-success' : ($r['status'] === 'in_progress' ? 'bg-warning text-dark' : 'bg-secondary') ?>">
+                                            <?= htmlspecialchars($r['status']) ?>
+                                        </span>
                                         <span class="req-date text-muted"><?= htmlspecialchars($r['created_at']) ?></span>
                                     </div>
                                 </summary>

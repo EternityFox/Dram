@@ -4220,8 +4220,8 @@ rem
 }
 
 .font-container-block .card-header-custom {
-    background: linear-gradient(249deg, #0155eb, #60e3d9);
-    color: #fff;
+    background: linear-gradient(90deg, rgba(59, 130, 246, .15), rgba(16, 185, 129, .15));
+    color: #4a4a4a;
     font-weight: 600;
     border-radius: 20px 20px 0 0;
     padding: 15px 25px;
@@ -4419,8 +4419,8 @@ rem
 }
 
 .font-family-container-block .card-header-custom {
-    background: linear-gradient(249deg, #0155eb, #60e3d9);
-    color: #fff;
+    background: linear-gradient(90deg, rgba(59, 130, 246, .15), rgba(16, 185, 129, .15));
+    color: #4a4a4a;
     font-weight: 600;
     border-radius: 20px 20px 0 0;
     padding: 15px 25px;
@@ -4597,6 +4597,19 @@ rem
 }
 
 @media (max-width: 576px) {
+    .account-hero .req-date {
+        display: none;
+    }
+
+    .account-hero .req-title {
+        font-size: 14px;
+        display: -webkit-inline-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        vertical-align: middle;
+        overflow: hidden;
+    }
+
     .font-family-container-block .card-header-custom span {
         font-size: 1rem;
     }
@@ -4693,8 +4706,10 @@ rem
 }
 
 .account-hero .avatar-circle {
+    min-width: 48px;
     width: 48px;
     height: 48px;
+    min-height: 48px;
     border-radius: 50%;
     display: grid;
     place-items: center;
@@ -4744,15 +4759,17 @@ rem
 
 .account-hero .fc-title {
     font-weight: 700;
+    color: #4a4a4a;
     margin-bottom: .15rem;
 }
 
 .account-hero .fc-sub {
-    color: var(--bs-secondary-color);
+    color: #212529;
     font-size: .925rem;
 }
 
 .account-hero .fc-arrow {
+    color: #212529;
     position: absolute;
     right: 12px;
     bottom: 10px;
