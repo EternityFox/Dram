@@ -13,6 +13,7 @@
     <meta name="Author" content="Copyright by Georgi Selmidis">
     <meta name="Copyright" content="Copyright by Georgi Selmidis">
     <meta name="Address" content="Армения, г. Севан, ул. Наирян 164/408">
+    <meta name="apple-itunes-app" content="app-id=6748325167, app-argument=dramam://home">
 
     <base href="/">
     <link type="image/x-icon" rel="shortcut icon" href="img/favicon/Favicon.png">
