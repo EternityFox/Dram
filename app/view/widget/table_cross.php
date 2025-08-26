@@ -13,7 +13,6 @@ $showHeaders = true;
                         </div>
                         <div class="table-item-title">
                             <?= $lang($tableNames[$tableNum]) ?>
-                            <?= (1 == $tableNum ? '<span style="padding: 1px 6px;border-radius:10px;background:#c00;color:#fff;margin-left:5px;font-size:11px;font-family:Arial;">new</span>' : '') ?>
                         </div>
                     </div>
                 </div>
