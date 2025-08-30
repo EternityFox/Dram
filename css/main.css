@@ -2377,7 +2377,7 @@ th {
     z-index: 5;
     color: #000000;
     right: -2px;
-    font-size: 12px;
+    font-size: 10px;
     height: 100%;
     text-align: center;
     writing-mode: vertical-rl;
@@ -2386,7 +2386,7 @@ th {
     overflow: hidden;
     text-overflow: ellipsis;
     background: #cadbff;
-    padding: 6px 4px;
+    padding: 6px 2px;
     border-radius: 0 10px 10px 0;
 }
 
