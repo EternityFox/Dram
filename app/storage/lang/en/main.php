@@ -39,6 +39,7 @@ return [
     'Шрифты отсутствуют' => 'No fonts here',
     'Регистрация' => 'Registration',
     'Логин' => 'Username',
+    'реклама' => 'ads',
     'Введите логин' => 'Enter username',
     'Пароль' => 'Password',
     'Введите пароль' => 'Enter password',
