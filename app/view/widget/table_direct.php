@@ -47,6 +47,7 @@ $showHeaders = true;
                             if (!empty($bannerMid)): ?>
                                 <div class="banner def-box banner-mobile banner-middle">
                                     <?= $bannerMid ?>
+                                    <span class="banner-ads-text"><?= $lang('реклама'); ?></span>
                                 </div>
                             <?php endif; ?>
                         <?php endif; ?>

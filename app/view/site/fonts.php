@@ -15,6 +15,7 @@
                     <?php if (!empty(trim($bannerMobile))) : ?>
                         <div class="banner def-box banner-mobile mb-4">
                             <?= $bannerMobile ?>
+                            <span class="banner-ads-text"><?= $lang('реклама'); ?></span>
                         </div>
                     <?php endif; ?>
 

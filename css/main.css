@@ -2371,6 +2371,25 @@ th {
     text-align: center;
 }
 
+.banner-ads-text {
+    position: absolute;
+    top: 0;
+    z-index: 5;
+    color: #000000;
+    right: -2px;
+    font-size: 12px;
+    height: 100%;
+    text-align: center;
+    writing-mode: vertical-rl;
+    max-height: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    background: #cadbff;
+    padding: 6px 4px;
+    border-radius: 0 10px 10px 0;
+}
+
 @media screen and (max-width: 1200px) {
     .header-menu-block {
         display: none;

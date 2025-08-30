@@ -47,21 +47,13 @@ $showHeaders = true;
                             if (!empty($bannerMid)): ?>
                                 <div class="banner def-box banner-mobile banner-middle">
                                     <?= $bannerMid ?>
+                                    <span class="banner-ads-text"><?= $lang('реклама'); ?></span>
                                 </div>
                             <?php endif; ?>
                         <?php endif; ?>
                     <?php endif; ?>
                 <?php endforeach ?>
             </div>
-            <?php if ($tableNum == 0): ?>
-                <?php
-                $bannerMid = random_elem($settings['banner_middle_1'] ?? '', $settings['banner_middle_2'] ?? '');
-                if (!empty($bannerMid)): ?>
-                    <div class="banner def-box banner-mobile banner-middle">
-                        <?= $bannerMid ?>
-                    </div>
-                <?php endif; ?>
-            <?php endif; ?>
         <?php endforeach ?>
     </div>
     <div class="banks-info-wrap">

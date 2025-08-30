@@ -8,6 +8,7 @@
                     </div>
                     <div class="banner def-box banner-mobile">
                         <?= random_elem($settings['banner_head_mobile'], $settings['banner_head_mobile_2'],) ?>
+                        <span class="banner-ads-text"><?= $lang('реклама'); ?></span>
                     </div>
 <!--                    <h1>title</h1>-->
 
@@ -20,6 +21,7 @@
                     </div>
                     <div class="banner banner-two def-box banner-mobile">
                         <?= random_elem($settings['banner_footer_mobile'], $settings['banner_footer_mobile_2'],) ?>
+                        <span class="banner-ads-text"><?= $lang('реклама'); ?></span>
                     </div>
                 </div>
             </div>

@@ -14,6 +14,7 @@
                     <?php if (!empty(trim($bannerMobile))) : ?>
                         <div class="banner def-box banner-mobile">
                             <?= $bannerMobile ?>
+                            <span class="banner-ads-text"><?= $lang('реклама'); ?></span>
                         </div>
                     <?php endif; ?>
 
@@ -92,6 +93,7 @@
                     </div>
                     <div class="banner banner-two def-box banner-mobile">
                         <?= random_elem($settings['banner_footer_mobile'], $settings['banner_footer_mobile_2'],) ?>
+                        <span class="banner-ads-text"><?= $lang('реклама'); ?></span>
                     </div>
                     <?php $converter->render() ?>
 
