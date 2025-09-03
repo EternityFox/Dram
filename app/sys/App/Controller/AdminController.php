@@ -11,112 +11,6 @@ class AdminController extends Controller
 {
     protected function actionIndex()
     {
-// Создание таблицы pages, если она не существует
-        $checkTable = App::db()->query("SELECT name FROM sqlite_master WHERE type='table' AND name='pages'")->fetch();
-        if (!$checkTable) {
-            App::db()->query("
-            CREATE TABLE pages (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,              
-                slug TEXT NOT NULL UNIQUE,
-                content TEXT NOT NULL,
-                seo_title TEXT,
-                seo_description TEXT,
-                seo_keywords TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        ");
-        }
-        // Проверка и создание таблицы users
-        $checkTable = App::db()->query("SELECT name FROM sqlite_master WHERE type='table' AND name='users'")->fetch();
-        if (!$checkTable) {
-            App::db()->query("
-                CREATE TABLE users (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    login TEXT NOT NULL UNIQUE,
-                    password TEXT NOT NULL,
-                    email TEXT,
-                    company_id INTEGER,
-                    role TEXT NOT NULL DEFAULT 'user',
-                    app_token TEXT,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    FOREIGN KEY (company_id) REFERENCES fuel_companies(id)
-                )
-            ");
-        }
-
-// Проверка и создание таблицы user_requests
-        $checkTable = App::db()->query("SELECT name FROM sqlite_master WHERE type='table' AND name='user_requests'")->fetch();
-        if (!$checkTable) {
-            App::db()->query("
-        CREATE TABLE user_requests (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            subject TEXT NOT NULL,
-            message TEXT NOT NULL,
-            file_path TEXT,
-            status TEXT NOT NULL DEFAULT 'new', -- new, in_progress, done
-            answer TEXT,                        -- ответ администратора/поддержки
-            answered_at TIMESTAMP,              -- когда дан ответ
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-        )
-    ");
-            App::db()->query("CREATE INDEX IF NOT EXISTS idx_user_requests_user ON user_requests(user_id)");
-            App::db()->query("CREATE INDEX IF NOT EXISTS idx_user_requests_status ON user_requests(status)");
-        }
-        // Проверка и создание таблицы fuel_types
-        $checkTable = App::db()->query("SELECT name FROM sqlite_master WHERE type='table' AND name='fuel_types'")->fetch();
-        if (!$checkTable) {
-            App::db()->query("
-                CREATE TABLE fuel_types (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    name TEXT NOT NULL UNIQUE,
-                    description TEXT
-                )
-            ");
-        }
-
-        // Проверка и создание таблицы fuel_companies
-        $checkTable = App::db()->query("SELECT name FROM sqlite_master WHERE type='table' AND name='fuel_companies'")->fetch();
-        if (!$checkTable) {
-            App::db()->query("
-                CREATE TABLE fuel_companies (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    slug TEXT NOT NULL UNIQUE,                   
-                    name TEXT NOT NULL,
-                    address TEXT,
-                    phones TEXT,
-                    emails TEXT,
-                    working_hours TEXT,
-                    website TEXT,
-                    socials TEXT,
-                    latitude DECIMAL(10, 8),
-                    longitude DECIMAL(10, 8),
-                    logo TEXT, -- Добавлено поле для логотипа
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            ");
-        }
-
-        // Проверка и создание таблицы fuel_data
-        $checkTable = App::db()->query("SELECT name FROM sqlite_master WHERE type='table' AND name='fuel_data'")->fetch();
-        if (!$checkTable) {
-            App::db()->query("
-                CREATE TABLE fuel_data (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    company_id INTEGER NOT NULL,
-                    fuel_type_id INTEGER NOT NULL,
-                    price DECIMAL(10, 2) NOT NULL,
-                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    FOREIGN KEY (company_id) REFERENCES fuel_companies(id),
-                    FOREIGN KEY (fuel_type_id) REFERENCES fuel_types(id)
-                )
-            ");
-        }
-
         $query = App::db()->query("PRAGMA table_info(settings)");
         $columns = $query->fetchAll(PDO::FETCH_ASSOC);
 
@@ -154,21 +48,8 @@ class AdminController extends Controller
             return false;
         }
 
-        $checkTable = App::db()->query("SELECT name FROM sqlite_master WHERE type='table' AND name='navigation'")->fetch();
-        if (!$checkTable) {
-            // Если таблица не существует, создаём её
-            App::db()->query("
-        CREATE TABLE navigation (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            link TEXT NOT NULL,
-            title_ru TEXT NOT NULL,
-            title_en TEXT NOT NULL,
-            title_am TEXT NOT NULL,
-            image TEXT NOT NULL
-        )
-    ");
-        }
-
+        $this->addedTables();
+        $this->migrateFuelSchemaToCompanyPoints();
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             if (isset($_FILES['logo-image']['name']) && !empty($_FILES['logo-image']['name'])) {
                 $imageName = $_FILES['logo-image']['name'];
@@ -298,6 +179,76 @@ class AdminController extends Controller
             return true;
         }
 
+        // === Уведомления (новые компании с ценами + новые заявки) ===
+        $pdo = App::db();
+
+// Кол-во компаний с любым ожиданием модерации (company/point/price)
+        $sqlCountCompanies = "
+    SELECT COUNT(DISTINCT fc.id)
+    FROM fuel_companies fc
+    LEFT JOIN company_points cp ON cp.company_id = fc.id
+    LEFT JOIN fuel_data     fd ON fd.company_point_id = cp.id
+    WHERE COALESCE(fc.moderation_status,'approved') = 'pending'
+       OR COALESCE(cp.moderation_status,'approved') = 'pending'
+       OR COALESCE(fd.moderation_status,'approved') = 'pending'
+";
+        $pendingCompaniesCount = (int)$pdo->query($sqlCountCompanies)->fetchColumn();
+
+// Список последних компаний С ЦЕНАМИ (для предпросмотра)
+        $sqlListCompanies = "
+    SELECT
+        fc.id,
+        fc.name,
+        MIN(cp.address) AS address,
+        MIN(c.name_ru)  AS city,
+        MIN(COALESCE(cp.created_at, fc.created_at)) AS created_at,
+        REPLACE(
+            GROUP_CONCAT(DISTINCT (ft.name || ' ' || printf('%.2f', fd.price))),
+            ',', ' | '
+        ) AS prices
+    FROM fuel_companies fc
+    JOIN company_points cp ON cp.company_id = fc.id
+    JOIN fuel_data     fd  ON fd.company_point_id = cp.id
+    LEFT JOIN fuel_types ft ON ft.id = fd.fuel_type_id
+    LEFT JOIN cities     c  ON c.id = cp.city_id
+    WHERE COALESCE(fc.moderation_status,'approved') = 'pending'
+       OR COALESCE(cp.moderation_status,'approved') = 'pending'
+       OR COALESCE(fd.moderation_status,'approved') = 'pending'
+    GROUP BY fc.id, fc.name
+    ORDER BY created_at DESC
+    LIMIT 12
+";
+        $pendingCompaniesList = $pdo->query($sqlListCompanies)->fetchAll(PDO::FETCH_ASSOC);
+
+// Новые заявки пользователей
+        $newReqCount = (int)$pdo->query("SELECT COUNT(*) FROM user_requests WHERE status = 'new'")->fetchColumn();
+        $newReqList = $pdo->query("
+    SELECT ur.id,
+           ur.user_id,
+           ur.subject,
+           ur.created_at,
+           COALESCE(u.login, '') AS user_login,
+           COALESCE(u.email, '') AS email
+      FROM user_requests ur
+      LEFT JOIN users u ON u.id = ur.user_id
+     WHERE ur.status = 'new'
+     ORDER BY ur.created_at DESC
+     LIMIT 10
+")->fetchAll(PDO::FETCH_ASSOC);
+
+// Собираем в один удобный массив и передаём во view
+        $alerts = [
+            'companies' => [
+                'count' => $pendingCompaniesCount,
+                'list' => $pendingCompaniesList,
+            ],
+            'requests' => [
+                'count' => $newReqCount,
+                'list' => $newReqList,
+            ],
+            'sum' => $newReqCount + $pendingCompaniesCount
+        ];
+
         $settings['english'] = file_get_contents(__DIR__ . '/../../../storage/lang/en/main.php');
         $settings['armenia'] = file_get_contents(__DIR__ . '/../../../storage/lang/am/main.php');
 
@@ -325,14 +276,16 @@ class AdminController extends Controller
         $companies = App::db()->query("SELECT * FROM fuel_companies")->fetchAll(PDO::FETCH_ASSOC);
         $fuelTypes = App::db()->query("SELECT * FROM fuel_types")->fetchAll(PDO::FETCH_ASSOC);
         $navigations = App::db()->query("SELECT * FROM navigation")->fetchAll();
+
         return [
-            'site/admin',
+            'admin/admin',
             [
                 'settings' => $settings,
                 'navigations' => $navigations,
                 'menu' => $menu,
                 'companies' => $companies,
                 'fuelTypes' => $fuelTypes,
+                'alerts' => $alerts,
             ]
         ];
     }
@@ -357,20 +310,22 @@ class AdminController extends Controller
 
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             if (isset($_POST['create_company'])) {
-                $phones = json_encode($_POST['phones'] ?? [], JSON_UNESCAPED_UNICODE);
-                $emails = json_encode($_POST['emails'] ?? [], JSON_UNESCAPED_UNICODE);
-                $workingHours = json_encode($_POST['working_hours'] ?? [], JSON_UNESCAPED_UNICODE);
-                $socials = json_encode($_POST['socials'] ?? [], JSON_UNESCAPED_UNICODE);
-                $stmt = App::db()->prepare("INSERT INTO fuel_companies (name, slug, address, phones, emails, working_hours, website, socials, latitude, longitude) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-                $stmt->execute([$_POST['name'], $_POST['slug'], $_POST['address'], $phones, $emails, $workingHours, $_POST['website'], $socials, $_POST['latitude'], $_POST['longitude']]);
+                $slugify = function (string $s): string {
+                    $s = trim($s);
+                    if ($s === '') return substr(md5(uniqid('', true)), 0, 8);
+                    $s = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $s);
+                    $s = strtolower(preg_replace('~[^a-z0-9]+~', '-', $s));
+                    $s = trim($s, '-');
+                    return $s !== '' ? $s : substr(md5(uniqid('', true)), 0, 8);
+                };
+                $slug = trim($_POST['slug'] ?? '');
+                if ($slug === '') $slug = $slugify($_POST['name']);
+                $stmt = App::db()->prepare("INSERT INTO fuel_companies (name, slug) VALUES (?, ?)");
+                $stmt->execute([$_POST['name'], $slug]);
             } elseif (isset($_POST['edit_company'])) {
                 $companyId = $_POST['company_id'];
-                $phones = json_encode($_POST['phones'] ?? [], JSON_UNESCAPED_UNICODE);
-                $emails = json_encode($_POST['emails'] ?? [], JSON_UNESCAPED_UNICODE);
-                $workingHours = json_encode($_POST['working_hours'] ?? [], JSON_UNESCAPED_UNICODE);
-                $socials = json_encode($_POST['socials'] ?? [], JSON_UNESCAPED_UNICODE);
-                $stmt = App::db()->prepare("UPDATE fuel_companies SET name = ?, slug = ?, address = ?, phones = ?, emails = ?, working_hours = ?, website = ?, socials = ?, latitude = ?, longitude = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?");
-                $stmt->execute([$_POST['name'], $_POST['slug'], $_POST['address'], $phones, $emails, $workingHours, $_POST['website'], $socials, $_POST['latitude'], $_POST['longitude'], $companyId]);
+                $stmt = App::db()->prepare("UPDATE fuel_companies SET name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?");
+                $stmt->execute([$_POST['name'], $companyId]);
             } elseif (isset($_POST['delete_company'])) {
                 $companyId = (int)$_POST['company_id'];
                 $stmt = App::db()->prepare("DELETE FROM fuel_companies WHERE id = ?");
@@ -392,7 +347,7 @@ class AdminController extends Controller
         unset($menuLeft['hidden']);
         $menu['left']['basic'] = $menuLeft;
 
-        return ['site/admin_manage_companies', ['settings' => $settings, 'menu' => $menu, 'companies' => $companies]];
+        return ['admin/admin_manage_companies', ['settings' => $settings, 'menu' => $menu, 'companies' => $companies]];
     }
 
     protected function actionManageUsers()
@@ -449,7 +404,7 @@ class AdminController extends Controller
             return true;
         }
 
-        return ['site/admin_manage_users', ['settings' => $settings, 'menu' => $menu, 'users' => $users, 'companies' => $companies]];
+        return ['admin/admin_manage_users', ['settings' => $settings, 'menu' => $menu, 'users' => $users, 'companies' => $companies]];
     }
 
     protected function actionFontsList()
@@ -659,7 +614,7 @@ class AdminController extends Controller
                     }
 
                     if (!empty($errors)) {
-                        return ['site/admin_fonts', [
+                        return ['admin/admin_fonts', [
                             'settings' => $settings, 'menu' => $menu,
                             'groupedFonts' => $groupedFonts, 'errors' => $errors
                         ]];
@@ -690,7 +645,7 @@ class AdminController extends Controller
             }
         }
 
-        return ['site/admin_fonts', ['settings' => $settings, 'menu' => $menu, 'groupedFonts' => $groupedFonts]];
+        return ['admin/admin_fonts', ['settings' => $settings, 'menu' => $menu, 'groupedFonts' => $groupedFonts]];
     }
 
 
@@ -720,7 +675,7 @@ class AdminController extends Controller
                 $fuelTypeId = $_POST['fuel_type_id'];
                 $name = $_POST['name'] ?? ''; // Ensure name is provided
                 if (empty($name)) {
-                    return ['site/admin_manage_fuel_types', ['settings' => $settings, 'menu' => $menu, 'fuelTypes' => $fuelTypes, 'error' => 'Название не может быть пустым']];
+                    return ['admin/admin_manage_fuel_types', ['settings' => $settings, 'menu' => $menu, 'fuelTypes' => $fuelTypes, 'error' => 'Название не может быть пустым']];
                 }
                 $stmt = App::db()->prepare("UPDATE fuel_types SET name = ?, description = ? WHERE id = ?");
                 $stmt->execute([$_POST['name'], $_POST['description'], $fuelTypeId]);
@@ -743,7 +698,7 @@ class AdminController extends Controller
         unset($menuLeft['hidden']);
         $menu['left']['basic'] = $menuLeft;
 
-        return ['site/admin_manage_fuel_types', ['settings' => $settings, 'menu' => $menu, 'fuelTypes' => $fuelTypes]];
+        return ['admin/admin_manage_fuel_types', ['settings' => $settings, 'menu' => $menu, 'fuelTypes' => $fuelTypes]];
     }
 
     protected function actionBank($id)
@@ -786,7 +741,7 @@ class AdminController extends Controller
         $menu['left']['basic'] = $menuLeft;
 
         return [
-            'site/admin_bank',
+            'admin/admin_bank',
             [
                 'settings' => $settings,
                 'menu' => $menu,
@@ -836,13 +791,156 @@ class AdminController extends Controller
         $menu['left']['basic'] = $menuLeft;
 
         return [
-            'site/admin_exchanger',
+            'admin/admin_exchanger',
             [
                 'settings' => $settings,
                 'menu' => $menu,
                 'exchanger' => $exchangers[$id],
             ]
         ];
+    }
+
+    protected function actionManageGeo()
+    {
+        $md = false;
+        $query = App::db()->query("SELECT * FROM settings");
+        $settings = $query->fetch();
+        if (isset($_COOKIE['app_token'])) {
+            $token = $_COOKIE['app_token'];
+            if (self::hash($settings['login'] . $settings['password']) == $token) {
+                $md = true;
+            }
+        }
+        if (!$md) {
+            header('Location: /login');
+            return false;
+        }
+
+        // --- Меню, как в других экранах ---
+        $settings['menu']['top'] = file_get_contents(__DIR__ . '/../../../storage/menu/top.php');
+        $settings['menu']['left'] = file_get_contents(__DIR__ . '/../../../storage/menu/left.php');
+        $menu['top'] = include_once(__DIR__ . '/../../../storage/menu/top.php');
+        $menuLeft = include_once(__DIR__ . '/../../../storage/menu/left.php');
+        $menu['left']['hidden'] = $menuLeft['hidden'];
+        unset($menuLeft['hidden']);
+        $menu['left']['basic'] = $menuLeft;
+
+        $pdo = App::db();
+
+        // Утилита: slugify (если slug не задан)
+        $slugify = function (string $s): string {
+            $s = trim($s);
+            if ($s === '') return substr(md5(uniqid('', true)), 0, 8);
+            // если есть английский — берём его, иначе пробуем упростить
+            $s = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $s);
+            $s = strtolower(preg_replace('~[^a-z0-9]+~', '-', $s));
+            $s = trim($s, '-');
+            return $s !== '' ? $s : substr(md5(uniqid('', true)), 0, 8);
+        };
+
+        // --- CRUD ---
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            // REGION: CREATE
+            if (isset($_POST['create_region'])) {
+                $name_ru = trim($_POST['name_ru'] ?? '');
+                $name_hy = trim($_POST['name_hy'] ?? '');
+                $name_eng = trim($_POST['name_eng'] ?? '');
+                $slug = trim($_POST['slug'] ?? '');
+                if ($slug === '') $slug = $slugify($name_eng ?: $name_ru);
+
+                $stmt = $pdo->prepare("INSERT INTO regions (slug,name_ru,name_hy,name_eng,updated_at) VALUES (?,?,?,?,CURRENT_TIMESTAMP)");
+                $stmt->execute([$slug, $name_ru, $name_hy, $name_eng]);
+            }
+
+            // REGION: UPDATE
+            if (isset($_POST['edit_region'])) {
+                $id = (int)$_POST['region_id'];
+                $name_ru = trim($_POST['name_ru'] ?? '');
+                $name_hy = trim($_POST['name_hy'] ?? '');
+                $name_eng = trim($_POST['name_eng'] ?? '');
+                $slug = trim($_POST['slug'] ?? '');
+                if ($slug === '') $slug = $slugify($name_eng ?: $name_ru);
+
+                $stmt = $pdo->prepare("UPDATE regions SET slug=?, name_ru=?, name_hy=?, name_eng=?, updated_at=CURRENT_TIMESTAMP WHERE id=?");
+                $stmt->execute([$slug, $name_ru, $name_hy, $name_eng, $id]);
+            }
+
+            // REGION: DELETE (с удалением городов этого региона)
+            if (isset($_POST['delete_region'])) {
+                $id = (int)$_POST['region_id'];
+                $pdo->beginTransaction();
+                $pdo->prepare("DELETE FROM cities WHERE region_id=?")->execute([$id]);
+                $pdo->prepare("DELETE FROM regions WHERE id=?")->execute([$id]);
+                $pdo->commit();
+            }
+
+            // CITY: CREATE
+            if (isset($_POST['create_city'])) {
+                $region_id = (int)($_POST['region_id'] ?? 0);
+                $name_ru = trim($_POST['name_ru'] ?? '');
+                $name_hy = trim($_POST['name_hy'] ?? '');
+                $name_eng = trim($_POST['name_eng'] ?? '');
+                $slug = trim($_POST['slug'] ?? '');
+                $lat = $_POST['lat'] !== '' ? (float)$_POST['lat'] : null;
+                $lng = $_POST['lng'] !== '' ? (float)$_POST['lng'] : null;
+                $capital = isset($_POST['is_capital']) ? 1 : 0;
+                $center = isset($_POST['is_region_center']) ? 1 : 0;
+                if ($slug === '') $slug = $slugify($name_eng ?: $name_ru);
+
+                $stmt = $pdo->prepare("
+                INSERT INTO cities (region_id,slug,name_ru,name_hy,name_eng,lat,lng,is_capital,is_region_center,updated_at)
+                VALUES (?,?,?,?,?,?,?,?,?,CURRENT_TIMESTAMP)
+            ");
+                $stmt->execute([$region_id, $slug, $name_ru, $name_hy, $name_eng, $lat, $lng, $capital, $center]);
+            }
+
+            // CITY: UPDATE
+            if (isset($_POST['edit_city'])) {
+                $id = (int)$_POST['city_id'];
+                $region_id = (int)($_POST['region_id'] ?? 0);
+                $name_ru = trim($_POST['name_ru'] ?? '');
+                $name_hy = trim($_POST['name_hy'] ?? '');
+                $name_eng = trim($_POST['name_eng'] ?? '');
+                $slug = trim($_POST['slug'] ?? '');
+                $lat = $_POST['lat'] !== '' ? (float)$_POST['lat'] : null;
+                $lng = $_POST['lng'] !== '' ? (float)$_POST['lng'] : null;
+                $capital = isset($_POST['is_capital']) ? 1 : 0;
+                $center = isset($_POST['is_region_center']) ? 1 : 0;
+                if ($slug === '') $slug = $slugify($name_eng ?: $name_ru);
+
+                $stmt = $pdo->prepare("
+                UPDATE cities SET
+                    region_id=?, slug=?, name_ru=?, name_hy=?, name_eng=?, lat=?, lng=?, is_capital=?, is_region_center=?, updated_at=CURRENT_TIMESTAMP
+                WHERE id=?
+            ");
+                $stmt->execute([$region_id, $slug, $name_ru, $name_hy, $name_eng, $lat, $lng, $capital, $center, $id]);
+            }
+
+            // CITY: DELETE
+            if (isset($_POST['delete_city'])) {
+                $id = (int)$_POST['city_id'];
+                $pdo->prepare("DELETE FROM cities WHERE id=?")->execute([$id]);
+            }
+
+            header('Location: /admin/manage-geo');
+            return true;
+        }
+
+        // --- Данные для таблиц/селектов ---
+        $regions = $pdo->query("SELECT * FROM regions ORDER BY name_ru")->fetchAll(PDO::FETCH_ASSOC);
+        $cities = $pdo->query("
+        SELECT c.*, r.name_ru AS region_name_ru
+        FROM cities c
+        LEFT JOIN regions r ON r.id = c.region_id
+        ORDER BY r.name_ru, c.name_ru
+    ")->fetchAll(PDO::FETCH_ASSOC);
+
+        return ['admin/admin_manage_geo', [
+            'settings' => $settings,
+            'menu' => $menu,
+            'regions' => $regions,
+            'cities' => $cities
+        ]];
     }
 
 
@@ -866,7 +964,7 @@ class AdminController extends Controller
         $navigations = App::db()->query("SELECT * FROM navigation")->fetchAll();
 
         return [
-            'site/admin_pages',
+            'admin/admin_pages',
             [
                 'pages' => $pages,
                 'settings' => $settings,
@@ -887,7 +985,7 @@ class AdminController extends Controller
 
             // Базовая санитизация (например, проверка на опасные конструкции)
             if (preg_match('/(eval|system|exec|shell_exec|passthru|phpinfo)/i', $content)) {
-                return ['site/admin_create_page', ['error' => 'Обнаружены запрещенные PHP-функции']];
+                return ['admin/admin_create_page', ['error' => 'Обнаружены запрещенные PHP-функции']];
             }
 
             $stmt = App::db()->prepare("INSERT INTO pages (slug, content, seo_title, seo_description, seo_keywords) VALUES (?, ?, ?, ?, ?)");
@@ -906,7 +1004,7 @@ class AdminController extends Controller
         $navigations = App::db()->query("SELECT * FROM navigation")->fetchAll();
 
         return [
-            'site/admin_create_page',
+            'admin/admin_create_page',
             [
                 'settings' => $settings,
                 'menu' => $menu,
@@ -935,7 +1033,7 @@ class AdminController extends Controller
 
             // Базовая санитизация
             if (preg_match('/(eval|system|exec|shell_exec|passthru|phpinfo)/i', $content)) {
-                return ['site/admin_edit_page', ['error' => 'Обнаружены запрещенные PHP-функции', 'page' => $page]];
+                return ['admin/admin_edit_page', ['error' => 'Обнаружены запрещенные PHP-функции', 'page' => $page]];
             }
 
             $stmt = App::db()->prepare("UPDATE pages SET slug = ?, content = ?, seo_title = ?, seo_description = ?, seo_keywords = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?");
@@ -954,7 +1052,7 @@ class AdminController extends Controller
         $navigations = App::db()->query("SELECT * FROM navigation")->fetchAll();
 
         return [
-            'site/admin_edit_page',
+            'admin/admin_edit_page',
             [
                 'page' => $page,
                 'settings' => $settings,
@@ -1054,7 +1152,7 @@ class AdminController extends Controller
         $stmt->execute($params);
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        return ['site/admin_requests', [
+        return ['admin/admin_requests', [
             'settings' => $guard['settings'],
             'menu' => $guard['menu'],
             'rows' => $rows,
@@ -1101,7 +1199,7 @@ class AdminController extends Controller
             return true;
         }
 
-        return ['site/admin_request_view', [
+        return ['admin/admin_request_view', [
             'settings' => $guard['settings'],
             'menu' => $guard['menu'],
             'r' => $req,
@@ -1133,6 +1231,680 @@ class AdminController extends Controller
 
         header('Location: /admin/requests?deleted=1');
         return true;
+    }
+
+    protected function addedTables()
+    {
+        // Создание таблицы pages, если она не существует
+        $checkTable = App::db()->query("SELECT name FROM sqlite_master WHERE type='table' AND name='pages'")->fetch();
+        if (!$checkTable) {
+            App::db()->query("
+            CREATE TABLE pages (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,              
+                slug TEXT NOT NULL UNIQUE,
+                content TEXT NOT NULL,
+                seo_title TEXT,
+                seo_description TEXT,
+                seo_keywords TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ");
+        }
+        // Проверка и создание таблицы users
+        $checkTable = App::db()->query("SELECT name FROM sqlite_master WHERE type='table' AND name='users'")->fetch();
+        if (!$checkTable) {
+            App::db()->query("
+                CREATE TABLE users (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    login TEXT NOT NULL UNIQUE,
+                    password TEXT NOT NULL,
+                    email TEXT,
+                    company_id INTEGER,
+                    role TEXT NOT NULL DEFAULT 'user',
+                    app_token TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (company_id) REFERENCES fuel_companies(id)
+                )
+            ");
+        }
+
+// Проверка и создание таблицы user_requests
+        $checkTable = App::db()->query("SELECT name FROM sqlite_master WHERE type='table' AND name='user_requests'")->fetch();
+        if (!$checkTable) {
+            App::db()->query("
+        CREATE TABLE user_requests (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            subject TEXT NOT NULL,
+            message TEXT NOT NULL,
+            file_path TEXT,
+            status TEXT NOT NULL DEFAULT 'new', -- new, in_progress, done
+            answer TEXT,                        -- ответ администратора/поддержки
+            answered_at TIMESTAMP,              -- когда дан ответ
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    ");
+            App::db()->query("CREATE INDEX IF NOT EXISTS idx_user_requests_user ON user_requests(user_id)");
+            App::db()->query("CREATE INDEX IF NOT EXISTS idx_user_requests_status ON user_requests(status)");
+        }
+        // Проверка и создание таблицы fuel_types
+        $checkTable = App::db()->query("SELECT name FROM sqlite_master WHERE type='table' AND name='fuel_types'")->fetch();
+        if (!$checkTable) {
+            App::db()->query("
+                CREATE TABLE fuel_types (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT NOT NULL UNIQUE,
+                    description TEXT
+                )
+            ");
+        }
+
+        // Проверка и создание таблицы fuel_companies
+        $checkTable = App::db()->query("SELECT name FROM sqlite_master WHERE type='table' AND name='fuel_companies'")->fetch();
+        if (!$checkTable) {
+            App::db()->query("
+                CREATE TABLE fuel_companies (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    slug TEXT NOT NULL UNIQUE,                   
+                    name TEXT NOT NULL,
+                    address TEXT,
+                    phones TEXT,
+                    emails TEXT,
+                    working_hours TEXT,
+                    website TEXT,
+                    socials TEXT,
+                    latitude DECIMAL(10, 8),
+                    longitude DECIMAL(10, 8),
+                    logo TEXT, -- Добавлено поле для логотипа
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ");
+        }
+
+        // Проверка и создание таблицы fuel_data
+        $checkTable = App::db()->query("SELECT name FROM sqlite_master WHERE type='table' AND name='fuel_data'")->fetch();
+        if (!$checkTable) {
+            App::db()->query("
+                CREATE TABLE fuel_data (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    company_id INTEGER NOT NULL,
+                    fuel_type_id INTEGER NOT NULL,
+                    price DECIMAL(10, 2) NOT NULL,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (company_id) REFERENCES fuel_companies(id),
+                    FOREIGN KEY (fuel_type_id) REFERENCES fuel_types(id)
+                )
+            ");
+        }
+
+        $checkTable = App::db()->query("SELECT name FROM sqlite_master WHERE type='table' AND name='navigation'")->fetch();
+        if (!$checkTable) {
+            // Если таблица не существует, создаём её
+            App::db()->query("
+        CREATE TABLE navigation (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            link TEXT NOT NULL,
+            title_ru TEXT NOT NULL,
+            title_en TEXT NOT NULL,
+            title_am TEXT NOT NULL,
+            image TEXT NOT NULL
+        )
+    ");
+        }
+        $pdo = App::db();
+
+        /** 1) REGIONS */
+        $existsTable = $pdo->query("SELECT name FROM sqlite_master WHERE type='table' AND name='regions'")->fetch();
+        if (!$existsTable) {
+            $pdo->query("
+        CREATE TABLE regions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            slug TEXT NOT NULL UNIQUE,
+            name_ru TEXT NOT NULL,
+            name_hy TEXT NOT NULL,
+            name_eng TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ");
+        } else {
+            // Добавим name_eng, если его нет
+            $cols = $pdo->query("PRAGMA table_info(regions)")->fetchAll(PDO::FETCH_ASSOC);
+            $hasEng = false;
+            foreach ($cols as $c) if (strtolower($c['name']) === 'name_eng') {
+                $hasEng = true;
+                break;
+            }
+            if (!$hasEng) $pdo->query("ALTER TABLE regions ADD COLUMN name_eng TEXT NOT NULL DEFAULT ''");
+        }
+
+        /** 2) CITIES */
+        $existsTable = $pdo->query("SELECT name FROM sqlite_master WHERE type='table' AND name='cities'")->fetch();
+        if (!$existsTable) {
+            $pdo->query("
+        CREATE TABLE cities (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            region_id INTEGER NOT NULL,
+            slug TEXT NOT NULL UNIQUE,
+            name_ru TEXT NOT NULL,
+            name_hy TEXT NOT NULL,
+            name_eng TEXT NOT NULL,
+            lat REAL,
+            lng REAL,
+            is_capital INTEGER NOT NULL DEFAULT 0,        -- столица страны
+            is_region_center INTEGER NOT NULL DEFAULT 0,  -- центр марза
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (region_id) REFERENCES regions(id)
+        )
+    ");
+            $pdo->query("CREATE INDEX IF NOT EXISTS idx_cities_region_name ON cities(region_id, name_ru)");
+        } else {
+            // Добавим name_eng, если его нет
+            $cols = $pdo->query("PRAGMA table_info(cities)")->fetchAll(PDO::FETCH_ASSOC);
+            $hasEng = false;
+            foreach ($cols as $c) if (strtolower($c['name']) === 'name_eng') {
+                $hasEng = true;
+                break;
+            }
+            if (!$hasEng) $pdo->query("ALTER TABLE cities ADD COLUMN name_eng TEXT NOT NULL DEFAULT ''");
+        }
+
+        /** 3) DATA: регионы (10 марзов + Ереван) */
+        $regions = [
+            ['slug' => 'yerevan', 'name_ru' => 'Ереван', 'name_hy' => 'Երևան', 'name_eng' => 'Yerevan'],
+            ['slug' => 'aragatsotn', 'name_ru' => 'Арагацотн', 'name_hy' => 'Արագածոտն', 'name_eng' => 'Aragatsotn'],
+            ['slug' => 'ararat', 'name_ru' => 'Арарат', 'name_hy' => 'Արարատ', 'name_eng' => 'Ararat'],
+            ['slug' => 'armavir', 'name_ru' => 'Армавир', 'name_hy' => 'Արմավիր', 'name_eng' => 'Armavir'],
+            ['slug' => 'gegharkunik', 'name_ru' => 'Гегаркуник', 'name_hy' => 'Գեղարքունիք', 'name_eng' => 'Gegharkunik'],
+            ['slug' => 'kotayk', 'name_ru' => 'Котайк', 'name_hy' => 'Կոտայք', 'name_eng' => 'Kotayk'],
+            ['slug' => 'lori', 'name_ru' => 'Лори', 'name_hy' => 'Լոռի', 'name_eng' => 'Lori'],
+            ['slug' => 'shirak', 'name_ru' => 'Ширак', 'name_hy' => 'Շիրակ', 'name_eng' => 'Shirak'],
+            ['slug' => 'syunik', 'name_ru' => 'Сюник', 'name_hy' => 'Սյունիք', 'name_eng' => 'Syunik'],
+            ['slug' => 'tavush', 'name_ru' => 'Тавуш', 'name_hy' => 'Թավուշ', 'name_eng' => 'Tavush'],
+            ['slug' => 'vayots-dzor', 'name_ru' => 'Вайоц Дзор', 'name_hy' => 'Վայոց Ձոր', 'name_eng' => 'Vayots Dzor'],
+        ];
+
+        $insReg = $pdo->prepare("INSERT OR IGNORE INTO regions (slug,name_ru,name_hy,name_eng) VALUES (:slug,:name_ru,:name_hy,:name_eng)");
+        $updReg = $pdo->prepare("UPDATE regions SET name_ru=:name_ru, name_hy=:name_hy, name_eng=:name_eng WHERE slug=:slug");
+        foreach ($regions as $r) {
+            $insReg->execute($r);
+            $updReg->execute($r);
+        }
+
+        /** 4) Карта region_id */
+        $regionMap = [];
+        foreach ($pdo->query("SELECT id, slug FROM regions")->fetchAll(PDO::FETCH_ASSOC) as $row) {
+            $regionMap[$row['slug']] = (int)$row['id'];
+        }
+
+        /** 5) DATA: города (основные города и центры марзов) */
+        $cities = [
+            // Yerevan (capital)
+            ['slug' => 'yerevan', 'region' => 'yerevan', 'name_ru' => 'Ереван', 'name_hy' => 'Երևան', 'name_eng' => 'Yerevan', 'lat' => 40.1772, 'lng' => 44.5035, 'capital' => 1, 'center' => 1],
+
+            // Aragatsotn
+            ['slug' => 'ashtarak', 'region' => 'aragatsotn', 'name_ru' => 'Аштарак', 'name_hy' => 'Աշտարակ', 'name_eng' => 'Ashtarak', 'lat' => 40.299, 'lng' => 44.362, 'capital' => 0, 'center' => 1],
+            ['slug' => 'aparan', 'region' => 'aragatsotn', 'name_ru' => 'Апаран', 'name_hy' => 'Ապարան', 'name_eng' => 'Aparan', 'lat' => 40.593, 'lng' => 44.358, 'capital' => 0, 'center' => 0],
+            ['slug' => 'talin', 'region' => 'aragatsotn', 'name_ru' => 'Талин', 'name_hy' => 'Թալին', 'name_eng' => 'Talin', 'lat' => 40.391, 'lng' => 43.872, 'capital' => 0, 'center' => 0],
+
+            // Ararat
+            ['slug' => 'artashat', 'region' => 'ararat', 'name_ru' => 'Арташат', 'name_hy' => 'Արտաշատ', 'name_eng' => 'Artashat', 'lat' => 39.953, 'lng' => 44.549, 'capital' => 0, 'center' => 1],
+            ['slug' => 'ararat-city', 'region' => 'ararat', 'name_ru' => 'Арарат', 'name_hy' => 'Արարատ', 'name_eng' => 'Ararat (city)', 'lat' => 39.830, 'lng' => 44.700, 'capital' => 0, 'center' => 0],
+            ['slug' => 'masis', 'region' => 'ararat', 'name_ru' => 'Масис', 'name_hy' => 'Մասիս', 'name_eng' => 'Masis', 'lat' => 40.067, 'lng' => 44.434, 'capital' => 0, 'center' => 0],
+            ['slug' => 'vedi', 'region' => 'ararat', 'name_ru' => 'Веди', 'name_hy' => 'Վեդի', 'name_eng' => 'Vedi', 'lat' => 39.913, 'lng' => 44.728, 'capital' => 0, 'center' => 0],
+
+            // Armavir
+            ['slug' => 'armavir-city', 'region' => 'armavir', 'name_ru' => 'Армавир', 'name_hy' => 'Արմավիր', 'name_eng' => 'Armavir (city)', 'lat' => 40.154, 'lng' => 44.039, 'capital' => 0, 'center' => 1],
+            ['slug' => 'vagharshapat', 'region' => 'armavir', 'name_ru' => 'Вагаршапат', 'name_hy' => 'Վաղարշապատ', 'name_eng' => 'Vagharshapat (Etchmiadzin)', 'lat' => 40.169, 'lng' => 44.291, 'capital' => 0, 'center' => 0],
+            ['slug' => 'metsamor', 'region' => 'armavir', 'name_ru' => 'Мецамор', 'name_hy' => 'Մեծամոր', 'name_eng' => 'Metsamor', 'lat' => 40.147, 'lng' => 44.133, 'capital' => 0, 'center' => 0],
+
+            // Gegharkunik
+            ['slug' => 'gavar', 'region' => 'gegharkunik', 'name_ru' => 'Гавар', 'name_hy' => 'Գավառ', 'name_eng' => 'Gavar', 'lat' => 40.354, 'lng' => 45.123, 'capital' => 0, 'center' => 1],
+            ['slug' => 'sevan', 'region' => 'gegharkunik', 'name_ru' => 'Севан', 'name_hy' => 'Սևան', 'name_eng' => 'Sevan', 'lat' => 40.549, 'lng' => 44.948, 'capital' => 0, 'center' => 0],
+            ['slug' => 'martuni', 'region' => 'gegharkunik', 'name_ru' => 'Мартуни', 'name_hy' => 'Մարտունի', 'name_eng' => 'Martuni', 'lat' => 40.135, 'lng' => 45.306, 'capital' => 0, 'center' => 0],
+            ['slug' => 'vardenis', 'region' => 'gegharkunik', 'name_ru' => 'Варденис', 'name_hy' => 'Վարդենիս', 'name_eng' => 'Vardenis', 'lat' => 40.183, 'lng' => 45.730, 'capital' => 0, 'center' => 0],
+            ['slug' => 'chambarak', 'region' => 'gegharkunik', 'name_ru' => 'Чамбарак', 'name_hy' => 'Չամբարակ', 'name_eng' => 'Chambarak', 'lat' => 40.595, 'lng' => 45.349, 'capital' => 0, 'center' => 0],
+
+            // Kotayk
+            ['slug' => 'hrazdan', 'region' => 'kotayk', 'name_ru' => 'Раздан', 'name_hy' => 'Հրազդան', 'name_eng' => 'Hrazdan', 'lat' => 40.497, 'lng' => 44.766, 'capital' => 0, 'center' => 1],
+            ['slug' => 'abovyan', 'region' => 'kotayk', 'name_ru' => 'Абовян', 'name_hy' => 'Աբովյան', 'name_eng' => 'Abovyan', 'lat' => 40.271, 'lng' => 44.627, 'capital' => 0, 'center' => 0],
+            ['slug' => 'charentsavan', 'region' => 'kotayk', 'name_ru' => 'Чаренцаван', 'name_hy' => 'Չարենցավան', 'name_eng' => 'Charentsavan', 'lat' => 40.402, 'lng' => 44.647, 'capital' => 0, 'center' => 0],
+            ['slug' => 'byureghavan', 'region' => 'kotayk', 'name_ru' => 'Бюрегаван', 'name_hy' => 'Բյուրեղավան', 'name_eng' => 'Byureghavan', 'lat' => 40.374, 'lng' => 44.593, 'capital' => 0, 'center' => 0],
+            ['slug' => 'nor-hachn', 'region' => 'kotayk', 'name_ru' => 'Нор-Ачин', 'name_hy' => 'Նոր Հաճն', 'name_eng' => 'Nor Hachn', 'lat' => 40.322, 'lng' => 44.586, 'capital' => 0, 'center' => 0],
+            ['slug' => 'tsaghkadzor', 'region' => 'kotayk', 'name_ru' => 'Цахкадзор', 'name_hy' => 'Ծաղկաձոր', 'name_eng' => 'Tsaghkadzor', 'lat' => 40.532, 'lng' => 44.719, 'capital' => 0, 'center' => 0],
+            ['slug' => 'yeghvard', 'region' => 'kotayk', 'name_ru' => 'Егвард', 'name_hy' => 'Եղվարդ', 'name_eng' => 'Yeghvard', 'lat' => 40.321, 'lng' => 44.486, 'capital' => 0, 'center' => 0],
+
+            // Lori
+            ['slug' => 'vanadzor', 'region' => 'lori', 'name_ru' => 'Ванадзор', 'name_hy' => 'Վանաձոր', 'name_eng' => 'Vanadzor', 'lat' => 40.8128, 'lng' => 44.4889, 'capital' => 0, 'center' => 1],
+            ['slug' => 'alaverdi', 'region' => 'lori', 'name_ru' => 'Алаверди', 'name_hy' => 'Ալավերդի', 'name_eng' => 'Alaverdi', 'lat' => 41.097, 'lng' => 44.663, 'capital' => 0, 'center' => 0],
+            ['slug' => 'spitak', 'region' => 'lori', 'name_ru' => 'Спитак', 'name_hy' => 'Սպիտակ', 'name_eng' => 'Spitak', 'lat' => 40.832, 'lng' => 44.267, 'capital' => 0, 'center' => 0],
+            ['slug' => 'stepanavan', 'region' => 'lori', 'name_ru' => 'Степанаван', 'name_hy' => 'Ստեփանավան', 'name_eng' => 'Stepanavan', 'lat' => 41.009, 'lng' => 44.379, 'capital' => 0, 'center' => 0],
+            ['slug' => 'tashir', 'region' => 'lori', 'name_ru' => 'Ташир', 'name_hy' => 'Տաշիր', 'name_eng' => 'Tashir', 'lat' => 41.121, 'lng' => 44.287, 'capital' => 0, 'center' => 0],
+            ['slug' => 'akhtala', 'region' => 'lori', 'name_ru' => 'Ахтала', 'name_hy' => 'Ախթալա', 'name_eng' => 'Akhtala', 'lat' => 41.149, 'lng' => 44.750, 'capital' => 0, 'center' => 0],
+            ['slug' => 'shamlugh', 'region' => 'lori', 'name_ru' => 'Шамлуг', 'name_hy' => 'Շամլուղ', 'name_eng' => 'Shamlugh', 'lat' => 41.173, 'lng' => 44.871, 'capital' => 0, 'center' => 0],
+
+            // Shirak
+            ['slug' => 'gyumri', 'region' => 'shirak', 'name_ru' => 'Гюмри', 'name_hy' => 'Գյումրի', 'name_eng' => 'Gyumri', 'lat' => 40.789, 'lng' => 43.847, 'capital' => 0, 'center' => 1],
+            ['slug' => 'artik', 'region' => 'shirak', 'name_ru' => 'Артик', 'name_hy' => 'Արթիկ', 'name_eng' => 'Artik', 'lat' => 40.591, 'lng' => 43.980, 'capital' => 0, 'center' => 0],
+            ['slug' => 'maralik', 'region' => 'shirak', 'name_ru' => 'Маралик', 'name_hy' => 'Մարալիկ', 'name_eng' => 'Maralik', 'lat' => 40.575, 'lng' => 43.869, 'capital' => 0, 'center' => 0],
+
+            // Syunik
+            ['slug' => 'kapan', 'region' => 'syunik', 'name_ru' => 'Капан', 'name_hy' => 'Կապան', 'name_eng' => 'Kapan', 'lat' => 39.207, 'lng' => 46.405, 'capital' => 0, 'center' => 1],
+            ['slug' => 'goris', 'region' => 'syunik', 'name_ru' => 'Горис', 'name_hy' => 'Գորիս', 'name_eng' => 'Goris', 'lat' => 39.511, 'lng' => 46.338, 'capital' => 0, 'center' => 0],
+            ['slug' => 'meghri', 'region' => 'syunik', 'name_ru' => 'Мегри', 'name_hy' => 'Մեղրի', 'name_eng' => 'Meghri', 'lat' => 38.906, 'lng' => 46.246, 'capital' => 0, 'center' => 0],
+            ['slug' => 'agarak', 'region' => 'syunik', 'name_ru' => 'Агарак', 'name_hy' => 'Ագարակ', 'name_eng' => 'Agarak', 'lat' => 38.901, 'lng' => 46.545, 'capital' => 0, 'center' => 0],
+            ['slug' => 'kajaran', 'region' => 'syunik', 'name_ru' => 'Каджаран', 'name_hy' => 'Քաջարան', 'name_eng' => 'Kajaran', 'lat' => 39.153, 'lng' => 46.146, 'capital' => 0, 'center' => 0],
+            ['slug' => 'sisian', 'region' => 'syunik', 'name_ru' => 'Сисиан', 'name_hy' => 'Սիսիան', 'name_eng' => 'Sisian', 'lat' => 39.521, 'lng' => 46.019, 'capital' => 0, 'center' => 0],
+            ['slug' => 'dastakert', 'region' => 'syunik', 'name_ru' => 'Дастакерт', 'name_hy' => 'Դաստակերտ', 'name_eng' => 'Dastakert', 'lat' => 39.383, 'lng' => 46.086, 'capital' => 0, 'center' => 0],
+
+            // Tavush
+            ['slug' => 'ijevan', 'region' => 'tavush', 'name_ru' => 'Иджеван', 'name_hy' => 'Իջևան', 'name_eng' => 'Ijevan', 'lat' => 40.879, 'lng' => 45.148, 'capital' => 0, 'center' => 1],
+            ['slug' => 'dilijan', 'region' => 'tavush', 'name_ru' => 'Дилижан', 'name_hy' => 'Դիլիջան', 'name_eng' => 'Dilijan', 'lat' => 40.741, 'lng' => 44.863, 'capital' => 0, 'center' => 0],
+            ['slug' => 'berd', 'region' => 'tavush', 'name_ru' => 'Берд', 'name_hy' => 'Բերդ', 'name_eng' => 'Berd', 'lat' => 40.882, 'lng' => 45.386, 'capital' => 0, 'center' => 0],
+            ['slug' => 'noyemberyan', 'region' => 'tavush', 'name_ru' => 'Ноемберян', 'name_hy' => 'Նոյեմբերյան', 'name_eng' => 'Noyemberyan', 'lat' => 41.173, 'lng' => 44.998, 'capital' => 0, 'center' => 0],
+            ['slug' => 'ayrum', 'region' => 'tavush', 'name_ru' => 'Айрум', 'name_hy' => 'Այրում', 'name_eng' => 'Ayrum', 'lat' => 41.017, 'lng' => 44.618, 'capital' => 0, 'center' => 0],
+
+            // Vayots Dzor
+            ['slug' => 'yeghegnadzor', 'region' => 'vayots-dzor', 'name_ru' => 'Ехегнадзор', 'name_hy' => 'Եղեգնաձոր', 'name_eng' => 'Yeghegnadzor', 'lat' => 39.763, 'lng' => 45.333, 'capital' => 0, 'center' => 1],
+            ['slug' => 'jermuk', 'region' => 'vayots-dzor', 'name_ru' => 'Джермук', 'name_hy' => 'Ջերմուկ', 'name_eng' => 'Jermuk', 'lat' => 39.842, 'lng' => 45.672, 'capital' => 0, 'center' => 0],
+            ['slug' => 'vayk', 'region' => 'vayots-dzor', 'name_ru' => 'Вайк', 'name_hy' => 'Վայք', 'name_eng' => 'Vayk', 'lat' => 39.688, 'lng' => 45.466, 'capital' => 0, 'center' => 0],
+        ];
+
+// upsert по slug
+        $insCity = $pdo->prepare("
+    INSERT OR IGNORE INTO cities
+    (region_id, slug, name_ru, name_hy, name_eng, lat, lng, is_capital, is_region_center)
+    VALUES (:region_id,:slug,:name_ru,:name_hy,:name_eng,:lat,:lng,:is_capital,:is_region_center)
+");
+        $updCity = $pdo->prepare("
+    UPDATE cities SET
+        region_id=:region_id, name_ru=:name_ru, name_hy=:name_hy, name_eng=:name_eng,
+        lat=:lat, lng=:lng, is_capital=:is_capital, is_region_center=:is_region_center
+    WHERE slug=:slug
+");
+
+        $pdo->beginTransaction();
+        foreach ($cities as $c) {
+            $regionId = $regionMap[$c['region']] ?? null;
+            if (!$regionId) continue;
+            $params = [
+                ':region_id' => $regionId,
+                ':slug' => $c['slug'],
+                ':name_ru' => $c['name_ru'],
+                ':name_hy' => $c['name_hy'],
+                ':name_eng' => $c['name_eng'],
+                ':lat' => $c['lat'],
+                ':lng' => $c['lng'],
+                ':is_capital' => $c['capital'],
+                ':is_region_center' => $c['center'],
+            ];
+            $insCity->execute($params);
+            $updCity->execute($params);
+        }
+        $pdo->commit();
+    }
+
+    protected function migrateFuelSchemaToCompanyPoints(): void
+    {
+        $pdo = App::db();
+
+        // Дадим SQLite время подождать блокировки и выключим FK на время DDL
+        $pdo->exec("PRAGMA busy_timeout = 30000");
+        $pdo->exec("PRAGMA foreign_keys = OFF");
+
+        // ==== УТИЛИТЫ ====
+        $tableExists = function (string $name) use ($pdo): bool {
+            for ($i = 0; $i < 5; $i++) {
+                try {
+                    $st = $pdo->prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?");
+                    $st->execute([$name]);
+                    return (bool)$st->fetchColumn();
+                } catch (\PDOException $e) {
+                    usleep(100_000);
+                    if ($i === 4) throw $e;
+                }
+            }
+            return false;
+        };
+        $colNames = function (string $table) use ($pdo): array {
+            $st = $pdo->query("PRAGMA table_info(" . $table . ")");
+            $cols = $st ? $st->fetchAll(PDO::FETCH_ASSOC) : [];
+            return array_map(fn($c) => strtolower($c['name']), $cols);
+        };
+        $fkList = function (string $table) use ($pdo): array {
+            $st = $pdo->query("PRAGMA foreign_key_list(" . $table . ")");
+            return $st ? $st->fetchAll(PDO::FETCH_ASSOC) : [];
+        };
+        $begin = function () use ($pdo): array {
+            if ($pdo->inTransaction()) {
+                $name = 'mig_' . bin2hex(random_bytes(3));
+                $pdo->exec("SAVEPOINT $name");
+                return ['sp', $name];
+            } else {
+                $pdo->exec("BEGIN IMMEDIATE");
+                return ['tx', null];
+            }
+        };
+        $commit = function (array $ctx) use ($pdo): void {
+            [$mode, $name] = $ctx;
+            if ($mode === 'sp') $pdo->exec("RELEASE SAVEPOINT $name");
+            else $pdo->exec("COMMIT");
+        };
+        $rollback = function (array $ctx) use ($pdo): void {
+            [$mode, $name] = $ctx;
+            if ($mode === 'sp') $pdo->exec("ROLLBACK TO SAVEPOINT $name");
+            else $pdo->exec("ROLLBACK");
+        };
+
+        // ==== 1) company_points: создать, если нет ====
+        if (!$tableExists('company_points')) {
+            $ctx = $begin();
+            try {
+                $pdo->exec("
+                CREATE TABLE company_points (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    company_id INTEGER NOT NULL,
+                    city_id INTEGER NOT NULL,
+                    address TEXT,
+                    phones TEXT,
+                    emails TEXT,
+                    working_hours TEXT,
+                    website TEXT,
+                    socials TEXT,
+                    latitude DECIMAL(10,8),
+                    longitude DECIMAL(10,8),
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (company_id) REFERENCES fuel_companies(id),
+                    FOREIGN KEY (city_id) REFERENCES cities(id)
+                )
+            ");
+                $pdo->exec("CREATE INDEX IF NOT EXISTS idx_company_points_company ON company_points(company_id)");
+                $pdo->exec("CREATE INDEX IF NOT EXISTS idx_company_points_city    ON company_points(city_id)");
+                $commit($ctx);
+            } catch (\Throwable $e) {
+                $rollback($ctx);
+                $pdo->exec("PRAGMA foreign_keys = ON");
+                throw $e;
+            }
+        }
+
+        // ==== 2) Перенос «лишних» полей из fuel_companies в company_points (если companies ещё «старые») ====
+        $companiesCols = $colNames('fuel_companies');
+        $legacyFields = ['address', 'phones', 'emails', 'working_hours', 'website', 'socials', 'latitude', 'longitude'];
+        $isLegacyCompanies = (bool)array_intersect($legacyFields, $companiesCols);
+
+        $hasAnyPoints = false;
+        if ($tableExists('company_points')) {
+            $st = $pdo->query("SELECT 1 FROM company_points LIMIT 1");
+            $hasAnyPoints = (bool)$st->fetchColumn();
+        }
+
+        if ($isLegacyCompanies && !$hasAnyPoints) {
+            $ctx = $begin();
+            try {
+                $pdo->exec("
+                INSERT INTO company_points (
+                    company_id, city_id, address, phones, emails, working_hours, website, socials,
+                    latitude, longitude, created_at, updated_at
+                )
+                SELECT
+                    fc.id, 1, fc.address, fc.phones, fc.emails, fc.working_hours, fc.website, fc.socials,
+                    fc.latitude, fc.longitude,
+                    COALESCE(fc.created_at, CURRENT_TIMESTAMP),
+                    COALESCE(fc.updated_at, CURRENT_TIMESTAMP)
+                FROM fuel_companies fc
+                WHERE NOT EXISTS (SELECT 1 FROM company_points cp WHERE cp.company_id = fc.id)
+            ");
+                $commit($ctx);
+            } catch (\Throwable $e) {
+                $rollback($ctx);
+                $pdo->exec("PRAGMA foreign_keys = ON");
+                throw $e;
+            }
+        }
+
+        // ==== 3) Пересборка fuel_companies до минимальной схемы ====
+        if ($isLegacyCompanies) {
+            $oldName = 'fuel_companies__old';
+            $needRename = !$tableExists($oldName);
+
+            $ctx = $begin();
+            try {
+                if ($needRename) {
+                    $pdo->exec("ALTER TABLE fuel_companies RENAME TO " . $oldName);
+                }
+                $pdo->exec("
+                CREATE TABLE IF NOT EXISTS fuel_companies (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    slug TEXT NOT NULL UNIQUE,
+                    name TEXT NOT NULL,
+                    logo TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ");
+                $pdo->exec("
+                INSERT INTO fuel_companies (id, slug, name, logo, created_at, updated_at)
+                SELECT o.id, o.slug, o.name, o.logo, o.created_at, o.updated_at
+                  FROM {$oldName} o
+                 WHERE NOT EXISTS (SELECT 1 FROM fuel_companies n WHERE n.id = o.id)
+            ");
+                $pdo->exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_fuel_companies_slug ON fuel_companies(slug)");
+                $commit($ctx);
+            } catch (\Throwable $e) {
+                $rollback($ctx);
+                $pdo->exec("PRAGMA foreign_keys = ON");
+                throw $e;
+            }
+
+            // Мягкий drop бэкапа, если получится
+            try {
+                $pdo->exec("DROP TABLE IF EXISTS {$oldName}");
+            } catch (\PDOException $e) {
+            }
+        }
+
+        // ==== 3.5) ПРОВЕРИТЬ и ПЕРЕСОБРАТЬ company_points, если FK указывает на fuel_companies__old ====
+        if ($tableExists('company_points')) {
+            $badFk = false;
+            foreach ($fkList('company_points') as $fk) {
+                if (strtolower($fk['table'] ?? '') === 'fuel_companies__old') {
+                    $badFk = true;
+                    break;
+                }
+            }
+
+            if ($badFk) {
+                // Пересобираем company_points с правильной FK на fuel_companies(id)
+                $ctx = $begin();
+                try {
+                    // 1) переименуем старую таблицу
+                    $pdo->exec("ALTER TABLE company_points RENAME TO company_points__old");
+
+                    // 2) создадим новую таблицу с нужной FK
+                    $pdo->exec("
+                    CREATE TABLE company_points (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        company_id INTEGER NOT NULL,
+                        city_id INTEGER NOT NULL,
+                        address TEXT,
+                        phones TEXT,
+                        emails TEXT,
+                        working_hours TEXT,
+                        website TEXT,
+                        socials TEXT,
+                        latitude DECIMAL(10,8),
+                        longitude DECIMAL(10,8),
+                        moderation_status TEXT NOT NULL DEFAULT 'approved',
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        FOREIGN KEY (company_id) REFERENCES fuel_companies(id),
+                        FOREIGN KEY (city_id)    REFERENCES cities(id)
+                    )
+                ");
+
+                    // 3) вычислим пересечение колонок и скопируем данные
+                    $oldCols = $colNames('company_points__old');
+                    $newCols = $colNames('company_points');
+
+                    // обязательные, чтобы не зависеть от модификаций
+                    $preferredOrder = [
+                        'id', 'company_id', 'city_id', 'address', 'phones', 'emails', 'working_hours',
+                        'website', 'socials', 'latitude', 'longitude', 'moderation_status', 'created_at', 'updated_at'
+                    ];
+
+                    $use = array_values(array_filter($preferredOrder, function ($c) use ($oldCols, $newCols) {
+                        return in_array($c, $oldCols, true) && in_array($c, $newCols, true);
+                    }));
+
+                    $colsList = implode(',', $use);
+                    $pdo->exec("
+                    INSERT INTO company_points ($colsList)
+                    SELECT $colsList FROM company_points__old
+                ");
+
+                    // 4) индексы
+                    $pdo->exec("CREATE INDEX IF NOT EXISTS idx_company_points_company ON company_points(company_id)");
+                    $pdo->exec("CREATE INDEX IF NOT EXISTS idx_company_points_city    ON company_points(city_id)");
+
+                    // 5) удалить старую
+                    //$pdo->exec("DROP TABLE company_points__old");
+
+                    $commit($ctx);
+                } catch (\Throwable $e) {
+                    $rollback($ctx);
+                    // Попробуем откатить обратно, чтобы не оставить систему в «полудо-режиме»
+                    try {
+                        $pdo->exec("DROP TABLE IF EXISTS company_points");
+                    } catch (\Throwable $ee) {
+                    }
+                    try {
+                        $pdo->exec("ALTER TABLE company_points__old RENAME TO company_points");
+                    } catch (\Throwable $ee) {
+                    }
+                    $pdo->exec("PRAGMA foreign_keys = ON");
+                    throw $e;
+                }
+            }
+        }
+
+        // ==== 4) fuel_data -> company_point_id (пересборка) ====
+        if ($tableExists('fuel_data')) {
+            $fuelDataCols = $colNames('fuel_data');
+            $hasCompanyPointId = in_array('company_point_id', $fuelDataCols, true);
+            $hasCompanyId = in_array('company_id', $fuelDataCols, true) || in_array('compani_id', $fuelDataCols, true);
+
+            // 4.1 Добавляем новую колонку, если нет
+            if (!$hasCompanyPointId) {
+                $ctx = $begin();
+                try {
+                    $pdo->exec("ALTER TABLE fuel_data ADD COLUMN company_point_id INTEGER");
+                    $commit($ctx);
+                } catch (\Throwable $e) {
+                    $rollback($ctx);
+                    $pdo->exec("PRAGMA foreign_keys = ON");
+                    throw $e;
+                }
+            }
+
+            // 4.2 Заполняем company_point_id по старому company_id/compani_id
+            $companyIdCol = in_array('company_id', $fuelDataCols, true) ? 'company_id'
+                : (in_array('compani_id', $fuelDataCols, true) ? 'compani_id' : null);
+
+            if ($companyIdCol) {
+                $ctx = $begin();
+                try {
+                    $pdo->exec("
+                    UPDATE fuel_data
+                       SET company_point_id = (
+                           SELECT cp.id
+                             FROM company_points cp
+                            WHERE cp.company_id = fuel_data.$companyIdCol
+                            ORDER BY cp.id
+                            LIMIT 1
+                       )
+                     WHERE company_point_id IS NULL
+                ");
+                    $commit($ctx);
+                } catch (\Throwable $e) {
+                    $rollback($ctx);
+                    $pdo->exec("PRAGMA foreign_keys = ON");
+                    throw $e;
+                }
+            }
+            // ==== 5) Гарантируем наличие колонок moderation_status ====
+            $addColIfMissing = function (string $table, string $col, string $def = 'approved') {
+                $pdo = App::db();
+                $cols = $pdo->query("PRAGMA table_info($table)")->fetchAll(PDO::FETCH_ASSOC);
+                $names = array_map(fn($c) => strtolower($c['name']), $cols);
+                if (!in_array(strtolower($col), $names, true)) {
+                    $pdo->exec("ALTER TABLE $table ADD COLUMN $col TEXT NOT NULL DEFAULT '$def'");
+                }
+            };
+            $addColIfMissing('fuel_companies', 'moderation_status');
+            $addColIfMissing('company_points', 'moderation_status');
+            $addColIfMissing('fuel_data', 'moderation_status');
+
+            // Индексы по статусам модерации (на всякий)
+            $pdo->exec("CREATE INDEX IF NOT EXISTS idx_fc_moderation ON fuel_companies(moderation_status)");
+            $pdo->exec("CREATE INDEX IF NOT EXISTS idx_cp_moderation ON company_points(moderation_status)");
+            $pdo->exec("CREATE INDEX IF NOT EXISTS idx_fd_moderation ON fuel_data(moderation_status)");
+
+
+            // 4.3 Пересобираем fuel_data без старого столбца company_id/compani_id
+            if ($hasCompanyId) {
+                $oldFuel = 'fuel_data__old';
+                $ctx = $begin();
+                try {
+                    if (!$tableExists($oldFuel)) {
+                        $pdo->exec("ALTER TABLE fuel_data RENAME TO {$oldFuel}");
+                    }
+                    $pdo->exec("
+                    CREATE TABLE IF NOT EXISTS fuel_data (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        company_point_id INTEGER NOT NULL,
+                        fuel_type_id INTEGER NOT NULL,
+                        price DECIMAL(10,2) NOT NULL,
+                        moderation_status TEXT NOT NULL DEFAULT 'approved',
+                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        FOREIGN KEY (company_point_id) REFERENCES company_points(id) ON DELETE CASCADE,
+                        FOREIGN KEY (fuel_type_id)     REFERENCES fuel_types(id)   ON DELETE CASCADE
+                    )
+                ");
+                    $pdo->exec("
+                    INSERT INTO fuel_data (id, company_point_id, fuel_type_id, price, moderation_status, updated_at)
+                    SELECT o.id, o.company_point_id, o.fuel_type_id, o.price,
+                           COALESCE(o.moderation_status, 'approved'),
+                           o.updated_at
+                      FROM {$oldFuel} o
+                     WHERE o.company_point_id IS NOT NULL
+                       AND NOT EXISTS (SELECT 1 FROM fuel_data n WHERE n.id = o.id)
+                ");
+                    $pdo->exec("CREATE INDEX IF NOT EXISTS idx_fuel_data_point ON fuel_data(company_point_id)");
+                    $pdo->exec("CREATE INDEX IF NOT EXISTS idx_fuel_data_type  ON fuel_data(fuel_type_id)");
+                    $commit($ctx);
+                } catch (\Throwable $e) {
+                    $rollback($ctx);
+                    $pdo->exec("PRAGMA foreign_keys = ON");
+                    throw $e;
+                }
+
+                try {
+                    $pdo->exec("DROP TABLE IF EXISTS {$oldFuel}");
+                } catch (\PDOException $e) {
+                }
+            }
+
+        }
+
+        // Вернём FK проверки
+        $pdo->exec("PRAGMA foreign_keys = ON");
     }
 
 

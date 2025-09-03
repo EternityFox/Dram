@@ -11,7 +11,8 @@
             <div class="form-group mb-4">
                 <label for="login"><?= $lang("Логин") ?>:</label>
                 <input type="text" class="form-control" id="login" name="login"
-                       placeholder="<?= $lang("Введите логин") ?>" required>
+                       placeholder="<?= $lang("Введите логин") ?>" required
+                       autocomplete="username" autocapitalize="off" spellcheck="false">
             </div>
             <div class="form-group mb-4">
                 <label for="password"><?= $lang("Пароль") ?>:</label>

@@ -1,6 +1,264 @@
 <section class="content">
     <div class="container">
         <h1>Панель управления</h1>
+        <style>
+            :root {
+                --adm-card-bg: #ffffff;
+                --adm-text: #222;
+                --adm-muted: #6c757d;
+                --adm-accent: #0d6efd;
+                --adm-danger: #dc3545;
+                --adm-border: #e5e7eb;
+                --adm-shadow: 0 10px 20px rgba(0, 0, 0, 0.06);
+                --adm-radius: 14px;
+            }
+
+            .admin-topbar {
+                position: sticky;
+                top: 0;
+                z-index: 1050;
+                background: linear-gradient(180deg, rgba(255, 255, 255, .95), rgba(255, 255, 255, .85));
+                backdrop-filter: saturate(1.3) blur(8px);
+                border-bottom: 1px solid var(--adm-border);
+                margin: 12px -12px 24px;
+                padding: 8px 12px;
+            }
+
+            .notif {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                justify-content: flex-end;
+            }
+
+            .notif-btn {
+                display: inline-flex;
+                align-items: center;
+                gap: 10px;
+                background: var(--adm-card-bg);
+                color: var(--adm-text);
+                border: 1px solid var(--adm-border);
+                border-radius: 999px;
+                padding: 10px 14px;
+                box-shadow: var(--adm-shadow);
+                transition: .2s ease;
+                cursor: pointer;
+            }
+
+            .notif-btn:hover {
+                transform: translateY(-1px);
+            }
+
+            .notif-btn .badge {
+                background: var(--adm-accent);
+                color: #fff;
+                border-radius: 999px;
+                padding: 6px 10px;
+                font-weight: 600;
+                font-size: 12px;
+            }
+
+            .notif-dropdown {
+                position: absolute;
+                right: 12px;
+                top: 56px;
+                width: min(680px, 96vw);
+                background: var(--adm-card-bg);
+                border: 1px solid var(--adm-border);
+                border-radius: var(--adm-radius);
+                box-shadow: var(--adm-shadow);
+                display: none;
+                max-height: 70vh;
+                overflow: auto;
+            }
+
+            .notif-header {
+                padding: 14px 16px;
+                border-bottom: 1px solid var(--adm-border);
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .notif-list {
+                padding: 8px;
+            }
+
+            .notif-item {
+                display: grid;
+                grid-template-columns: 1fr auto;
+                gap: 8px 12px;
+                padding: 12px;
+                border-radius: 12px;
+                border: 1px solid var(--adm-border);
+                transition: .15s ease;
+                background: #fff;
+            }
+
+            .notif-item + .notif-item {
+                margin-top: 8px;
+            }
+
+            .notif-item:hover {
+                transform: translateY(-1px);
+                box-shadow: var(--adm-shadow);
+            }
+
+            .notif-title {
+                font-weight: 600;
+                color: var(--adm-text);
+            }
+
+            .notif-meta {
+                font-size: 12px;
+                color: var(--adm-muted);
+            }
+
+            .notif-prices {
+                font-size: 13px;
+                color: var(--adm-text);
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            .notif-link {
+                align-self: center;
+                padding: 8px 12px;
+                border-radius: 10px;
+                border: 1px solid var(--adm-border);
+                text-decoration: none;
+                color: var(--adm-accent);
+                font-weight: 600;
+            }
+
+            .notif-empty {
+                padding: 24px;
+                text-align: center;
+                color: var(--adm-muted);
+            }
+
+            @media (max-width: 540px) {
+                .notif-item {
+                    grid-template-columns: 1fr;
+                }
+
+                .notif-link {
+                    justify-self: start;
+                }
+            }
+        </style>
+
+        <div class="admin-topbar">
+            <div class="d-flex justify-content-end">
+                <div class="notif">
+                    <button type="button" class="notif-btn" id="notifToggle" aria-expanded="false"
+                            aria-controls="notifDropdown">
+                        <!-- bell icon -->
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                            <path d="M15 17H20L18.7 15.7C18.25 15.25 18 14.64 18 14V11C18 8.24 16.28 6.07 13.7 5.36C13.38 4.09 12.3 3.09 11 3.01C9.45 2.9 8.11 3.99 7.86 5.49C5.23 6.25 3.5 8.52 3.5 11.2V14C3.5 14.66 3.24 15.27 2.79 15.71L1.5 17H9M9 17V18C9 19.66 10.34 21 12 21C13.66 21 15 19.66 15 18V17H9Z"
+                                  stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                                  stroke-linejoin="round"/>
+                        </svg>
+                        <span>Новые заявки</span>
+                        <span class="badge"><?= (int)($alerts['sum'] ?? 0) ?></span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="notif-dropdown" id="notifDropdown" role="menu" aria-labelledby="notifToggle">
+                <div class="notif-header">
+                    <div><strong>Новые компании с ценами</strong></div>
+                    <div class="text-muted small">для модерации</div>
+                </div>
+
+                <?php if (!empty($alerts) && (int)$alerts['sum'] > 0): ?>
+                    <div class="notif-list">
+                        <?php if (!empty($alerts['companies']) && (int)$alerts['companies']['count'] > 0): ?>
+                            <?php foreach ($alerts['companies']['list'] as $row): ?>
+                                <div class="notif-item">
+                                    <div>
+                                        <div class="notif-title"><?= htmlspecialchars($row['name'] ?? 'Без названия') ?></div>
+                                        <div class="notif-meta">
+                                            <?= htmlspecialchars($row['city'] ?? '—') ?><?= !empty($row['address']) ? ' • ' . htmlspecialchars($row['address']) : '' ?>
+                                            <?php if (!empty($row['created_at'])): ?>
+                                                •
+                                                <span title="<?= htmlspecialchars($row['created_at']) ?>"><?= htmlspecialchars(substr($row['created_at'], 0, 16)) ?></span>
+                                            <?php endif; ?>
+                                        </div>
+                                        <?php if (!empty($row['prices'])): ?>
+                                            <div class="notif-prices" title="<?= htmlspecialchars($row['prices']) ?>">
+                                                <?= htmlspecialchars($row['prices']) ?>
+                                            </div>
+                                        <?php endif; ?>
+                                    </div>
+                                    <a class="notif-link" href="/user/company/<?= (int)$row['id'] ?>">Открыть</a>
+                                </div>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                        <?php if (!empty($alerts['requests']) && (int)$alerts['requests']['count'] > 0): ?>
+                            <div class="notif-header mb-3">
+                                <div><strong>Новые заявки от пользователей</strong></div>
+                                <div class="text-muted small">для модерации</div>
+                            </div>
+                            <?php foreach ($alerts['requests']['list'] as $row): ?>
+                                <div class="notif-item">
+                                    <div>
+                                        <div class="notif-title"><?= htmlspecialchars($row['subject'] ?? 'Без названия') ?></div>
+                                        <div class="notif-meta">
+                                            <?= htmlspecialchars($row['user_login'] ?? '—') ?><?= !empty($row['email']) ? ' • ' . htmlspecialchars($row['email']) : '' ?>
+                                            <?php if (!empty($row['created_at'])): ?>
+                                                •
+                                                <span title="<?= htmlspecialchars($row['created_at']) ?>"><?= htmlspecialchars(substr($row['created_at'], 0, 16)) ?></span>
+                                            <?php endif; ?>
+                                        </div>
+
+                                    </div>
+                                    <a class="notif-link" href="/admin/requests">Открыть</a>
+                                </div>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </div>
+                <?php else: ?>
+                    <div class="notif-empty">Новых заявок нет</div>
+                <?php endif; ?>
+            </div>
+        </div>
+
+        <script>
+            (function () {
+                const btn = document.getElementById('notifToggle');
+                const dd = document.getElementById('notifDropdown');
+
+                function closeAll() {
+                    dd.style.display = 'none';
+                    btn.setAttribute('aria-expanded', 'false');
+                }
+
+                btn.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const shown = dd.style.display === 'block';
+                    if (shown) {
+                        closeAll();
+                    } else {
+                        dd.style.display = 'block';
+                        btn.setAttribute('aria-expanded', 'true');
+                    }
+                });
+
+                document.addEventListener('click', function (e) {
+                    if (!dd.contains(e.target) && !btn.contains(e.target)) {
+                        closeAll();
+                    }
+                });
+
+                window.addEventListener('resize', closeAll);
+                window.addEventListener('scroll', function () {
+                    if (dd.style.display === 'block') closeAll();
+                });
+            })();
+        </script>
+
         <form action="" method="POST" class="mt-4" enctype="multipart/form-data">
             <div class="card admin-banners toggle">
                 <h5 class="card-header">Логотип</h5>
@@ -25,14 +283,18 @@
                     <a href="/admin/manage-companies" class="btn btn-primary">Управление компаниями</a>
                 </div>
             </div>
-
             <div class="card mt-4 toggle">
                 <h5 class="card-header">Пользователи</h5>
                 <div class="card-body" style="display: none;">
                     <a href="/admin/manage-users" class="btn btn-primary">Управление пользователями</a>
                 </div>
             </div>
-
+            <div class="card mt-4 toggle">
+                <h5 class="card-header">Города и регионы</h5>
+                <div class="card-body" style="display: none;">
+                    <a href="/admin/manage-geo" class="btn btn-primary">Управление регонами и городами</a>
+                </div>
+            </div>
             <div class="card mt-4 toggle">
                 <h5 class="card-header">Типы топлива</h5>
                 <div class="card-body" style="display: none;">

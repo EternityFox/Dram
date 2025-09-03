@@ -89,33 +89,31 @@ class SiteController extends Controller
 
     protected function actionFuelCompany($id)
     {
-        $query = App::db()->query("SELECT * FROM settings");
-        $settings = $query->fetch();
-        $navigations = App::db()->query("SELECT * FROM navigation")->fetchAll();
+        $db = App::db();
+
+        $settings = $db->query("SELECT * FROM settings")->fetch();
+        $navigations = $db->query("SELECT * FROM navigation")->fetchAll();
         $menu['top'] = include_once(__DIR__ . '/../../../storage/menu/top.php');
         $menuLeft = include_once(__DIR__ . '/../../../storage/menu/left.php');
         $menu['left']['hidden'] = $menuLeft['hidden'];
         unset($menuLeft['hidden']);
         $menu['left']['basic'] = $menuLeft;
 
-        // Компания
-        $stmt = App::db()->prepare("SELECT * FROM fuel_companies WHERE id = ?");
+        // компания теперь только id, slug, name, logo
+        $stmt = $db->prepare("SELECT id, slug, name, logo FROM fuel_companies WHERE id = ? AND moderation_status !='pending'");
         $stmt->execute([$id]);
-        $fuelCompanyInfo = $stmt->fetch();
+        $fuelCompanyInfo = $stmt->fetch(\PDO::FETCH_ASSOC);
+        if (!$fuelCompanyInfo) return $this->actionNotFound();
 
-        if (!$fuelCompanyInfo) {
-            return $this->actionNotFound();
-        }
-
+        // права на редактирование
         $editUrl = '';
         $canEdit = false;
         if (!empty($_COOKIE['app_token'])) {
             $token = $_COOKIE['app_token'];
-            $uStmt = App::db()->prepare("SELECT id, role, company_id FROM users WHERE app_token = ?");
+            $uStmt = $db->prepare("SELECT id, role, company_id FROM users WHERE app_token = ?");
             $uStmt->execute([$token]);
             $authUser = $uStmt->fetch(\PDO::FETCH_ASSOC);
-            $query = App::db()->query("SELECT login, password FROM settings");
-            $adminCred = $query->fetch();
+            $adminCred = $db->query("SELECT login, password FROM settings")->fetch();
             if ($authUser && $authUser['role'] === 'company' && (int)$authUser['company_id'] === (int)$id) {
                 $canEdit = true;
                 $editUrl = '/user/company';
@@ -126,22 +124,99 @@ class SiteController extends Controller
             }
         }
 
-        $fuelPricesStmt = App::db()->prepare("
-        SELECT ft.name, fd.price, fd.updated_at
-        FROM fuel_data fd
-        JOIN fuel_types ft ON fd.fuel_type_id = ft.id
-        WHERE fd.company_id = ?
+        // точки компании + города + регионы
+        $rows = $db->prepare("
+        SELECT
+            cp.id, cp.company_id, cp.city_id,
+            cp.address, cp.phones, cp.emails, cp.working_hours,
+            cp.website, cp.socials, cp.latitude, cp.longitude,
+            c.id AS city_real_id, c.name_ru AS city_name_ru,
+            r.id AS region_id, r.slug AS region_slug, r.name_ru AS region_name_ru
+        FROM company_points cp
+        JOIN cities  c ON c.id = cp.city_id
+        JOIN regions r ON r.id = c.region_id
+        WHERE cp.company_id = :cid AND cp.moderation_status !='pending'
+        ORDER BY r.name_ru, c.name_ru, COALESCE(cp.address,'')
     ");
-        $fuelPricesStmt->execute([$id]);
-        $fuelPrices = $fuelPricesStmt->fetchAll(\PDO::FETCH_ASSOC);
+        $rows->execute([':cid' => $id]);
+        $points = $rows->fetchAll(\PDO::FETCH_ASSOC);
 
-        // Подготовка данных
-        $address = $fuelCompanyInfo['address'] ?? '-';
-        $phones = json_decode($fuelCompanyInfo['phones'], true) ?? [];
-        $emails = json_decode($fuelCompanyInfo['emails'], true) ?? [];
-        $website = $fuelCompanyInfo['website'] ?? '';
-        $socials = json_decode($fuelCompanyInfo['socials'], true) ?? [];
-        $workingHours = json_decode($fuelCompanyInfo['working_hours'], true) ?? [];
+        // helper-декодеры (json или "a, b, c")
+        $toList = function ($v): array {
+            if (!$v) return [];
+            $a = json_decode($v, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($a)) return array_values(array_filter(array_map('trim', $a)));
+            return array_values(array_filter(array_map('trim', explode(',', (string)$v))));
+        };
+        $toMap = function ($v): array {
+            if (!$v) return [];
+            $a = json_decode($v, true);
+            return (json_last_error() === JSON_ERROR_NONE && is_array($a)) ? $a : [];
+        };
+
+        // цены по point-id
+        $pointIds = array_map(fn($r) => (int)$r['id'], $points);
+        $pricesByPoint = [];
+        if ($pointIds) {
+            $in = implode(',', array_fill(0, count($pointIds), '?'));
+            $ps = $db->prepare("
+            SELECT fd.company_point_id, ft.name AS fuel_name, fd.price, fd.updated_at
+            FROM fuel_data fd
+            JOIN fuel_types ft ON ft.id = fd.fuel_type_id
+            WHERE fd.company_point_id IN ($in) AND fd.moderation_status !='pending'
+            ORDER BY ft.name
+        ");
+            $ps->execute($pointIds);
+            foreach ($ps->fetchAll(\PDO::FETCH_ASSOC) as $p) {
+                $pid = (int)$p['company_point_id'];
+                $pricesByPoint[$pid][] = [
+                    'name' => $p['fuel_name'],
+                    'price' => $p['price'],
+                    'updated_at' => $p['updated_at'],
+                ];
+            }
+        }
+
+        // дерево: region -> city -> points
+        $regionsTree = [];
+        foreach ($points as $r) {
+            $rid = (int)$r['region_id'];
+            $cid = (int)$r['city_real_id'];
+            $pid = (int)$r['id'];
+
+            $regionsTree[$rid]['id'] = $rid;
+            $regionsTree[$rid]['slug'] = $r['region_slug'];
+            $regionsTree[$rid]['name'] = $r['region_name_ru'];
+
+            $regionsTree[$rid]['cities'][$cid]['id'] = $cid;
+            $regionsTree[$rid]['cities'][$cid]['name'] = $r['city_name_ru'];
+
+            $regionsTree[$rid]['cities'][$cid]['points'][$pid] = [
+                'id' => $pid,
+                'address' => $r['address'] ?: '',
+                'phones' => $toList($r['phones']),
+                'emails' => $toList($r['emails']),
+                'working_hours' => $toMap($r['working_hours']),
+                'website' => $r['website'] ?: '',
+                'socials' => $toList($r['socials']),
+                'latitude' => $r['latitude'],
+                'longitude' => $r['longitude'],
+                'prices' => $pricesByPoint[$pid] ?? [],
+            ];
+        }
+
+        // сортировка
+        ksort($regionsTree);
+        foreach ($regionsTree as &$reg) {
+            if (!empty($reg['cities'])) {
+                ksort($reg['cities']);
+                foreach ($reg['cities'] as &$ct) {
+                    if (!empty($ct['points'])) ksort($ct['points']);
+                }
+                unset($ct);
+            }
+        }
+        unset($reg);
 
         return [
             'site/fuel_company',
@@ -149,20 +224,15 @@ class SiteController extends Controller
                 'settings' => $settings,
                 'menu' => $menu,
                 'fuelCompanyInfo' => $fuelCompanyInfo,
-                'address' => $address,
-                'phones' => $phones,
-                'emails' => $emails,
-                'website' => $website,
-                'socials' => $socials,
-                'workingHours' => $workingHours,
+                'regionsTree' => $regionsTree,
                 'id' => $id,
                 'navigations' => $navigations,
-                'fuelPrices' => $fuelPrices,
                 'canEdit' => $canEdit,
                 'editUrl' => $editUrl,
             ]
         ];
     }
+
 
     protected function actionExchanger($id)
     {
@@ -1158,54 +1228,229 @@ HTML;
 
     protected function actionFuel()
     {
-        $query = App::db()->query("SELECT * FROM settings");
-        $settings = $query->fetch();
-        $navigations = App::db()->query("SELECT * FROM navigation")->fetchAll();
+        $pdo = App::db();
+
+        // settings / меню / навигация
+        $settings = $pdo->query("SELECT * FROM settings")->fetch();
+        $navigations = $pdo->query("SELECT * FROM navigation")->fetchAll();
         $menu['top'] = include_once(__DIR__ . '/../../../storage/menu/top.php');
         $menuLeft = include_once(__DIR__ . '/../../../storage/menu/left.php');
         $menu['left']['hidden'] = $menuLeft['hidden'];
         unset($menuLeft['hidden']);
         $menu['left']['basic'] = $menuLeft;
 
-        // Fetch fuel types from the database
-        $fuelTypesStmt = App::db()->query("SELECT id, name FROM fuel_types ORDER BY id");
-        $fuelTypes = $fuelTypesStmt->fetchAll(\PDO::FETCH_KEY_PAIR); // Maps id => name
+        // ====== селект города (только где есть данные) ======
+        $selectedCitySlug = isset($_GET['city']) ? trim((string)$_GET['city']) : '';
+        $selectedCityId = null;
 
-        // Fetch fuel companies with their latest updated_at from fuel_data
-        $companiesStmt = App::db()->query("
-            SELECT fc.id, fc.slug, fc.name, fc.logo, max(fd.updated_at) as latest_update, fc.updated_at as company_updated
-            FROM fuel_companies fc
-            LEFT JOIN fuel_data fd ON fc.id = fd.company_id
-            GROUP BY fc.id, fc.slug, fc.name, fc.logo, fc.updated_at
-            ORDER BY fd.updated_at DESC
-        ");
-        $fuelCompanies = $companiesStmt->fetchAll();
+        // типы топлива в нужном порядке
+        $fuelTypes = $pdo->query("SELECT id, name FROM fuel_types ORDER BY id")
+            ->fetchAll(\PDO::FETCH_KEY_PAIR); // id => name
+        $fuelTypeNames = array_values($fuelTypes);
 
-        // Fetch fuel data with updated_at
-        $fuelDataStmt = App::db()->query("
-            SELECT fc.slug, ft.name AS fuel_type, fd.price, fd.updated_at
-            FROM fuel_data fd 
-            JOIN fuel_companies fc ON fd.company_id = fc.id
-            JOIN fuel_types ft ON fd.fuel_type_id = ft.id
-            ORDER BY fd.updated_at DESC
-        ");
-        $fuelData = [];
-        while ($row = $fuelDataStmt->fetch()) {
-            $fuelData[$row['slug']][$row['fuel_type']] = [
-                'price' => $row['price'],
-                'updated_at' => $row['updated_at']
-            ];
+        // -------- дерево регион → город → компания (с учётом фильтра города) ----------
+        $params = [];
+        $whereSql = "WHERE cp.moderation_status !='pending' AND fc.moderation_status !='pending' AND fd.moderation_status !='pending'";
+        if ($selectedCitySlug !== '') {
+            $st = $pdo->prepare("SELECT id FROM cities WHERE slug = :slug LIMIT 1");
+            $st->execute([':slug' => $selectedCitySlug]);
+            if ($row = $st->fetch()) {
+                $selectedCityId = (int)$row['id'];
+                $whereSql = $whereSql . " AND c.id = :cityId";
+                $params[':cityId'] = $selectedCityId;
+            } else {
+                $selectedCitySlug = '';
+            }
         }
+
+        $sql = "
+        SELECT
+            r.id  AS region_id, r.slug AS region_slug, r.name_ru AS region_name,
+            c.id  AS city_id,   c.slug AS city_slug,   c.name_ru AS city_name,
+            fc.id AS company_id, fc.slug AS company_slug, fc.name AS company_name, fc.logo AS company_logo,
+            ft.id AS fuel_type_id, ft.name AS fuel_type_name,
+            MIN(fd.price) AS price,
+            MAX(fd.updated_at) AS updated_at,
+            MAX(CASE
+          WHEN u.login IS NOT NULL AND u.login <> ''
+           AND u.password IS NOT NULL AND u.password <> ''
+          THEN 1 ELSE 0
+        END) AS has_owner
+        FROM regions r
+        JOIN cities c          ON c.region_id = r.id
+        JOIN company_points cp ON cp.city_id  = c.id
+        JOIN fuel_companies fc ON fc.id       = cp.company_id
+        JOIN fuel_data fd      ON fd.company_point_id = cp.id
+        JOIN fuel_types ft     ON ft.id       = fd.fuel_type_id
+        LEFT JOIN users u      ON u.company_id = fc.id
+        $whereSql
+        GROUP BY r.id, c.id, fc.id, ft.id
+        ORDER BY r.name_ru, c.name_ru, fc.name, ft.id
+    ";
+        $st = $pdo->prepare($sql);
+        $st->execute($params);
+
+        $regions = [];         // дерево для аккордеонов
+
+        while ($row = $st->fetch(\PDO::FETCH_ASSOC)) {
+            $rid = (int)$row['region_id'];
+            $cid = (int)$row['city_id'];
+            $ft = (string)$row['fuel_type_name'];
+            $price = (float)$row['price'];
+            $updated = $row['updated_at'];
+
+            if (!isset($regions[$rid])) {
+                $regions[$rid] = [
+                    'id' => $rid,
+                    'slug' => $row['region_slug'],
+                    'name' => $row['region_name'],
+                    'best' => [],
+                    'cities' => []
+                ];
+            }
+            if (!isset($regions[$rid]['cities'][$cid])) {
+                $regions[$rid]['cities'][$cid] = [
+                    'id' => $cid,
+                    'slug' => $row['city_slug'],
+                    'name' => $row['city_name'],
+                    'best' => [],
+                    'companies' => []
+                ];
+            }
+            if (!isset($regions[$rid]['cities'][$cid]['companies'][$row['company_id']])) {
+                $regions[$rid]['cities'][$cid]['companies'][$row['company_id']] = [
+                    'id' => (int)$row['company_id'],
+                    'slug' => $row['company_slug'],
+                    'name' => $row['company_name'],
+                    'logo' => $row['company_logo'],
+                    'verified' => ((int)$row['has_owner'] === 1),
+                    'latest_update' => null,
+                    'prices' => []
+                ];
+            }
+
+            // цены компании по типам
+            $company =& $regions[$rid]['cities'][$cid]['companies'][$row['company_id']];
+            $company['prices'][$ft] = ['price' => $price, 'updated_at' => $updated];
+            if ($updated && ($company['latest_update'] === null || $updated > $company['latest_update'])) {
+                $company['latest_update'] = $updated;
+            }
+
+            // лучшие по городу
+            $city =& $regions[$rid]['cities'][$cid];
+            if (!isset($city['best'][$ft]) || $price < $city['best'][$ft]['price']) {
+                $city['best'][$ft] = ['price' => $price, 'updated_at' => $updated];
+            }
+            // лучшие по региону
+            if (!isset($regions[$rid]['best'][$ft]) || $price < $regions[$rid]['best'][$ft]['price']) {
+                $regions[$rid]['best'][$ft] = ['price' => $price, 'updated_at' => $updated];
+            }
+        }
+
+        // -------- «Лучшие» (без учёта фильтра города! глобально по стране) ----------
+        $bestCompanies = []; // список компаний с их минимальными ценами по каждому типу
+        $bestHeader = []; // глобально лучшая цена по типу топлива
+
+        $sqlBest = "
+        SELECT
+            fc.id AS company_id, fc.slug AS company_slug, fc.name AS company_name, fc.logo AS company_logo,
+            c.id  AS city_id, c.slug AS city_slug, c.name_ru AS city_name,
+            ft.id AS fuel_type_id, ft.name AS fuel_type_name,
+            fd.price AS price, fd.updated_at AS updated_at,
+            CASE WHEN EXISTS (
+        SELECT 1 FROM users uu
+         WHERE uu.company_id = fc.id
+           AND uu.login IS NOT NULL AND uu.login <> ''
+           AND uu.password IS NOT NULL AND uu.password <> ''
+    ) THEN 1 ELSE 0 END AS has_owner
+        FROM fuel_data fd
+        JOIN company_points cp ON cp.id = fd.company_point_id
+        JOIN cities c          ON c.id  = cp.city_id
+        JOIN fuel_companies fc ON fc.id = cp.company_id
+        JOIN fuel_types ft     ON ft.id = fd.fuel_type_id
+        LEFT JOIN users u      ON u.company_id = fc.id
+        $whereSql
+    ";
+        foreach ($pdo->query($sqlBest) as $row) {
+            $cid = (int)$row['company_id'];
+            $ft = (string)$row['fuel_type_name'];
+            $price = (float)$row['price'];
+
+            if (!isset($bestCompanies[$cid])) {
+                $bestCompanies[$cid] = [
+                    'id' => $cid,
+                    'slug' => $row['company_slug'],
+                    'name' => $row['company_name'],
+                    'logo' => $row['company_logo'],
+                    'latest_update' => null,
+                    'verified' => ((int)$row['has_owner'] === 1),
+                    'prices' => [] // fuel_type => ['price','updated_at','city_name','city_slug']
+                ];
+            }
+            // сохраняем минимальную цену компании по типу и город-носитель минимума
+            if (!isset($bestCompanies[$cid]['prices'][$ft]) || $price < $bestCompanies[$cid]['prices'][$ft]['price']) {
+                $bestCompanies[$cid]['prices'][$ft] = [
+                    'price' => $price,
+                    'updated_at' => $row['updated_at'],
+                    'city_name' => $row['city_name'],
+                    'city_slug' => $row['city_slug'],
+                ];
+            }
+            // глобальная лучшая цена по типу
+            if (!isset($bestHeader[$ft]) || $price < $bestHeader[$ft]['price']) {
+                $bestHeader[$ft] = ['price' => $price];
+            }
+        }
+        // latest_update для «Лучших»
+        foreach ($bestCompanies as &$bc) {
+            foreach ($bc['prices'] as $p) {
+                if ($p['updated_at'] && ($bc['latest_update'] === null || $p['updated_at'] > $bc['latest_update'])) {
+                    $bc['latest_update'] = $p['updated_at'];
+                }
+            }
+        }
+        unset($bc);
+
+        // -------- сортировки ----------
+        $regions = array_values($regions);
+        usort($regions, fn($a, $b) => strcmp($a['name'], $b['name']));
+        foreach ($regions as &$r) {
+            $r['cities'] = array_values($r['cities']);
+            usort($r['cities'], fn($a, $b) => strcmp($a['name'], $b['name']));
+            foreach ($r['cities'] as &$c) {
+                $c['companies'] = array_values($c['companies']);
+                usort($c['companies'], fn($a, $b) => strcmp($a['name'], $b['name']));
+            }
+            unset($c);
+        }
+        unset($r);
+        $sqlCities = "
+    SELECT DISTINCT c.id, c.slug, c.name_ru
+    FROM cities c
+    JOIN company_points cp ON cp.city_id = c.id
+    JOIN fuel_data fd ON fd.company_point_id = cp.id
+    WHERE fd.moderation_status !='pending' AND cp.moderation_status !='pending'
+    ORDER BY c.name_ru
+";
+        $cities = App::db()->query($sqlCities)->fetchAll();
+
+        // Сортировка компаний в «Лучших»
+        $bestCompanies = array_values($bestCompanies);
+        usort($bestCompanies, fn($a, $b) => strcmp($a['name'], $b['name']));
 
         return ['site/table_fuel', [
             'settings' => $settings,
             'menu' => $menu,
-            'fuelCompanies' => $fuelCompanies,
-            'fuelData' => $fuelData,
-            'fuelTypes' => array_values($fuelTypes),
             'navigations' => $navigations,
+            'fuelTypes' => $fuelTypeNames,
+            'regionsTree' => $regions,
+            'cities' => $cities,
+            'selectedCitySlug' => $selectedCitySlug,
+            'bestCompanies' => $bestCompanies,
+            'bestHeader' => $bestHeader,
         ]];
     }
+
 
     protected function actionPage($slug)
     {
@@ -1511,6 +1756,156 @@ HTML;
             header('Location: /font-family/' . $family);
         }
         exit;
+    }
+
+
+    protected function actionAddStation()
+    {
+        $pdo = \App\App::db();
+
+        // Базовые данные для шапки/меню
+        $settings    = $pdo->query("SELECT * FROM settings")->fetch();
+        $navigations = $pdo->query("SELECT * FROM navigation")->fetchAll();
+        $menu['top'] = include_once(__DIR__ . '/../../../storage/menu/top.php');
+        $menuLeft    = include_once(__DIR__ . '/../../../storage/menu/left.php');
+        $menu['left'] = ['hidden' => $menuLeft['hidden']]; unset($menuLeft['hidden']);
+        $menu['left']['basic'] = $menuLeft;
+
+        // Режим формы
+        $mode    = (isset($_GET['mode']) && $_GET['mode'] === 'owner') ? 'owner' : 'driver';
+        $isOwner = ($mode === 'owner');
+
+        // Справочники для формы
+        $regions   = $pdo->query("SELECT id, name_ru FROM regions ORDER BY name_ru")->fetchAll(\PDO::FETCH_ASSOC);
+        $cities    = $pdo->query("SELECT id, region_id, name_ru FROM cities ORDER BY name_ru")->fetchAll(\PDO::FETCH_ASSOC);
+        $fuelTypes = $pdo->query("SELECT id, name FROM fuel_types ORDER BY id")->fetchAll(\PDO::FETCH_ASSOC);
+
+        // Лучшие цены (подсказки в UI)
+        $bestPrices = [];
+        $bx = $pdo->query("
+        SELECT ft.id AS fuel_type_id, MIN(fd.price) AS min_price
+          FROM fuel_types ft
+          LEFT JOIN fuel_data fd ON ft.id = fd.fuel_type_id
+          WHERE fd.moderation_status != 'pending'
+         GROUP BY ft.id
+    ");
+        while ($r = $bx->fetch(\PDO::FETCH_ASSOC)) {
+            $bestPrices[$r['fuel_type_id']] = $r['min_price'] ?: 'N/A';
+        }
+
+        $ok = !empty($_GET['ok']);
+
+        // ===== Отправка формы =====
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_station'])) {
+            $pdo->exec("PRAGMA busy_timeout = 30000");
+            $pdo->exec("PRAGMA foreign_keys = ON");
+
+            // Валидные ID типов топлива (для быстрой проверки)
+            $validFuelTypeIds = array_flip(array_map(fn($r) => (int)$r['id'], $fuelTypes));
+
+            // 1) Данные компании
+            $name = trim((string)($_POST['name'] ?? ''));
+            if ($name === '') $name = 'Без названия';
+
+            // Генерация уникального slug
+            $nameAscii = iconv('UTF-8', 'ASCII//TRANSLIT', $name);
+            if ($nameAscii === false) $nameAscii = $name;
+            $slug = preg_replace('~[^a-z0-9]+~i', '-', $nameAscii);
+            $slug = strtolower(trim($slug, '-'));
+            if ($slug === '') $slug = 'company';
+
+            $suffix = '';
+            while (true) {
+                $st = $pdo->prepare("SELECT 1 FROM fuel_companies WHERE slug = ?");
+                $st->execute([$slug . $suffix]);
+                if (!$st->fetchColumn()) { $slug .= $suffix; break; }
+                try { $rand = bin2hex(random_bytes(6)); } catch (\Throwable $e) {
+                    $rand = sha1((string)microtime(true) . ':' . random_int(0, PHP_INT_MAX));
+                }
+                $suffix = '-' . substr($rand, 0, 6);
+            }
+
+            // 2) Город и адрес
+            $cityId = (int)($_POST['company_city_id'] ?? 0);
+            if ($cityId <= 0) {
+                $cityId = (int)($pdo->query("SELECT id FROM cities ORDER BY id LIMIT 1")->fetchColumn() ?: 1);
+            }
+            $address = trim((string)($_POST['company_address'] ?? ''));
+            $lat = ($_POST['company_latitude']  ?? '') !== '' ? (float)$_POST['company_latitude']  : null;
+            $lng = ($_POST['company_longitude'] ?? '') !== '' ? (float)$_POST['company_longitude'] : null;
+
+            $phones  = $isOwner ? json_encode($_POST['phones']  ?? [], JSON_UNESCAPED_UNICODE) : json_encode([], JSON_UNESCAPED_UNICODE);
+            $emails  = $isOwner ? json_encode($_POST['emails']  ?? [], JSON_UNESCAPED_UNICODE) : json_encode([], JSON_UNESCAPED_UNICODE);
+            $socials = $isOwner ? json_encode($_POST['socials'] ?? [], JSON_UNESCAPED_UNICODE) : json_encode([], JSON_UNESCAPED_UNICODE);
+            $workingHours = [];
+            if ($isOwner && !empty($_POST['working_days']) && !empty($_POST['working_times'])) {
+                foreach ($_POST['working_days'] as $i => $day) {
+                    $t = $_POST['working_times'][$i] ?? '';
+                    if ($t !== '') $workingHours[$day] = $t;
+                }
+            }
+            $workingHours = json_encode($workingHours, JSON_UNESCAPED_UNICODE);
+            $website = $isOwner ? (string)($_POST['website'] ?? '') : '';
+
+            try {
+                $pdo->beginTransaction();
+
+                $insC = $pdo->prepare("
+                INSERT INTO fuel_companies (slug, name, moderation_status, created_at, updated_at)
+                VALUES (?, ?, 'pending', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            ");
+                $insC->execute([$slug, $name]);
+                $companyId = (int)$pdo->lastInsertId();
+
+                // INSERT: company_points (всегда pending)
+                $insP = $pdo->prepare("
+                INSERT INTO company_points
+                    (company_id, city_id, address, phones, emails, working_hours, website, socials, latitude, longitude,
+                     moderation_status, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            ");
+                $insP->execute([
+                    $companyId, $cityId, $address,
+                    $phones, $emails, $workingHours,
+                    $website, $socials, $lat, $lng
+                ]);
+                $pointId = (int)$pdo->lastInsertId();
+
+                // INSERT: fuel_data (всегда pending)
+                if (!empty($_POST['fuel_type']) && !empty($_POST['fuel_price'])) {
+                    $insF = $pdo->prepare("
+                    INSERT INTO fuel_data (company_point_id, fuel_type_id, price, moderation_status, updated_at)
+                    VALUES (?, ?, ?, 'pending', CURRENT_TIMESTAMP)
+                ");
+                    foreach ($_POST['fuel_type'] as $i => $ftId) {
+                        $ftId  = (int)$ftId;
+                        $price = $_POST['fuel_price'][$i] ?? '';
+                        if ($price === '' || $price === null) continue;
+                        if (!isset($validFuelTypeIds[$ftId])) continue;
+                        $insF->execute([$pointId, $ftId, (float)$price]);
+                    }
+                }
+
+                $pdo->commit();
+                header('Location: /add-station?mode=' . $mode . '&ok=1');
+                return true;
+            } catch (\Throwable $e) {
+                if ($pdo->inTransaction()) $pdo->rollBack();
+                $this->error = 'Не удалось сохранить данные АЗС. Проверьте выбранный город и цены на топливо.';
+            }
+        }
+
+        return ['site/add_station', [
+            'settings'    => $settings,
+            'menu'        => $menu,
+            'navigations' => $navigations,
+            'mode'        => $mode,
+            'fuelTypes'   => $fuelTypes,
+            'bestPrices'  => $bestPrices,
+            'regions'     => $regions,
+            'cities'      => $cities,
+            'ok'          => $ok,
+        ]];
     }
 
     public static function hash($str): ?string

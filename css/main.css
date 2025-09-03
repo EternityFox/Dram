@@ -1037,6 +1037,11 @@ section {
     transition: 0.3s;
 }
 
+.fuel-table-entry-item-input input {
+    height: 40px;
+    line-height: 40px;
+}
+
 .table-entry-item-input-clear, .fuel-table-entry-item-input-clear {
     position: absolute;
     right: 4px;
@@ -2309,8 +2314,7 @@ th {
 }
 
 .fuel-comparison td {
-    padding-top: 0.5rem;
-    padding-bottom: 0.5rem;
+    padding: 0.2rem 0;
     color: #333;
 }
 
@@ -2335,12 +2339,20 @@ th {
     align-items: flex-start;
 }
 
-.fuel-comparison .company-name {
+.fuel-comparison .company-name-text {
     color: #454545;
     font-size: 14px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    position: relative;
+    max-width: 110px;
+}
+.fuel-comparison .company-name img{
+    width: 16px;
+    height: 16px;
+    vertical-align: middle;
+    margin-left: 6px;
 }
 
 .fuel-comparison .company-updated {
@@ -2359,12 +2371,23 @@ th {
     font-size: 16px;
     color: #000000;
     font-weight: 600;
-    width: 120px;
+    width: 100px;
+}
+
+.fuel-comparison .fuel-type-header-city {
+    max-width: 180px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    font-size: 16px;
+    color: #000000;
+    font-weight: 600;
 }
 
 .fuel-comparison .price-item-fuel {
     color: #454545;
-    width: 120px;
+    width: 100px;
     height: 45px;
     line-height: 45px;
     font-size: 14px;
@@ -2442,18 +2465,21 @@ a[href="/loans"], a[href="/deposits"], a[href="/cards"], a[href="/news"], a[href
 }
 
 @media screen and (max-width: 768px) {
+    .fuel-content .row-link{
+        gap: 12px!important;
+    }
     .content {
         margin-bottom: 40px;
         padding-bottom: 40px;
     }
 
-    .fuel-comparison .company-name {
+    .fuel-comparison .company-name-text {
         font-size: 12px;
-        max-width: 85px;
+        max-width: 75px;
     }
 
     .fuel-comparison .sticky {
-        max-width: 150px;
+        max-width: 170px;
     }
 
     .fuel-comparison .sticky-header-row {
@@ -2558,6 +2584,10 @@ a[href="/loans"], a[href="/deposits"], a[href="/cards"], a[href="/news"], a[href
 
 
 @media screen and (max-width: 760px) {
+    .dashboard-container .price-header {
+        font-size: 12px;
+    }
+
     .header-search {
         display: none;
     }
@@ -3722,6 +3752,7 @@ a[href="/loans"], a[href="/deposits"], a[href="/cards"], a[href="/news"], a[href
     align-items: center;
     font-weight: 500;
     color: #34495e;
+    justify-content: space-between;
 }
 
 .dashboard-container .card-section .section-content {
@@ -3735,8 +3766,8 @@ a[href="/loans"], a[href="/deposits"], a[href="/cards"], a[href="/news"], a[href
 }
 
 .dashboard-container .form-group label {
-    font-weight: 500;
-    color: #34495e;
+    color: #000000;
+    font-weight: 600;
     display: block;
     margin-bottom: 0.4rem;
 }
@@ -3772,35 +3803,10 @@ a[href="/loans"], a[href="/deposits"], a[href="/cards"], a[href="/news"], a[href
     background: #2980b9;
 }
 
-.dashboard-container .remove-btn {
-    background: #e74c3c;
-    color: white;
-    border: none;
-    padding: 0.3rem 0.6rem;
-    border-radius: 4px;
-    font-size: 0.8rem;
-    margin-left: 0.5rem;
-}
-
 .dashboard-container .remove-btn:hover {
     background: #c0392b;
 }
 
-.dashboard-container .save-button {
-    padding: 0.6rem 1.6rem;
-    border-radius: 8px;
-    font-size: 1rem;
-    font-weight: 600;
-    background: linear-gradient(to right, #2ecc71, #27ae60);
-    color: #fff;
-    border: none;
-    transition: background 0.3s ease, transform 0.2s ease;
-}
-
-.dashboard-container .save-button:hover {
-    background: linear-gradient(to right, #27ae60, #1e8449);
-    transform: translateY(-1px);
-}
 
 /* Группы ввода */
 .dashboard-container .dynamic-group .input-group,
@@ -3828,7 +3834,7 @@ a[href="/loans"], a[href="/deposits"], a[href="/cards"], a[href="/news"], a[href
 }
 
 /* Карта */
-.dashboard-container .map-container {
+.map-container {
     height: 400px;
     width: 100%;
     border-radius: 10px;
@@ -3837,47 +3843,17 @@ a[href="/loans"], a[href="/deposits"], a[href="/cards"], a[href="/news"], a[href
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.dashboard-container .map bież:
-
-'Загрузка карты...'
-;
-position: absolute
-
-;
-top:
-
-50
-%
-;
-left:
-
-50
-%
-;
-transform:
-translate
-
-(
--
-50
-%
-,
--
-50
-%
-)
-;
-color: #888
-
-;
-font-size:
-
-1
-rem
-
-;
+.map-container::before {
+    content: 'Загрузка карты...';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #888;
+    font-size: 1rem;
 }
-.dashboard-container .map-container.loaded::before {
+
+.map-container.loaded::before {
     content: none;
 }
 
@@ -3993,7 +3969,7 @@ rem
         padding: 0.8rem;
     }
 
-    .dashboard-container .map-container {
+    .map-container {
         height: 220px;
     }
 
@@ -4938,4 +4914,300 @@ rem
     .account-hero .req-item[open] .req-head {
         background: rgba(255, 255, 255, .06);
     }
+}
+
+
+.fuel-content .add-data-banner {
+    background: #E8F5FF;
+    border-radius: 14px;
+    padding: 32px 24px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 40px;
+    margin: 10px 0 18px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.fuel-content .add-data-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.fuel-content .add-data-title {
+    font-size: 22px;
+    line-height: 1.2;
+    font-weight: 700;
+    color: #0F172A
+}
+
+.fuel-content .add-data-sub {
+    font-size: 14px;
+    color: #999999;
+    margin-top: 4px
+}
+
+.fuel-content .add-data-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.fuel-content .btn-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 18px;
+    border-radius: 12px;
+    font-weight: 600;
+    text-decoration: none;
+    line-height: 1;
+    box-shadow: 0 1px 0 rgba(255, 255, 255, .6) inset;
+    white-space: nowrap
+}
+
+.fuel-content .btn-driver {
+    background: #36D5C6;
+    color: #fff
+}
+
+.fuel-content .btn-owner {
+    background: #3B82F6;
+    color: #fff
+}
+
+.fuel-content .add-data-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    cursor: pointer;
+    width: 12px;
+}
+
+.fuel-content .fuel-title {
+    font-size: 15px;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 150px;
+}
+
+.fuel-content .fuel-table table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 16px;
+}
+
+.fuel-content .fuel-table thead th {
+    vertical-align: top;
+    padding: 0.5rem 0.25rem
+}
+
+.fuel-content .fuel-type-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px
+}
+
+.fuel-content .fuel-type-name {
+    font-weight: 700;
+    font-size: 15px;
+}
+
+/* Липкая ячейка с селектором города */
+.fuel-content .sticky-tools {
+    min-width: 260px
+}
+
+.fuel-content .city-select {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 10px 16px;
+    border-radius: 32px;
+    background: #fff;
+    border: 1px solid #EBEBEB;
+    width: 100%
+}
+
+.fuel-content .city-select select {
+    border: 0;
+    background: transparent;
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+    font-weight: 700;
+    color: #111827;
+    cursor: pointer;
+    font-size: 12px;
+    width: 100px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.fuel-content .city-caret {
+    -webkit-filter: grayscale(1);
+    filter: grayscale(1);
+}
+
+.fuel-content .city-pin {
+    display: inline-flex;
+}
+
+@media (max-width: 768px) {
+    .fuel-content .add-data-title {
+        font-size: 16px;
+    }
+
+    .fuel-content .add-data-sub {
+        font-size: 12px;
+    }
+
+    .fuel-content .btn-pill {
+        font-size: 14px;
+    }
+
+    .fuel-content .sticky-tools {
+        min-width: auto
+    }
+
+    .fuel-content .city-select {
+        width: 100%
+    }
+
+    .fuel-content .fuel-table thead th {
+        padding: 8px 4px
+    }
+}
+
+.dashboard-container .price-header {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 20px;
+    gap: 8px;
+    align-items: center;
+    border-radius: 12px;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+    color: #A2A2A2;
+}
+
+.dashboard-container .price-header div {
+    text-align: center;
+}
+
+.dashboard-container .price-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.dashboard-container .price-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 20px;
+    gap: 8px;
+    align-items: center;
+}
+
+.dashboard-container .best-cell {
+    text-align: center;
+    color: rgb(34, 197, 94);
+    font-weight: 700;
+}
+
+.dashboard-container #addFuelRow {
+    background: #34C759;
+    color: #fff;
+    border: none;
+    border-radius: 28px;
+    padding: 12px 22px;
+    font-weight: 600;
+}
+
+.dashboard-container .blue-background {
+    background: #E1F6FF !important;
+    color: #2D84EC !important;
+}
+
+.dashboard-container .blue-background img {
+    filter: grayscale(1);
+}
+
+.fuel-content .row-link {
+    display: flex;
+    gap: 24px;
+    align-items: center;
+}
+
+.fuel-content.region-head .title {
+    font-size: 16px;
+    color: #2D84EC;
+}
+
+.fuel-content .best-row td, .fuel-content .region-row td, .fuel-content .city-row td {
+    background: #F6F6F6 !important;
+}
+
+.fuel-content .best-row .sticky, .fuel-content .region-row .sticky, .fuel-content .city-row .sticky {
+    padding: 0.2rem 1.2rem 0.2rem;
+    border-radius: 30px 0 0 30px;
+}
+
+.fuel-content .city-row .sticky {
+    border-left: 20px solid transparent;
+}
+
+.fuel-content .best-row td:last-child, .fuel-content .region-row td:last-child, .fuel-content .city-row td:last-child {
+    border-radius: 0 30px 30px 0;
+}
+
+.fuel-content .title {
+    color: #2D84EC;
+}
+
+.fuel-content .best-row .title {
+    font-weight: 600;
+}
+
+.fuel-content thead, .fuel-content tr, .fuel-content td, .fuel-content th {
+    border: none;
+}
+
+.fuel-content .hidden {
+    display: none !important;
+}
+
+.fuel-content .caret {
+    transition: transform .2s ease;
+}
+
+.fuel-content .caret.open {
+    transform: rotate(180deg);
+}
+
+.fuel-content .company-row .sticky {
+    padding-left: 32px;
+}
+
+.fuel-content .company-row.best .sticky {
+    padding-left: 16px;
+}
+
+.back-arrow{
+    width: 32px;
+}
+
+.blue-btn{
+    background: #4285F4;
+    border: none;
+}
+.gray-btn{
+    border: none;
+    background: #E3E3E3;
+    color: #000000;
 }
