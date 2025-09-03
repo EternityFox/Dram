@@ -59,6 +59,41 @@
 </head>
 
 <body>
+<?php
+use App\App;
+use PDO;
+
+$isAuth = false;
+$label  = $lang('Аккаунт');
+$link   = '/login';
+
+if (!empty($_COOKIE['app_token'])) {
+    // Быстрая проверка по БД
+    $st = App::db()->prepare("SELECT role FROM users WHERE app_token = ? LIMIT 1");
+    $st->execute([$_COOKIE['app_token']]);
+    $row = $st->fetch(PDO::FETCH_ASSOC);
+
+    if ($row) {
+        $isAuth = true;
+        $label  = $lang('Выйти');
+        $link   = '/logout';
+    } else {
+        // Поддержим токен админа из settings
+        $q = App::db()->query("SELECT login, password FROM settings");
+        $admin = $q->fetch(PDO::FETCH_ASSOC);
+        if ($admin) {
+            $adminToken = \App\Controller\LoginController::hash(
+                strtolower($admin['login']) . $admin['password']
+            );
+            if (hash_equals($adminToken, $_COOKIE['app_token'])) {
+                $isAuth = true;
+                $label  = $lang('Выйти');
+                $link   = '/logout';
+            }
+        }
+    }
+}
+?>
 <div class="wrapper">
     <header class="header my-3">
         <div class="header-row">
@@ -179,7 +214,7 @@
                         </div>
                     </div>
                 </div>
-                <a href="/login" class="header-profile">
+                <a href="<?= htmlspecialchars($link) ?>" class="header-profile" data-page="<?= $isAuth ? 'logout' : 'login' ?>">
                     <img src="img/profile.png" alt="">
                 </a>
             </div>
@@ -367,10 +402,10 @@
                 <img src="img/auto.svg" alt="Госномера" width="20" height="20">
                 <small class="tab-label"><?= $lang('Госномера') ?></small>
             </a>
-            <a href="/login" class="tab-item d-flex flex-column align-items-center text-decoration-none text-dark"
-               data-page="login">
-                <img src="img/user.svg" alt="Аккаунт" width="20" height="20">
-                <small class="tab-label"><?= $lang('Аккаунт') ?></small>
+            <a href="<?= htmlspecialchars($link) ?>" class="tab-item d-flex flex-column align-items-center text-decoration-none text-dark"
+               data-page="<?= $isAuth ? 'logout' : 'login' ?>">
+                <img src="img/user.svg" alt="<?= $label ?>" width="20" height="20">
+                <small class="tab-label"><?= $label ?></small>
             </a>
         </div>
     </div>

@@ -9,167 +9,234 @@ use PDO;
 
 class LoginController extends Controller
 {
+    /** Унификация: логин сравниваем в нижнем регистре */
+    private static function normLogin(string $s): string
+    {
+        return strtolower(trim($s));
+    }
+
+    /** Токен пользователя строим ОДИНАКОВО: login(lower) + password_hash */
+    private static function makeUserToken(string $loginOriginal, string $passwordHash): string
+    {
+        return self::hash(self::normLogin($loginOriginal) . $passwordHash);
+    }
+
+    /** Токен админа (из settings): логин сравниваем без регистра, пароль — как есть (как у вас было) */
+    private static function makeAdminToken(string $adminLogin, string $adminPlainPassword): string
+    {
+        return self::hash(self::normLogin($adminLogin) . $adminPlainPassword);
+    }
+
+    private static function setAuthCookie(string $token): void
+    {
+        // Общий путь + безопасные флаги
+        $params = [
+            'expires'  => time() + 60 * 60 * 24 * 30,
+            'path'     => '/',
+            'secure'   => (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'),
+            'httponly' => true,
+            'samesite' => 'Lax',
+        ];
+        setcookie('app_token', $token, $params);
+    }
+
+    private static function clearAuthCookie(): void
+    {
+        $params = [
+            'expires'  => time() - 3600,
+            'path'     => '/',
+            'secure'   => (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'),
+            'httponly' => true,
+            'samesite' => 'Lax',
+        ];
+        setcookie('app_token', '', $params);
+    }
+
+    private static function redirectByRole(string $role): void
+    {
+        switch ($role) {
+            case 'admin':
+                header('Location: /admin/');
+                break;
+            case 'company':
+                header('Location: /user/company');
+                break;
+            case 'user':
+                header('Location: /user/account');
+                break;
+            default:
+                header('Location: /');
+                break;
+        }
+        exit;
+    }
+
+    /** Пытаемся авторизовать по cookie-токену */
+    private static function authFromCookie(?array $adminCred): ?array
+    {
+        if (empty($_COOKIE['app_token'])) {
+            return null;
+        }
+        $token = $_COOKIE['app_token'];
+
+        // 1) Проверка на админа (settings)
+        if ($adminCred) {
+            $adminToken = self::makeAdminToken((string)$adminCred['login'], (string)$adminCred['password']);
+            if (hash_equals($adminToken, $token)) {
+                return ['id' => 0, 'login' => $adminCred['login'], 'role' => 'admin'];
+            }
+        }
+
+        // 2) Обычный пользователь
+        $st = App::db()->prepare("SELECT id, login, password, role, app_token FROM users WHERE app_token = ? LIMIT 1");
+        $st->execute([$token]);
+        $user = $st->fetch(PDO::FETCH_ASSOC);
+
+        if ($user) {
+            $shouldBe = self::makeUserToken($user['login'], $user['password']); // password тут уже хэш
+            if (hash_equals($shouldBe, $token)) {
+                return $user;
+            }
+        }
+        return null;
+    }
+
     protected function actionLogout()
     {
-        if (isset($_COOKIE['app_token'])) {
-            setcookie('app_token', '', time() - 3600);
+        // Если знаем токен — почистим и в БД
+        if (!empty($_COOKIE['app_token'])) {
+            $token = $_COOKIE['app_token'];
+            $st = App::db()->prepare("UPDATE users SET app_token = NULL WHERE app_token = ?");
+            $st->execute([$token]);
         }
+        self::clearAuthCookie();
         header('Location: /login');
         return true;
     }
 
     protected function actionLogin()
     {
-        $md = false;
-        $query = App::db()->query("SELECT login, password FROM settings");
-        $adminCred = $query->fetch();
-        $query = App::db()->query("SELECT * FROM settings");
-        $settings = $query->fetch();
-        $settings['menu']['top'] = file_get_contents(__DIR__ . '/../../../storage/menu/top.php');
+        // Настройки и меню (как было)
+        $q = App::db()->query("SELECT login, password FROM settings");
+        $adminCred = $q->fetch();
+        $q = App::db()->query("SELECT * FROM settings");
+        $settings = $q->fetch();
+        $settings['menu']['top']  = file_get_contents(__DIR__ . '/../../../storage/menu/top.php');
         $settings['menu']['left'] = file_get_contents(__DIR__ . '/../../../storage/menu/left.php');
 
-        if (isset($_COOKIE['app_token'])) {
-            $token = $_COOKIE['app_token'];
-            $stmt = App::db()->prepare("SELECT id, login, password, role FROM users WHERE app_token = ?");
-            $stmt->execute([$token]);
-            $user = $stmt->fetch(PDO::FETCH_ASSOC);
-            if ($user && self::hash($user['login'] . $user['password']) == $token) {
-                $md = true;
-            }
-            if (self::hash($adminCred['login'] . $adminCred['password']) == $token) {
-                $md = true;
-            }
+        // Если уже авторизованы по cookie — сразу уводим по роли
+        if ($auth = self::authFromCookie($adminCred)) {
+            self::redirectByRole($auth['role']);
         }
 
-        if ($md) {
-            switch ($user['role']) {
-                case 'admin':
-                    header('Location: /admin/');
-                    break;
-                case 'company':
-                    header('Location: /user/company/');
-                    break;
-                case 'user':
-                    header('Location: /user/account');
-                    break;
-                default:
-                    header('Location: /');
-                    break;
-            }
-            return true;
+        // Рендер формы
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            return ['auth/login', ['settings' => $settings]];
         }
 
-        if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-            $login = $_POST['login'];
-            $password = $_POST['password'];
-            if ($adminCred['login'] == $login && $adminCred['password'] == $password) {
-                setcookie('app_token', self::hash($adminCred['login'] . $adminCred['password']), time() + 60 * 60 * 24 * 30);
-                header('Location: /admin/');
-                return true;
-            }
+        // 登录 / Login
+        $loginRaw = (string)($_POST['login'] ?? '');
+        $password = (string)($_POST['password'] ?? '');
+        $login    = self::normLogin($loginRaw);
 
-            $stmt = App::db()->prepare("SELECT id, login, password, role FROM users WHERE login = ?");
-            $stmt->execute([$login]);
-            $user = $stmt->fetch(PDO::FETCH_ASSOC);
-
-            if ($user && self::hash($password) === $user['password']) {
-                setcookie('app_token', self::hash($user['login'] . $password), time() + 60 * 60 * 24 * 30);
-
-                switch ($user['role']) {
-                    case 'admin':
-                        header('Location: /admin/');
-                        break;
-                    case 'company':
-                        header('Location: /user/company');
-                        break;
-                    case 'user':
-                        header('Location: /user/account');
-                        break;
-                    default:
-                        header('Location: /');
-                        break;
-                }
-                return true;
-            }
-
-            return ['auth/login', ['error' => 'Неверный логин или пароль', 'settings' => $settings]];
+        // Сначала проверка на админа (регистронезависимый логин)
+        $adminLoginNorm = self::normLogin((string)$adminCred['login'] ?? '');
+        if ($adminLoginNorm !== '' && $login === $adminLoginNorm && $password === (string)$adminCred['password']) {
+            $token = self::makeAdminToken($adminCred['login'], $adminCred['password']);
+            self::setAuthCookie($token);
+            self::redirectByRole('admin');
         }
 
-        return ['auth/login', ['settings' => $settings]];
+        // Обычный пользователь: регистронезависимая выборка
+        $st = App::db()->prepare("SELECT id, login, password, role FROM users WHERE lower(login) = lower(?) LIMIT 1");
+        $st->execute([$loginRaw]);
+        $user = $st->fetch(PDO::FETCH_ASSOC);
+
+        // Проверка пароля
+        if ($user && hash_equals(self::hash($password), $user['password'])) {
+            // Единая формула токена: login(lower) + password_hash
+            $token = self::makeUserToken($user['login'], $user['password']);
+
+            // Обновляем app_token в БД (ключевой фикс!)
+            $upd = App::db()->prepare("UPDATE users SET app_token = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?");
+            $upd->execute([$token, $user['id']]);
+
+            self::setAuthCookie($token);
+            self::redirectByRole($user['role']);
+        }
+
+        return ['auth/login', ['error' => 'Неверный логин или пароль', 'settings' => $settings]];
     }
 
     protected function actionRegister()
     {
-        $query = App::db()->query("SELECT * FROM settings");
-        $settings = $query->fetch();
-        $settings['menu']['top'] = file_get_contents(__DIR__ . '/../../../storage/menu/top.php');
+        $q = App::db()->query("SELECT * FROM settings");
+        $settings = $q->fetch();
+        $settings['menu']['top']  = file_get_contents(__DIR__ . '/../../../storage/menu/top.php');
         $settings['menu']['left'] = file_get_contents(__DIR__ . '/../../../storage/menu/left.php');
 
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             return ['auth/register', ['settings' => $settings]];
         }
 
-        $login = trim((string)($_POST['login'] ?? ''));
-        $password = (string)($_POST['password'] ?? '');
-        $password_confirm = (string)($_POST['password_confirm'] ?? '');
+        $loginRaw        = trim((string)($_POST['login'] ?? ''));
+        $loginNorm       = self::normLogin($loginRaw);
+        $password        = (string)($_POST['password'] ?? '');
+        $passwordConfirm = (string)($_POST['password_confirm'] ?? '');
+        $role            = 'user';
 
-        $role = 'user';
-
-        // Простая валидация
         $errors = [];
-
-        if ($login === '' || mb_strlen($login) < 3) {
+        if ($loginRaw === '' || mb_strlen($loginRaw) < 3) {
             $errors[] = 'Логин должен быть не короче 3 символов.';
         }
-        // Разрешим буквы/цифры/._-
-        if (!preg_match('/^[a-zA-Z0-9._-]+$/u', $login)) {
+        if (!preg_match('/^[a-zA-Z0-9._-]+$/u', $loginRaw)) {
             $errors[] = 'Разрешены только латинские буквы, цифры и символы . _ -';
         }
         if (mb_strlen($password) < 6) {
             $errors[] = 'Пароль должен быть не короче 6 символов.';
         }
-        if ($password !== $password_confirm) {
+        if ($password !== $passwordConfirm) {
             $errors[] = 'Пароли не совпадают.';
         }
 
-        // Проверка уникальности логина
-        $stmt = App::db()->prepare("SELECT id FROM users WHERE login = ?");
-        $stmt->execute([$login]);
-        if ($stmt->fetchColumn()) {
+        // Уникальность логина — БЕЗ учёта регистра
+        $st = App::db()->prepare("SELECT id FROM users WHERE lower(login) = lower(?) LIMIT 1");
+        $st->execute([$loginRaw]);
+        if ($st->fetchColumn()) {
             $errors[] = 'Пользователь с таким логином уже существует.';
         }
 
-        if (!empty($errors)) {
+        if ($errors) {
             return ['auth/register', [
                 'settings' => $settings,
-                'error' => implode('<br>', array_map('htmlspecialchars', $errors)),
-                'old' => ['login' => $login]
+                'error'    => implode('<br>', array_map('htmlspecialchars', $errors)),
+                'old'      => ['login' => $loginRaw],
             ]];
         }
 
-        // Хеш пароля: совместим с вашей авторизацией
         $passwordHash = self::hash($password);
 
-        // Вставка пользователя
+        // Сохраняем (логин в БД можно хранить как ввёл пользователь — вход всё равно регистронезависимый)
         $ins = App::db()->prepare("
-            INSERT INTO users (login, password, role, app_token, created_at)
-            VALUES (?, ?, ?, NULL, datetime('now'))
+            INSERT INTO users (login, password, role, created_at, updated_at)
+            VALUES (?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
         ");
-        $ok = $ins->execute([$login, $passwordHash, $role]);
-
+        $ok = $ins->execute([$loginRaw, $passwordHash, $role]);
         if (!$ok) {
             return ['auth/register', [
                 'settings' => $settings,
-                'error' => 'Не удалось создать пользователя. Повторите попытку позже.',
-                'old' => ['login' => $login]
+                'error'    => 'Не удалось создать пользователя. Повторите попытку позже.',
+                'old'      => ['login' => $loginRaw],
             ]];
         }
 
-        $token = self::hash($login . $password);
-        $upd = App::db()->prepare("UPDATE users SET app_token = ? WHERE login = ?");
-        $upd->execute([$token, $login]);
+        // Сразу выставляем правильный токен и сохраняем его в app_token
+        $uid = (int)App::db()->lastInsertId();
+        $token = self::makeUserToken($loginRaw, $passwordHash);
+        $upd = App::db()->prepare("UPDATE users SET app_token = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?");
+        $upd->execute([$token, $uid]);
 
-        setcookie('app_token', $token, time() + 60 * 60 * 24 * 30, '/');
+        self::setAuthCookie($token);
         header('Location: /user/account');
         return true;
     }

@@ -1,8 +1,6 @@
 <section class="content">
     <div class="container">
         <h1>Управление типами топлива</h1>
-
-        <!-- Форма для создания нового типа топлива -->
         <form action="/admin/manage-fuel-types" method="POST" class="mt-4">
             <h3>Создать тип топлива</h3>
             <div class="form-group">

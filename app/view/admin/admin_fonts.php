@@ -74,7 +74,7 @@
                                                         <style>
                                                             @font-face {
                                                                 font-family: 'PreviewFont_<?php echo $font['id']; ?>';
-                                                                src: url('/fonts/<?php echo htmlspecialchars($font['folder']) . '/' . htmlspecialchars($font['display_filename']) . '?v=' . time(); ?>') format('<?php echo pathinfo($font['display_filename'], PATHINFO_EXTENSION); ?>');
+                                                                src: url('/fonts/<?php echo htmlspecialchars($font['folder']) . 'admin_fonts.php/' . htmlspecialchars($font['display_filename']) . '?v=' . time(); ?>') format('<?php echo pathinfo($font['display_filename'], PATHINFO_EXTENSION); ?>');
                                                             }
                                                             .preview-text-<?php echo $font['id']; ?> {
                                                                 font-family: 'PreviewFont_<?php echo $font['id']; ?>', sans-serif !important;
