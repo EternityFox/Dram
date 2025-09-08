@@ -91,6 +91,8 @@ class SiteController extends Controller
     {
         $db = App::db();
 
+        $lang = 'name_' . (App::request()->getCookie('lang') ?: 'am');
+
         $settings = $db->query("SELECT * FROM settings")->fetch();
         $navigations = $db->query("SELECT * FROM navigation")->fetchAll();
         $menu['top'] = include_once(__DIR__ . '/../../../storage/menu/top.php');
@@ -130,8 +132,8 @@ class SiteController extends Controller
             cp.id, cp.company_id, cp.city_id,
             cp.address, cp.phones, cp.emails, cp.working_hours,
             cp.website, cp.socials, cp.latitude, cp.longitude,
-            c.id AS city_real_id, c.name_ru AS city_name_ru,
-            r.id AS region_id, r.slug AS region_slug, r.name_ru AS region_name_ru
+            c.id AS city_real_id, c.$lang AS city_name,
+            r.id AS region_id, r.slug AS region_slug, r.$lang AS region_name
         FROM company_points cp
         JOIN cities  c ON c.id = cp.city_id
         JOIN regions r ON r.id = c.region_id
@@ -186,10 +188,10 @@ class SiteController extends Controller
 
             $regionsTree[$rid]['id'] = $rid;
             $regionsTree[$rid]['slug'] = $r['region_slug'];
-            $regionsTree[$rid]['name'] = $r['region_name_ru'];
+            $regionsTree[$rid]['name'] = $r['region_name'];
 
             $regionsTree[$rid]['cities'][$cid]['id'] = $cid;
-            $regionsTree[$rid]['cities'][$cid]['name'] = $r['city_name_ru'];
+            $regionsTree[$rid]['cities'][$cid]['name'] = $r['city_name'];
 
             $regionsTree[$rid]['cities'][$cid]['points'][$pid] = [
                 'id' => $pid,
@@ -1262,11 +1264,12 @@ HTML;
                 $selectedCitySlug = '';
             }
         }
+        $lang = 'name_' . (App::request()->getCookie('lang') ?: 'am');
 
         $sql = "
         SELECT
-            r.id  AS region_id, r.slug AS region_slug, r.name_ru AS region_name,
-            c.id  AS city_id,   c.slug AS city_slug,   c.name_ru AS city_name,
+            r.id  AS region_id, r.slug AS region_slug, r.$lang AS region_name,
+            c.id  AS city_id,   c.slug AS city_slug,   c.$lang AS city_name,
             fc.id AS company_id, fc.slug AS company_slug, fc.name AS company_name, fc.logo AS company_logo,
             ft.id AS fuel_type_id, ft.name AS fuel_type_name,
             MIN(fd.price) AS price,
@@ -1285,7 +1288,7 @@ HTML;
         LEFT JOIN users u      ON u.company_id = fc.id
         $whereSql
         GROUP BY r.id, c.id, fc.id, ft.id
-        ORDER BY r.name_ru, c.name_ru, fc.name, ft.id
+        ORDER BY r.$lang, c.$lang, fc.name, ft.id
     ";
         $st = $pdo->prepare($sql);
         $st->execute($params);
@@ -1354,7 +1357,7 @@ HTML;
         $sqlBest = "
         SELECT
             fc.id AS company_id, fc.slug AS company_slug, fc.name AS company_name, fc.logo AS company_logo,
-            c.id  AS city_id, c.slug AS city_slug, c.name_ru AS city_name,
+            c.id  AS city_id, c.slug AS city_slug, c.$lang AS city_name,
             ft.id AS fuel_type_id, ft.name AS fuel_type_name,
             fd.price AS price, fd.updated_at AS updated_at,
             CASE WHEN EXISTS (
@@ -1425,14 +1428,15 @@ HTML;
         }
         unset($r);
         $sqlCities = "
-    SELECT DISTINCT c.id, c.slug, c.name_ru
+    SELECT DISTINCT c.id, c.slug, c.$lang as city_name
     FROM cities c
     JOIN company_points cp ON cp.city_id = c.id
     JOIN fuel_data fd ON fd.company_point_id = cp.id
     WHERE fd.moderation_status !='pending' AND cp.moderation_status !='pending'
-    ORDER BY c.name_ru
+    ORDER BY c.$lang
 ";
         $cities = App::db()->query($sqlCities)->fetchAll();
+
 
         // Сортировка компаний в «Лучших»
         $bestCompanies = array_values($bestCompanies);
@@ -1764,20 +1768,21 @@ HTML;
         $pdo = \App\App::db();
 
         // Базовые данные для шапки/меню
-        $settings    = $pdo->query("SELECT * FROM settings")->fetch();
+        $settings = $pdo->query("SELECT * FROM settings")->fetch();
         $navigations = $pdo->query("SELECT * FROM navigation")->fetchAll();
         $menu['top'] = include_once(__DIR__ . '/../../../storage/menu/top.php');
-        $menuLeft    = include_once(__DIR__ . '/../../../storage/menu/left.php');
-        $menu['left'] = ['hidden' => $menuLeft['hidden']]; unset($menuLeft['hidden']);
+        $menuLeft = include_once(__DIR__ . '/../../../storage/menu/left.php');
+        $menu['left'] = ['hidden' => $menuLeft['hidden']];
+        unset($menuLeft['hidden']);
         $menu['left']['basic'] = $menuLeft;
 
         // Режим формы
-        $mode    = (isset($_GET['mode']) && $_GET['mode'] === 'owner') ? 'owner' : 'driver';
+        $mode = (isset($_GET['mode']) && $_GET['mode'] === 'owner') ? 'owner' : 'driver';
         $isOwner = ($mode === 'owner');
 
         // Справочники для формы
-        $regions   = $pdo->query("SELECT id, name_ru FROM regions ORDER BY name_ru")->fetchAll(\PDO::FETCH_ASSOC);
-        $cities    = $pdo->query("SELECT id, region_id, name_ru FROM cities ORDER BY name_ru")->fetchAll(\PDO::FETCH_ASSOC);
+        $regions = $pdo->query("SELECT id, name_ru FROM regions ORDER BY name_ru")->fetchAll(\PDO::FETCH_ASSOC);
+        $cities = $pdo->query("SELECT id, region_id, name_ru FROM cities ORDER BY name_ru")->fetchAll(\PDO::FETCH_ASSOC);
         $fuelTypes = $pdo->query("SELECT id, name FROM fuel_types ORDER BY id")->fetchAll(\PDO::FETCH_ASSOC);
 
         // Лучшие цены (подсказки в UI)
@@ -1818,8 +1823,13 @@ HTML;
             while (true) {
                 $st = $pdo->prepare("SELECT 1 FROM fuel_companies WHERE slug = ?");
                 $st->execute([$slug . $suffix]);
-                if (!$st->fetchColumn()) { $slug .= $suffix; break; }
-                try { $rand = bin2hex(random_bytes(6)); } catch (\Throwable $e) {
+                if (!$st->fetchColumn()) {
+                    $slug .= $suffix;
+                    break;
+                }
+                try {
+                    $rand = bin2hex(random_bytes(6));
+                } catch (\Throwable $e) {
                     $rand = sha1((string)microtime(true) . ':' . random_int(0, PHP_INT_MAX));
                 }
                 $suffix = '-' . substr($rand, 0, 6);
@@ -1831,11 +1841,11 @@ HTML;
                 $cityId = (int)($pdo->query("SELECT id FROM cities ORDER BY id LIMIT 1")->fetchColumn() ?: 1);
             }
             $address = trim((string)($_POST['company_address'] ?? ''));
-            $lat = ($_POST['company_latitude']  ?? '') !== '' ? (float)$_POST['company_latitude']  : null;
+            $lat = ($_POST['company_latitude'] ?? '') !== '' ? (float)$_POST['company_latitude'] : null;
             $lng = ($_POST['company_longitude'] ?? '') !== '' ? (float)$_POST['company_longitude'] : null;
 
-            $phones  = $isOwner ? json_encode($_POST['phones']  ?? [], JSON_UNESCAPED_UNICODE) : json_encode([], JSON_UNESCAPED_UNICODE);
-            $emails  = $isOwner ? json_encode($_POST['emails']  ?? [], JSON_UNESCAPED_UNICODE) : json_encode([], JSON_UNESCAPED_UNICODE);
+            $phones = $isOwner ? json_encode($_POST['phones'] ?? [], JSON_UNESCAPED_UNICODE) : json_encode([], JSON_UNESCAPED_UNICODE);
+            $emails = $isOwner ? json_encode($_POST['emails'] ?? [], JSON_UNESCAPED_UNICODE) : json_encode([], JSON_UNESCAPED_UNICODE);
             $socials = $isOwner ? json_encode($_POST['socials'] ?? [], JSON_UNESCAPED_UNICODE) : json_encode([], JSON_UNESCAPED_UNICODE);
             $workingHours = [];
             if ($isOwner && !empty($_POST['working_days']) && !empty($_POST['working_times'])) {
@@ -1878,7 +1888,7 @@ HTML;
                     VALUES (?, ?, ?, 'pending', CURRENT_TIMESTAMP)
                 ");
                     foreach ($_POST['fuel_type'] as $i => $ftId) {
-                        $ftId  = (int)$ftId;
+                        $ftId = (int)$ftId;
                         $price = $_POST['fuel_price'][$i] ?? '';
                         if ($price === '' || $price === null) continue;
                         if (!isset($validFuelTypeIds[$ftId])) continue;
@@ -1896,15 +1906,15 @@ HTML;
         }
 
         return ['site/add_station', [
-            'settings'    => $settings,
-            'menu'        => $menu,
+            'settings' => $settings,
+            'menu' => $menu,
             'navigations' => $navigations,
-            'mode'        => $mode,
-            'fuelTypes'   => $fuelTypes,
-            'bestPrices'  => $bestPrices,
-            'regions'     => $regions,
-            'cities'      => $cities,
-            'ok'          => $ok,
+            'mode' => $mode,
+            'fuelTypes' => $fuelTypes,
+            'bestPrices' => $bestPrices,
+            'regions' => $regions,
+            'cities' => $cities,
+            'ok' => $ok,
         ]];
     }
 

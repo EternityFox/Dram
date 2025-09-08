@@ -34,11 +34,11 @@
                 </label>
                 <label class="form-field">
                     <span>Название (HY)</span>
-                    <input type="text" name="name_hy" class="form-control" required>
+                    <input type="text" name="name_am" class="form-control" required>
                 </label>
                 <label class="form-field">
                     <span>Название (ENG)</span>
-                    <input type="text" name="name_eng" class="form-control" required>
+                    <input type="text" name="name_en" class="form-control" required>
                 </label>
                 <div class="form-actions">
                     <button type="submit" name="create_region" class="btn btn-primary">Создать регион</button>
@@ -73,11 +73,11 @@
                 </label>
                 <label class="form-field">
                     <span>Название (HY)</span>
-                    <input type="text" name="name_hy" class="form-control" required>
+                    <input type="text" name="name_am" class="form-control" required>
                 </label>
                 <label class="form-field">
                     <span>Название (ENG)</span>
-                    <input type="text" name="name_eng" class="form-control" required>
+                    <input type="text" name="name_en" class="form-control" required>
                 </label>
 
                 <label class="form-field"><span>Lat</span>
@@ -128,7 +128,7 @@
                                     <span class="caret" aria-hidden="true"></span>
                                     <div class="acc-text">
                                         <strong><?= htmlspecialchars($r['name_ru']) ?></strong>
-                                        <span class="muted">/ <?= htmlspecialchars($r['name_eng']) ?> • <?= htmlspecialchars($r['name_hy']) ?></span>
+                                        <span class="muted">/ <?= htmlspecialchars($r['name_en']) ?> • <?= htmlspecialchars($r['name_am']) ?></span>
                                         <span class="muted slug">[<?= htmlspecialchars($r['slug']) ?>]</span>
                                     </div>
                                 </div>
@@ -139,8 +139,8 @@
                                             data-id="<?= $rid ?>"
                                             data-slug="<?= htmlspecialchars($r['slug']) ?>"
                                             data-ru="<?= htmlspecialchars($r['name_ru']) ?>"
-                                            data-hy="<?= htmlspecialchars($r['name_hy']) ?>"
-                                            data-eng="<?= htmlspecialchars($r['name_eng']) ?>"
+                                            data-hy="<?= htmlspecialchars($r['name_am']) ?>"
+                                            data-eng="<?= htmlspecialchars($r['name_en']) ?>"
                                     >Редактировать</button>
                                     <form action="/admin/manage-geo" method="POST" class="inline" onsubmit="return confirm('Удалить регион и все его города?');">
                                         <input type="hidden" name="region_id" value="<?= $rid ?>">
@@ -168,8 +168,8 @@
                                                     <td>
                                                         <div class="stack">
                                                             <strong><?= htmlspecialchars($c['name_ru']) ?></strong>
-                                                            <small class="muted"><?= htmlspecialchars($c['name_eng']) ?></small>
-                                                            <small class="muted"><?= htmlspecialchars($c['name_hy']) ?></small>
+                                                            <small class="muted"><?= htmlspecialchars($c['name_en']) ?></small>
+                                                            <small class="muted"><?= htmlspecialchars($c['name_am']) ?></small>
                                                         </div>
                                                     </td>
                                                     <td><?= htmlspecialchars($c['lat']) ?></td>
@@ -185,8 +185,8 @@
                                                                 data-region-id="<?= $rid ?>"
                                                                 data-slug="<?= htmlspecialchars($c['slug']) ?>"
                                                                 data-ru="<?= htmlspecialchars($c['name_ru']) ?>"
-                                                                data-hy="<?= htmlspecialchars($c['name_hy']) ?>"
-                                                                data-eng="<?= htmlspecialchars($c['name_eng']) ?>"
+                                                                data-hy="<?= htmlspecialchars($c['name_am']) ?>"
+                                                                data-eng="<?= htmlspecialchars($c['name_en']) ?>"
                                                                 data-lat="<?= htmlspecialchars($c['lat']) ?>"
                                                                 data-lng="<?= htmlspecialchars($c['lng']) ?>"
                                                                 data-cap="<?= (int)$c['is_capital'] ?>"
@@ -232,11 +232,11 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Название (HY)</label>
-                            <input type="text" name="name_hy" id="editRegionNameHy" class="form-control" required>
+                            <input type="text" name="name_am" id="editRegionNameHy" class="form-control" required>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Название (ENG)</label>
-                            <input type="text" name="name_eng" id="editRegionNameEng" class="form-control" required>
+                            <input type="text" name="name_en" id="editRegionNameEng" class="form-control" required>
                         </div>
                         <div class="d-flex gap-2 justify-content-end">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
@@ -279,11 +279,11 @@
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label">Название (HY)</label>
-                                <input type="text" name="name_hy" id="editCityNameHy" class="form-control" required>
+                                <input type="text" name="name_am" id="editCityNameHy" class="form-control" required>
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label">Название (ENG)</label>
-                                <input type="text" name="name_eng" id="editCityNameEng" class="form-control" required>
+                                <input type="text" name="name_en" id="editCityNameEng" class="form-control" required>
                             </div>
                             <div class="col-md-2">
                                 <label class="form-label">Lat</label>

@@ -843,26 +843,26 @@ class AdminController extends Controller
             // REGION: CREATE
             if (isset($_POST['create_region'])) {
                 $name_ru = trim($_POST['name_ru'] ?? '');
-                $name_hy = trim($_POST['name_hy'] ?? '');
-                $name_eng = trim($_POST['name_eng'] ?? '');
+                $name_am = trim($_POST['name_am'] ?? '');
+                $name_en = trim($_POST['name_en'] ?? '');
                 $slug = trim($_POST['slug'] ?? '');
-                if ($slug === '') $slug = $slugify($name_eng ?: $name_ru);
+                if ($slug === '') $slug = $slugify($name_en ?: $name_ru);
 
-                $stmt = $pdo->prepare("INSERT INTO regions (slug,name_ru,name_hy,name_eng,updated_at) VALUES (?,?,?,?,CURRENT_TIMESTAMP)");
-                $stmt->execute([$slug, $name_ru, $name_hy, $name_eng]);
+                $stmt = $pdo->prepare("INSERT INTO regions (slug,name_ru,name_am,name_en,updated_at) VALUES (?,?,?,?,CURRENT_TIMESTAMP)");
+                $stmt->execute([$slug, $name_ru, $name_am, $name_en]);
             }
 
             // REGION: UPDATE
             if (isset($_POST['edit_region'])) {
                 $id = (int)$_POST['region_id'];
                 $name_ru = trim($_POST['name_ru'] ?? '');
-                $name_hy = trim($_POST['name_hy'] ?? '');
-                $name_eng = trim($_POST['name_eng'] ?? '');
+                $name_am = trim($_POST['name_am'] ?? '');
+                $name_en = trim($_POST['name_en'] ?? '');
                 $slug = trim($_POST['slug'] ?? '');
-                if ($slug === '') $slug = $slugify($name_eng ?: $name_ru);
+                if ($slug === '') $slug = $slugify($name_en ?: $name_ru);
 
-                $stmt = $pdo->prepare("UPDATE regions SET slug=?, name_ru=?, name_hy=?, name_eng=?, updated_at=CURRENT_TIMESTAMP WHERE id=?");
-                $stmt->execute([$slug, $name_ru, $name_hy, $name_eng, $id]);
+                $stmt = $pdo->prepare("UPDATE regions SET slug=?, name_ru=?, name_am=?, name_en=?, updated_at=CURRENT_TIMESTAMP WHERE id=?");
+                $stmt->execute([$slug, $name_ru, $name_am, $name_en, $id]);
             }
 
             // REGION: DELETE (с удалением городов этого региона)
@@ -878,20 +878,20 @@ class AdminController extends Controller
             if (isset($_POST['create_city'])) {
                 $region_id = (int)($_POST['region_id'] ?? 0);
                 $name_ru = trim($_POST['name_ru'] ?? '');
-                $name_hy = trim($_POST['name_hy'] ?? '');
-                $name_eng = trim($_POST['name_eng'] ?? '');
+                $name_am = trim($_POST['name_am'] ?? '');
+                $name_en = trim($_POST['name_en'] ?? '');
                 $slug = trim($_POST['slug'] ?? '');
                 $lat = $_POST['lat'] !== '' ? (float)$_POST['lat'] : null;
                 $lng = $_POST['lng'] !== '' ? (float)$_POST['lng'] : null;
                 $capital = isset($_POST['is_capital']) ? 1 : 0;
                 $center = isset($_POST['is_region_center']) ? 1 : 0;
-                if ($slug === '') $slug = $slugify($name_eng ?: $name_ru);
+                if ($slug === '') $slug = $slugify($name_en ?: $name_ru);
 
                 $stmt = $pdo->prepare("
-                INSERT INTO cities (region_id,slug,name_ru,name_hy,name_eng,lat,lng,is_capital,is_region_center,updated_at)
+                INSERT INTO cities (region_id,slug,name_ru,name_am,name_en,lat,lng,is_capital,is_region_center,updated_at)
                 VALUES (?,?,?,?,?,?,?,?,?,CURRENT_TIMESTAMP)
             ");
-                $stmt->execute([$region_id, $slug, $name_ru, $name_hy, $name_eng, $lat, $lng, $capital, $center]);
+                $stmt->execute([$region_id, $slug, $name_ru, $name_am, $name_en, $lat, $lng, $capital, $center]);
             }
 
             // CITY: UPDATE
@@ -899,21 +899,21 @@ class AdminController extends Controller
                 $id = (int)$_POST['city_id'];
                 $region_id = (int)($_POST['region_id'] ?? 0);
                 $name_ru = trim($_POST['name_ru'] ?? '');
-                $name_hy = trim($_POST['name_hy'] ?? '');
-                $name_eng = trim($_POST['name_eng'] ?? '');
+                $name_am = trim($_POST['name_am'] ?? '');
+                $name_en = trim($_POST['name_en'] ?? '');
                 $slug = trim($_POST['slug'] ?? '');
                 $lat = $_POST['lat'] !== '' ? (float)$_POST['lat'] : null;
                 $lng = $_POST['lng'] !== '' ? (float)$_POST['lng'] : null;
                 $capital = isset($_POST['is_capital']) ? 1 : 0;
                 $center = isset($_POST['is_region_center']) ? 1 : 0;
-                if ($slug === '') $slug = $slugify($name_eng ?: $name_ru);
+                if ($slug === '') $slug = $slugify($name_en ?: $name_ru);
 
                 $stmt = $pdo->prepare("
                 UPDATE cities SET
-                    region_id=?, slug=?, name_ru=?, name_hy=?, name_eng=?, lat=?, lng=?, is_capital=?, is_region_center=?, updated_at=CURRENT_TIMESTAMP
+                    region_id=?, slug=?, name_ru=?, name_am=?, name_en=?, lat=?, lng=?, is_capital=?, is_region_center=?, updated_at=CURRENT_TIMESTAMP
                 WHERE id=?
             ");
-                $stmt->execute([$region_id, $slug, $name_ru, $name_hy, $name_eng, $lat, $lng, $capital, $center, $id]);
+                $stmt->execute([$region_id, $slug, $name_ru, $name_am, $name_en, $lat, $lng, $capital, $center, $id]);
             }
 
             // CITY: DELETE
@@ -1365,21 +1365,21 @@ class AdminController extends Controller
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             slug TEXT NOT NULL UNIQUE,
             name_ru TEXT NOT NULL,
-            name_hy TEXT NOT NULL,
-            name_eng TEXT NOT NULL,
+            name_am TEXT NOT NULL,
+            name_en TEXT NOT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ");
         } else {
-            // Добавим name_eng, если его нет
+            // Добавим name_en, если его нет
             $cols = $pdo->query("PRAGMA table_info(regions)")->fetchAll(PDO::FETCH_ASSOC);
             $hasEng = false;
-            foreach ($cols as $c) if (strtolower($c['name']) === 'name_eng') {
+            foreach ($cols as $c) if (strtolower($c['name']) === 'name_en') {
                 $hasEng = true;
                 break;
             }
-            if (!$hasEng) $pdo->query("ALTER TABLE regions ADD COLUMN name_eng TEXT NOT NULL DEFAULT ''");
+            if (!$hasEng) $pdo->query("ALTER TABLE regions ADD COLUMN name_en TEXT NOT NULL DEFAULT ''");
         }
 
         /** 2) CITIES */
@@ -1391,8 +1391,8 @@ class AdminController extends Controller
             region_id INTEGER NOT NULL,
             slug TEXT NOT NULL UNIQUE,
             name_ru TEXT NOT NULL,
-            name_hy TEXT NOT NULL,
-            name_eng TEXT NOT NULL,
+            name_am TEXT NOT NULL,
+            name_en TEXT NOT NULL,
             lat REAL,
             lng REAL,
             is_capital INTEGER NOT NULL DEFAULT 0,        -- столица страны
@@ -1404,33 +1404,33 @@ class AdminController extends Controller
     ");
             $pdo->query("CREATE INDEX IF NOT EXISTS idx_cities_region_name ON cities(region_id, name_ru)");
         } else {
-            // Добавим name_eng, если его нет
+            // Добавим name_en, если его нет
             $cols = $pdo->query("PRAGMA table_info(cities)")->fetchAll(PDO::FETCH_ASSOC);
             $hasEng = false;
-            foreach ($cols as $c) if (strtolower($c['name']) === 'name_eng') {
+            foreach ($cols as $c) if (strtolower($c['name']) === 'name_en') {
                 $hasEng = true;
                 break;
             }
-            if (!$hasEng) $pdo->query("ALTER TABLE cities ADD COLUMN name_eng TEXT NOT NULL DEFAULT ''");
+            if (!$hasEng) $pdo->query("ALTER TABLE cities ADD COLUMN name_en TEXT NOT NULL DEFAULT ''");
         }
 
         /** 3) DATA: регионы (10 марзов + Ереван) */
         $regions = [
-            ['slug' => 'yerevan', 'name_ru' => 'Ереван', 'name_hy' => 'Երևան', 'name_eng' => 'Yerevan'],
-            ['slug' => 'aragatsotn', 'name_ru' => 'Арагацотн', 'name_hy' => 'Արագածոտն', 'name_eng' => 'Aragatsotn'],
-            ['slug' => 'ararat', 'name_ru' => 'Арарат', 'name_hy' => 'Արարատ', 'name_eng' => 'Ararat'],
-            ['slug' => 'armavir', 'name_ru' => 'Армавир', 'name_hy' => 'Արմավիր', 'name_eng' => 'Armavir'],
-            ['slug' => 'gegharkunik', 'name_ru' => 'Гегаркуник', 'name_hy' => 'Գեղարքունիք', 'name_eng' => 'Gegharkunik'],
-            ['slug' => 'kotayk', 'name_ru' => 'Котайк', 'name_hy' => 'Կոտայք', 'name_eng' => 'Kotayk'],
-            ['slug' => 'lori', 'name_ru' => 'Лори', 'name_hy' => 'Լոռի', 'name_eng' => 'Lori'],
-            ['slug' => 'shirak', 'name_ru' => 'Ширак', 'name_hy' => 'Շիրակ', 'name_eng' => 'Shirak'],
-            ['slug' => 'syunik', 'name_ru' => 'Сюник', 'name_hy' => 'Սյունիք', 'name_eng' => 'Syunik'],
-            ['slug' => 'tavush', 'name_ru' => 'Тавуш', 'name_hy' => 'Թավուշ', 'name_eng' => 'Tavush'],
-            ['slug' => 'vayots-dzor', 'name_ru' => 'Вайоц Дзор', 'name_hy' => 'Վայոց Ձոր', 'name_eng' => 'Vayots Dzor'],
+            ['slug' => 'yerevan', 'name_ru' => 'Ереван', 'name_am' => 'Երևան', 'name_en' => 'Yerevan'],
+            ['slug' => 'aragatsotn', 'name_ru' => 'Арагацотн', 'name_am' => 'Արագածոտն', 'name_en' => 'Aragatsotn'],
+            ['slug' => 'ararat', 'name_ru' => 'Арарат', 'name_am' => 'Արարատ', 'name_en' => 'Ararat'],
+            ['slug' => 'armavir', 'name_ru' => 'Армавир', 'name_am' => 'Արմավիր', 'name_en' => 'Armavir'],
+            ['slug' => 'gegharkunik', 'name_ru' => 'Гегаркуник', 'name_am' => 'Գեղարքունիք', 'name_en' => 'Gegharkunik'],
+            ['slug' => 'kotayk', 'name_ru' => 'Котайк', 'name_am' => 'Կոտայք', 'name_en' => 'Kotayk'],
+            ['slug' => 'lori', 'name_ru' => 'Лори', 'name_am' => 'Լոռի', 'name_en' => 'Lori'],
+            ['slug' => 'shirak', 'name_ru' => 'Ширак', 'name_am' => 'Շիրակ', 'name_en' => 'Shirak'],
+            ['slug' => 'syunik', 'name_ru' => 'Сюник', 'name_am' => 'Սյունիք', 'name_en' => 'Syunik'],
+            ['slug' => 'tavush', 'name_ru' => 'Тавуш', 'name_am' => 'Թավուշ', 'name_en' => 'Tavush'],
+            ['slug' => 'vayots-dzor', 'name_ru' => 'Вайоц Дзор', 'name_am' => 'Վայոց Ձոր', 'name_en' => 'Vayots Dzor'],
         ];
 
-        $insReg = $pdo->prepare("INSERT OR IGNORE INTO regions (slug,name_ru,name_hy,name_eng) VALUES (:slug,:name_ru,:name_hy,:name_eng)");
-        $updReg = $pdo->prepare("UPDATE regions SET name_ru=:name_ru, name_hy=:name_hy, name_eng=:name_eng WHERE slug=:slug");
+        $insReg = $pdo->prepare("INSERT OR IGNORE INTO regions (slug,name_ru,name_am,name_en) VALUES (:slug,:name_ru,:name_am,:name_en)");
+        $updReg = $pdo->prepare("UPDATE regions SET name_ru=:name_ru, name_am=:name_am, name_en=:name_en WHERE slug=:slug");
         foreach ($regions as $r) {
             $insReg->execute($r);
             $updReg->execute($r);
@@ -1445,85 +1445,85 @@ class AdminController extends Controller
         /** 5) DATA: города (основные города и центры марзов) */
         $cities = [
             // Yerevan (capital)
-            ['slug' => 'yerevan', 'region' => 'yerevan', 'name_ru' => 'Ереван', 'name_hy' => 'Երևան', 'name_eng' => 'Yerevan', 'lat' => 40.1772, 'lng' => 44.5035, 'capital' => 1, 'center' => 1],
+            ['slug' => 'yerevan', 'region' => 'yerevan', 'name_ru' => 'Ереван', 'name_am' => 'Երևան', 'name_en' => 'Yerevan', 'lat' => 40.1772, 'lng' => 44.5035, 'capital' => 1, 'center' => 1],
 
             // Aragatsotn
-            ['slug' => 'ashtarak', 'region' => 'aragatsotn', 'name_ru' => 'Аштарак', 'name_hy' => 'Աշտարակ', 'name_eng' => 'Ashtarak', 'lat' => 40.299, 'lng' => 44.362, 'capital' => 0, 'center' => 1],
-            ['slug' => 'aparan', 'region' => 'aragatsotn', 'name_ru' => 'Апаран', 'name_hy' => 'Ապարան', 'name_eng' => 'Aparan', 'lat' => 40.593, 'lng' => 44.358, 'capital' => 0, 'center' => 0],
-            ['slug' => 'talin', 'region' => 'aragatsotn', 'name_ru' => 'Талин', 'name_hy' => 'Թալին', 'name_eng' => 'Talin', 'lat' => 40.391, 'lng' => 43.872, 'capital' => 0, 'center' => 0],
+            ['slug' => 'ashtarak', 'region' => 'aragatsotn', 'name_ru' => 'Аштарак', 'name_am' => 'Աշտարակ', 'name_en' => 'Ashtarak', 'lat' => 40.299, 'lng' => 44.362, 'capital' => 0, 'center' => 1],
+            ['slug' => 'aparan', 'region' => 'aragatsotn', 'name_ru' => 'Апаран', 'name_am' => 'Ապարան', 'name_en' => 'Aparan', 'lat' => 40.593, 'lng' => 44.358, 'capital' => 0, 'center' => 0],
+            ['slug' => 'talin', 'region' => 'aragatsotn', 'name_ru' => 'Талин', 'name_am' => 'Թալին', 'name_en' => 'Talin', 'lat' => 40.391, 'lng' => 43.872, 'capital' => 0, 'center' => 0],
 
             // Ararat
-            ['slug' => 'artashat', 'region' => 'ararat', 'name_ru' => 'Арташат', 'name_hy' => 'Արտաշատ', 'name_eng' => 'Artashat', 'lat' => 39.953, 'lng' => 44.549, 'capital' => 0, 'center' => 1],
-            ['slug' => 'ararat-city', 'region' => 'ararat', 'name_ru' => 'Арарат', 'name_hy' => 'Արարատ', 'name_eng' => 'Ararat (city)', 'lat' => 39.830, 'lng' => 44.700, 'capital' => 0, 'center' => 0],
-            ['slug' => 'masis', 'region' => 'ararat', 'name_ru' => 'Масис', 'name_hy' => 'Մասիս', 'name_eng' => 'Masis', 'lat' => 40.067, 'lng' => 44.434, 'capital' => 0, 'center' => 0],
-            ['slug' => 'vedi', 'region' => 'ararat', 'name_ru' => 'Веди', 'name_hy' => 'Վեդի', 'name_eng' => 'Vedi', 'lat' => 39.913, 'lng' => 44.728, 'capital' => 0, 'center' => 0],
+            ['slug' => 'artashat', 'region' => 'ararat', 'name_ru' => 'Арташат', 'name_am' => 'Արտաշատ', 'name_en' => 'Artashat', 'lat' => 39.953, 'lng' => 44.549, 'capital' => 0, 'center' => 1],
+            ['slug' => 'ararat-city', 'region' => 'ararat', 'name_ru' => 'Арарат', 'name_am' => 'Արարատ', 'name_en' => 'Ararat (city)', 'lat' => 39.830, 'lng' => 44.700, 'capital' => 0, 'center' => 0],
+            ['slug' => 'masis', 'region' => 'ararat', 'name_ru' => 'Масис', 'name_am' => 'Մասիս', 'name_en' => 'Masis', 'lat' => 40.067, 'lng' => 44.434, 'capital' => 0, 'center' => 0],
+            ['slug' => 'vedi', 'region' => 'ararat', 'name_ru' => 'Веди', 'name_am' => 'Վեդի', 'name_en' => 'Vedi', 'lat' => 39.913, 'lng' => 44.728, 'capital' => 0, 'center' => 0],
 
             // Armavir
-            ['slug' => 'armavir-city', 'region' => 'armavir', 'name_ru' => 'Армавир', 'name_hy' => 'Արմավիր', 'name_eng' => 'Armavir (city)', 'lat' => 40.154, 'lng' => 44.039, 'capital' => 0, 'center' => 1],
-            ['slug' => 'vagharshapat', 'region' => 'armavir', 'name_ru' => 'Вагаршапат', 'name_hy' => 'Վաղարշապատ', 'name_eng' => 'Vagharshapat (Etchmiadzin)', 'lat' => 40.169, 'lng' => 44.291, 'capital' => 0, 'center' => 0],
-            ['slug' => 'metsamor', 'region' => 'armavir', 'name_ru' => 'Мецамор', 'name_hy' => 'Մեծամոր', 'name_eng' => 'Metsamor', 'lat' => 40.147, 'lng' => 44.133, 'capital' => 0, 'center' => 0],
+            ['slug' => 'armavir-city', 'region' => 'armavir', 'name_ru' => 'Армавир', 'name_am' => 'Արմավիր', 'name_en' => 'Armavir (city)', 'lat' => 40.154, 'lng' => 44.039, 'capital' => 0, 'center' => 1],
+            ['slug' => 'vagharshapat', 'region' => 'armavir', 'name_ru' => 'Вагаршапат', 'name_am' => 'Վաղարշապատ', 'name_en' => 'Vagharshapat (Etchmiadzin)', 'lat' => 40.169, 'lng' => 44.291, 'capital' => 0, 'center' => 0],
+            ['slug' => 'metsamor', 'region' => 'armavir', 'name_ru' => 'Мецамор', 'name_am' => 'Մեծամոր', 'name_en' => 'Metsamor', 'lat' => 40.147, 'lng' => 44.133, 'capital' => 0, 'center' => 0],
 
             // Gegharkunik
-            ['slug' => 'gavar', 'region' => 'gegharkunik', 'name_ru' => 'Гавар', 'name_hy' => 'Գավառ', 'name_eng' => 'Gavar', 'lat' => 40.354, 'lng' => 45.123, 'capital' => 0, 'center' => 1],
-            ['slug' => 'sevan', 'region' => 'gegharkunik', 'name_ru' => 'Севан', 'name_hy' => 'Սևան', 'name_eng' => 'Sevan', 'lat' => 40.549, 'lng' => 44.948, 'capital' => 0, 'center' => 0],
-            ['slug' => 'martuni', 'region' => 'gegharkunik', 'name_ru' => 'Мартуни', 'name_hy' => 'Մարտունի', 'name_eng' => 'Martuni', 'lat' => 40.135, 'lng' => 45.306, 'capital' => 0, 'center' => 0],
-            ['slug' => 'vardenis', 'region' => 'gegharkunik', 'name_ru' => 'Варденис', 'name_hy' => 'Վարդենիս', 'name_eng' => 'Vardenis', 'lat' => 40.183, 'lng' => 45.730, 'capital' => 0, 'center' => 0],
-            ['slug' => 'chambarak', 'region' => 'gegharkunik', 'name_ru' => 'Чамбарак', 'name_hy' => 'Չամբարակ', 'name_eng' => 'Chambarak', 'lat' => 40.595, 'lng' => 45.349, 'capital' => 0, 'center' => 0],
+            ['slug' => 'gavar', 'region' => 'gegharkunik', 'name_ru' => 'Гавар', 'name_am' => 'Գավառ', 'name_en' => 'Gavar', 'lat' => 40.354, 'lng' => 45.123, 'capital' => 0, 'center' => 1],
+            ['slug' => 'sevan', 'region' => 'gegharkunik', 'name_ru' => 'Севан', 'name_am' => 'Սևան', 'name_en' => 'Sevan', 'lat' => 40.549, 'lng' => 44.948, 'capital' => 0, 'center' => 0],
+            ['slug' => 'martuni', 'region' => 'gegharkunik', 'name_ru' => 'Мартуни', 'name_am' => 'Մարտունի', 'name_en' => 'Martuni', 'lat' => 40.135, 'lng' => 45.306, 'capital' => 0, 'center' => 0],
+            ['slug' => 'vardenis', 'region' => 'gegharkunik', 'name_ru' => 'Варденис', 'name_am' => 'Վարդենիս', 'name_en' => 'Vardenis', 'lat' => 40.183, 'lng' => 45.730, 'capital' => 0, 'center' => 0],
+            ['slug' => 'chambarak', 'region' => 'gegharkunik', 'name_ru' => 'Чамбарак', 'name_am' => 'Չամբարակ', 'name_en' => 'Chambarak', 'lat' => 40.595, 'lng' => 45.349, 'capital' => 0, 'center' => 0],
 
             // Kotayk
-            ['slug' => 'hrazdan', 'region' => 'kotayk', 'name_ru' => 'Раздан', 'name_hy' => 'Հրազդան', 'name_eng' => 'Hrazdan', 'lat' => 40.497, 'lng' => 44.766, 'capital' => 0, 'center' => 1],
-            ['slug' => 'abovyan', 'region' => 'kotayk', 'name_ru' => 'Абовян', 'name_hy' => 'Աբովյան', 'name_eng' => 'Abovyan', 'lat' => 40.271, 'lng' => 44.627, 'capital' => 0, 'center' => 0],
-            ['slug' => 'charentsavan', 'region' => 'kotayk', 'name_ru' => 'Чаренцаван', 'name_hy' => 'Չարենցավան', 'name_eng' => 'Charentsavan', 'lat' => 40.402, 'lng' => 44.647, 'capital' => 0, 'center' => 0],
-            ['slug' => 'byureghavan', 'region' => 'kotayk', 'name_ru' => 'Бюрегаван', 'name_hy' => 'Բյուրեղավան', 'name_eng' => 'Byureghavan', 'lat' => 40.374, 'lng' => 44.593, 'capital' => 0, 'center' => 0],
-            ['slug' => 'nor-hachn', 'region' => 'kotayk', 'name_ru' => 'Нор-Ачин', 'name_hy' => 'Նոր Հաճն', 'name_eng' => 'Nor Hachn', 'lat' => 40.322, 'lng' => 44.586, 'capital' => 0, 'center' => 0],
-            ['slug' => 'tsaghkadzor', 'region' => 'kotayk', 'name_ru' => 'Цахкадзор', 'name_hy' => 'Ծաղկաձոր', 'name_eng' => 'Tsaghkadzor', 'lat' => 40.532, 'lng' => 44.719, 'capital' => 0, 'center' => 0],
-            ['slug' => 'yeghvard', 'region' => 'kotayk', 'name_ru' => 'Егвард', 'name_hy' => 'Եղվարդ', 'name_eng' => 'Yeghvard', 'lat' => 40.321, 'lng' => 44.486, 'capital' => 0, 'center' => 0],
+            ['slug' => 'hrazdan', 'region' => 'kotayk', 'name_ru' => 'Раздан', 'name_am' => 'Հրազդան', 'name_en' => 'Hrazdan', 'lat' => 40.497, 'lng' => 44.766, 'capital' => 0, 'center' => 1],
+            ['slug' => 'abovyan', 'region' => 'kotayk', 'name_ru' => 'Абовян', 'name_am' => 'Աբովյան', 'name_en' => 'Abovyan', 'lat' => 40.271, 'lng' => 44.627, 'capital' => 0, 'center' => 0],
+            ['slug' => 'charentsavan', 'region' => 'kotayk', 'name_ru' => 'Чаренцаван', 'name_am' => 'Չարենցավան', 'name_en' => 'Charentsavan', 'lat' => 40.402, 'lng' => 44.647, 'capital' => 0, 'center' => 0],
+            ['slug' => 'byureghavan', 'region' => 'kotayk', 'name_ru' => 'Бюрегаван', 'name_am' => 'Բյուրեղավան', 'name_en' => 'Byureghavan', 'lat' => 40.374, 'lng' => 44.593, 'capital' => 0, 'center' => 0],
+            ['slug' => 'nor-hachn', 'region' => 'kotayk', 'name_ru' => 'Нор-Ачин', 'name_am' => 'Նոր Հաճն', 'name_en' => 'Nor Hachn', 'lat' => 40.322, 'lng' => 44.586, 'capital' => 0, 'center' => 0],
+            ['slug' => 'tsaghkadzor', 'region' => 'kotayk', 'name_ru' => 'Цахкадзор', 'name_am' => 'Ծաղկաձոր', 'name_en' => 'Tsaghkadzor', 'lat' => 40.532, 'lng' => 44.719, 'capital' => 0, 'center' => 0],
+            ['slug' => 'yeghvard', 'region' => 'kotayk', 'name_ru' => 'Егвард', 'name_am' => 'Եղվարդ', 'name_en' => 'Yeghvard', 'lat' => 40.321, 'lng' => 44.486, 'capital' => 0, 'center' => 0],
 
             // Lori
-            ['slug' => 'vanadzor', 'region' => 'lori', 'name_ru' => 'Ванадзор', 'name_hy' => 'Վանաձոր', 'name_eng' => 'Vanadzor', 'lat' => 40.8128, 'lng' => 44.4889, 'capital' => 0, 'center' => 1],
-            ['slug' => 'alaverdi', 'region' => 'lori', 'name_ru' => 'Алаверди', 'name_hy' => 'Ալավերդի', 'name_eng' => 'Alaverdi', 'lat' => 41.097, 'lng' => 44.663, 'capital' => 0, 'center' => 0],
-            ['slug' => 'spitak', 'region' => 'lori', 'name_ru' => 'Спитак', 'name_hy' => 'Սպիտակ', 'name_eng' => 'Spitak', 'lat' => 40.832, 'lng' => 44.267, 'capital' => 0, 'center' => 0],
-            ['slug' => 'stepanavan', 'region' => 'lori', 'name_ru' => 'Степанаван', 'name_hy' => 'Ստեփանավան', 'name_eng' => 'Stepanavan', 'lat' => 41.009, 'lng' => 44.379, 'capital' => 0, 'center' => 0],
-            ['slug' => 'tashir', 'region' => 'lori', 'name_ru' => 'Ташир', 'name_hy' => 'Տաշիր', 'name_eng' => 'Tashir', 'lat' => 41.121, 'lng' => 44.287, 'capital' => 0, 'center' => 0],
-            ['slug' => 'akhtala', 'region' => 'lori', 'name_ru' => 'Ахтала', 'name_hy' => 'Ախթալա', 'name_eng' => 'Akhtala', 'lat' => 41.149, 'lng' => 44.750, 'capital' => 0, 'center' => 0],
-            ['slug' => 'shamlugh', 'region' => 'lori', 'name_ru' => 'Шамлуг', 'name_hy' => 'Շամլուղ', 'name_eng' => 'Shamlugh', 'lat' => 41.173, 'lng' => 44.871, 'capital' => 0, 'center' => 0],
+            ['slug' => 'vanadzor', 'region' => 'lori', 'name_ru' => 'Ванадзор', 'name_am' => 'Վանաձոր', 'name_en' => 'Vanadzor', 'lat' => 40.8128, 'lng' => 44.4889, 'capital' => 0, 'center' => 1],
+            ['slug' => 'alaverdi', 'region' => 'lori', 'name_ru' => 'Алаверди', 'name_am' => 'Ալավերդի', 'name_en' => 'Alaverdi', 'lat' => 41.097, 'lng' => 44.663, 'capital' => 0, 'center' => 0],
+            ['slug' => 'spitak', 'region' => 'lori', 'name_ru' => 'Спитак', 'name_am' => 'Սպիտակ', 'name_en' => 'Spitak', 'lat' => 40.832, 'lng' => 44.267, 'capital' => 0, 'center' => 0],
+            ['slug' => 'stepanavan', 'region' => 'lori', 'name_ru' => 'Степанаван', 'name_am' => 'Ստեփանավան', 'name_en' => 'Stepanavan', 'lat' => 41.009, 'lng' => 44.379, 'capital' => 0, 'center' => 0],
+            ['slug' => 'tashir', 'region' => 'lori', 'name_ru' => 'Ташир', 'name_am' => 'Տաշիր', 'name_en' => 'Tashir', 'lat' => 41.121, 'lng' => 44.287, 'capital' => 0, 'center' => 0],
+            ['slug' => 'akhtala', 'region' => 'lori', 'name_ru' => 'Ахтала', 'name_am' => 'Ախթալա', 'name_en' => 'Akhtala', 'lat' => 41.149, 'lng' => 44.750, 'capital' => 0, 'center' => 0],
+            ['slug' => 'shamlugh', 'region' => 'lori', 'name_ru' => 'Шамлуг', 'name_am' => 'Շամլուղ', 'name_en' => 'Shamlugh', 'lat' => 41.173, 'lng' => 44.871, 'capital' => 0, 'center' => 0],
 
             // Shirak
-            ['slug' => 'gyumri', 'region' => 'shirak', 'name_ru' => 'Гюмри', 'name_hy' => 'Գյումրի', 'name_eng' => 'Gyumri', 'lat' => 40.789, 'lng' => 43.847, 'capital' => 0, 'center' => 1],
-            ['slug' => 'artik', 'region' => 'shirak', 'name_ru' => 'Артик', 'name_hy' => 'Արթիկ', 'name_eng' => 'Artik', 'lat' => 40.591, 'lng' => 43.980, 'capital' => 0, 'center' => 0],
-            ['slug' => 'maralik', 'region' => 'shirak', 'name_ru' => 'Маралик', 'name_hy' => 'Մարալիկ', 'name_eng' => 'Maralik', 'lat' => 40.575, 'lng' => 43.869, 'capital' => 0, 'center' => 0],
+            ['slug' => 'gyumri', 'region' => 'shirak', 'name_ru' => 'Гюмри', 'name_am' => 'Գյումրի', 'name_en' => 'Gyumri', 'lat' => 40.789, 'lng' => 43.847, 'capital' => 0, 'center' => 1],
+            ['slug' => 'artik', 'region' => 'shirak', 'name_ru' => 'Артик', 'name_am' => 'Արթիկ', 'name_en' => 'Artik', 'lat' => 40.591, 'lng' => 43.980, 'capital' => 0, 'center' => 0],
+            ['slug' => 'maralik', 'region' => 'shirak', 'name_ru' => 'Маралик', 'name_am' => 'Մարալիկ', 'name_en' => 'Maralik', 'lat' => 40.575, 'lng' => 43.869, 'capital' => 0, 'center' => 0],
 
             // Syunik
-            ['slug' => 'kapan', 'region' => 'syunik', 'name_ru' => 'Капан', 'name_hy' => 'Կապան', 'name_eng' => 'Kapan', 'lat' => 39.207, 'lng' => 46.405, 'capital' => 0, 'center' => 1],
-            ['slug' => 'goris', 'region' => 'syunik', 'name_ru' => 'Горис', 'name_hy' => 'Գորիս', 'name_eng' => 'Goris', 'lat' => 39.511, 'lng' => 46.338, 'capital' => 0, 'center' => 0],
-            ['slug' => 'meghri', 'region' => 'syunik', 'name_ru' => 'Мегри', 'name_hy' => 'Մեղրի', 'name_eng' => 'Meghri', 'lat' => 38.906, 'lng' => 46.246, 'capital' => 0, 'center' => 0],
-            ['slug' => 'agarak', 'region' => 'syunik', 'name_ru' => 'Агарак', 'name_hy' => 'Ագարակ', 'name_eng' => 'Agarak', 'lat' => 38.901, 'lng' => 46.545, 'capital' => 0, 'center' => 0],
-            ['slug' => 'kajaran', 'region' => 'syunik', 'name_ru' => 'Каджаран', 'name_hy' => 'Քաջարան', 'name_eng' => 'Kajaran', 'lat' => 39.153, 'lng' => 46.146, 'capital' => 0, 'center' => 0],
-            ['slug' => 'sisian', 'region' => 'syunik', 'name_ru' => 'Сисиан', 'name_hy' => 'Սիսիան', 'name_eng' => 'Sisian', 'lat' => 39.521, 'lng' => 46.019, 'capital' => 0, 'center' => 0],
-            ['slug' => 'dastakert', 'region' => 'syunik', 'name_ru' => 'Дастакерт', 'name_hy' => 'Դաստակերտ', 'name_eng' => 'Dastakert', 'lat' => 39.383, 'lng' => 46.086, 'capital' => 0, 'center' => 0],
+            ['slug' => 'kapan', 'region' => 'syunik', 'name_ru' => 'Капан', 'name_am' => 'Կապան', 'name_en' => 'Kapan', 'lat' => 39.207, 'lng' => 46.405, 'capital' => 0, 'center' => 1],
+            ['slug' => 'goris', 'region' => 'syunik', 'name_ru' => 'Горис', 'name_am' => 'Գորիս', 'name_en' => 'Goris', 'lat' => 39.511, 'lng' => 46.338, 'capital' => 0, 'center' => 0],
+            ['slug' => 'meghri', 'region' => 'syunik', 'name_ru' => 'Мегри', 'name_am' => 'Մեղրի', 'name_en' => 'Meghri', 'lat' => 38.906, 'lng' => 46.246, 'capital' => 0, 'center' => 0],
+            ['slug' => 'agarak', 'region' => 'syunik', 'name_ru' => 'Агарак', 'name_am' => 'Ագարակ', 'name_en' => 'Agarak', 'lat' => 38.901, 'lng' => 46.545, 'capital' => 0, 'center' => 0],
+            ['slug' => 'kajaran', 'region' => 'syunik', 'name_ru' => 'Каджаран', 'name_am' => 'Քաջարան', 'name_en' => 'Kajaran', 'lat' => 39.153, 'lng' => 46.146, 'capital' => 0, 'center' => 0],
+            ['slug' => 'sisian', 'region' => 'syunik', 'name_ru' => 'Сисиан', 'name_am' => 'Սիսիան', 'name_en' => 'Sisian', 'lat' => 39.521, 'lng' => 46.019, 'capital' => 0, 'center' => 0],
+            ['slug' => 'dastakert', 'region' => 'syunik', 'name_ru' => 'Дастакерт', 'name_am' => 'Դաստակերտ', 'name_en' => 'Dastakert', 'lat' => 39.383, 'lng' => 46.086, 'capital' => 0, 'center' => 0],
 
             // Tavush
-            ['slug' => 'ijevan', 'region' => 'tavush', 'name_ru' => 'Иджеван', 'name_hy' => 'Իջևան', 'name_eng' => 'Ijevan', 'lat' => 40.879, 'lng' => 45.148, 'capital' => 0, 'center' => 1],
-            ['slug' => 'dilijan', 'region' => 'tavush', 'name_ru' => 'Дилижан', 'name_hy' => 'Դիլիջան', 'name_eng' => 'Dilijan', 'lat' => 40.741, 'lng' => 44.863, 'capital' => 0, 'center' => 0],
-            ['slug' => 'berd', 'region' => 'tavush', 'name_ru' => 'Берд', 'name_hy' => 'Բերդ', 'name_eng' => 'Berd', 'lat' => 40.882, 'lng' => 45.386, 'capital' => 0, 'center' => 0],
-            ['slug' => 'noyemberyan', 'region' => 'tavush', 'name_ru' => 'Ноемберян', 'name_hy' => 'Նոյեմբերյան', 'name_eng' => 'Noyemberyan', 'lat' => 41.173, 'lng' => 44.998, 'capital' => 0, 'center' => 0],
-            ['slug' => 'ayrum', 'region' => 'tavush', 'name_ru' => 'Айрум', 'name_hy' => 'Այրում', 'name_eng' => 'Ayrum', 'lat' => 41.017, 'lng' => 44.618, 'capital' => 0, 'center' => 0],
+            ['slug' => 'ijevan', 'region' => 'tavush', 'name_ru' => 'Иджеван', 'name_am' => 'Իջևան', 'name_en' => 'Ijevan', 'lat' => 40.879, 'lng' => 45.148, 'capital' => 0, 'center' => 1],
+            ['slug' => 'dilijan', 'region' => 'tavush', 'name_ru' => 'Дилижан', 'name_am' => 'Դիլիջան', 'name_en' => 'Dilijan', 'lat' => 40.741, 'lng' => 44.863, 'capital' => 0, 'center' => 0],
+            ['slug' => 'berd', 'region' => 'tavush', 'name_ru' => 'Берд', 'name_am' => 'Բերդ', 'name_en' => 'Berd', 'lat' => 40.882, 'lng' => 45.386, 'capital' => 0, 'center' => 0],
+            ['slug' => 'noyemberyan', 'region' => 'tavush', 'name_ru' => 'Ноемберян', 'name_am' => 'Նոյեմբերյան', 'name_en' => 'Noyemberyan', 'lat' => 41.173, 'lng' => 44.998, 'capital' => 0, 'center' => 0],
+            ['slug' => 'ayrum', 'region' => 'tavush', 'name_ru' => 'Айрум', 'name_am' => 'Այրում', 'name_en' => 'Ayrum', 'lat' => 41.017, 'lng' => 44.618, 'capital' => 0, 'center' => 0],
 
             // Vayots Dzor
-            ['slug' => 'yeghegnadzor', 'region' => 'vayots-dzor', 'name_ru' => 'Ехегнадзор', 'name_hy' => 'Եղեգնաձոր', 'name_eng' => 'Yeghegnadzor', 'lat' => 39.763, 'lng' => 45.333, 'capital' => 0, 'center' => 1],
-            ['slug' => 'jermuk', 'region' => 'vayots-dzor', 'name_ru' => 'Джермук', 'name_hy' => 'Ջերմուկ', 'name_eng' => 'Jermuk', 'lat' => 39.842, 'lng' => 45.672, 'capital' => 0, 'center' => 0],
-            ['slug' => 'vayk', 'region' => 'vayots-dzor', 'name_ru' => 'Вайк', 'name_hy' => 'Վայք', 'name_eng' => 'Vayk', 'lat' => 39.688, 'lng' => 45.466, 'capital' => 0, 'center' => 0],
+            ['slug' => 'yeghegnadzor', 'region' => 'vayots-dzor', 'name_ru' => 'Ехегнадзор', 'name_am' => 'Եղեգնաձոր', 'name_en' => 'Yeghegnadzor', 'lat' => 39.763, 'lng' => 45.333, 'capital' => 0, 'center' => 1],
+            ['slug' => 'jermuk', 'region' => 'vayots-dzor', 'name_ru' => 'Джермук', 'name_am' => 'Ջերմուկ', 'name_en' => 'Jermuk', 'lat' => 39.842, 'lng' => 45.672, 'capital' => 0, 'center' => 0],
+            ['slug' => 'vayk', 'region' => 'vayots-dzor', 'name_ru' => 'Вайк', 'name_am' => 'Վայք', 'name_en' => 'Vayk', 'lat' => 39.688, 'lng' => 45.466, 'capital' => 0, 'center' => 0],
         ];
 
 // upsert по slug
         $insCity = $pdo->prepare("
     INSERT OR IGNORE INTO cities
-    (region_id, slug, name_ru, name_hy, name_eng, lat, lng, is_capital, is_region_center)
-    VALUES (:region_id,:slug,:name_ru,:name_hy,:name_eng,:lat,:lng,:is_capital,:is_region_center)
+    (region_id, slug, name_ru, name_am, name_en, lat, lng, is_capital, is_region_center)
+    VALUES (:region_id,:slug,:name_ru,:name_am,:name_en,:lat,:lng,:is_capital,:is_region_center)
 ");
         $updCity = $pdo->prepare("
     UPDATE cities SET
-        region_id=:region_id, name_ru=:name_ru, name_hy=:name_hy, name_eng=:name_eng,
+        region_id=:region_id, name_ru=:name_ru, name_am=:name_am, name_en=:name_en,
         lat=:lat, lng=:lng, is_capital=:is_capital, is_region_center=:is_region_center
     WHERE slug=:slug
 ");
@@ -1536,8 +1536,8 @@ class AdminController extends Controller
                 ':region_id' => $regionId,
                 ':slug' => $c['slug'],
                 ':name_ru' => $c['name_ru'],
-                ':name_hy' => $c['name_hy'],
-                ':name_eng' => $c['name_eng'],
+                ':name_am' => $c['name_am'],
+                ':name_en' => $c['name_en'],
                 ':lat' => $c['lat'],
                 ':lng' => $c['lng'],
                 ':is_capital' => $c['capital'],
@@ -1773,8 +1773,8 @@ class AdminController extends Controller
                     $pdo->exec("CREATE INDEX IF NOT EXISTS idx_company_points_company ON company_points(company_id)");
                     $pdo->exec("CREATE INDEX IF NOT EXISTS idx_company_points_city    ON company_points(city_id)");
 
-                    // 5) удалить старую
-                    //$pdo->exec("DROP TABLE company_points__old");
+                    // 5) удалить старую (оставим мягко закомментированным)
+                    // $pdo->exec("DROP TABLE company_points__old");
 
                     $commit($ctx);
                 } catch (\Throwable $e) {
@@ -1838,6 +1838,7 @@ class AdminController extends Controller
                     throw $e;
                 }
             }
+
             // ==== 5) Гарантируем наличие колонок moderation_status ====
             $addColIfMissing = function (string $table, string $col, string $def = 'approved') {
                 $pdo = App::db();
@@ -1855,7 +1856,6 @@ class AdminController extends Controller
             $pdo->exec("CREATE INDEX IF NOT EXISTS idx_fc_moderation ON fuel_companies(moderation_status)");
             $pdo->exec("CREATE INDEX IF NOT EXISTS idx_cp_moderation ON company_points(moderation_status)");
             $pdo->exec("CREATE INDEX IF NOT EXISTS idx_fd_moderation ON fuel_data(moderation_status)");
-
 
             // 4.3 Пересобираем fuel_data без старого столбца company_id/compani_id
             if ($hasCompanyId) {
@@ -1900,8 +1900,118 @@ class AdminController extends Controller
                 } catch (\PDOException $e) {
                 }
             }
-
         }
+
+        // ==== 6) Переименование name_eng -> name_en в regions и cities ====
+        $renameNameEngToEn = function (string $table) use ($pdo, $colNames, $tableExists, $begin, $commit, $rollback) {
+            if (!$tableExists($table)) return;
+
+            $cols = $colNames($table);
+            $hasOld = in_array('name_eng', $cols, true);
+            $hasNew = in_array('name_en', $cols, true);
+
+            if ($hasOld && !$hasNew) {
+                // Пытаемся нативно переименовать столбец (SQLite >= 3.25)
+                $ctx = $begin();
+                try {
+                    $pdo->exec("ALTER TABLE {$table} RENAME COLUMN name_eng TO name_en");
+                    $commit($ctx);
+                } catch (\Throwable $e) {
+                    $rollback($ctx);
+                    // Фолбэк: добавим name_en, скопируем данные, попробуем удалить name_eng
+                    $ctx2 = $begin();
+                    try {
+                        $pdo->exec("ALTER TABLE {$table} ADD COLUMN name_en TEXT");
+                        $pdo->exec("UPDATE {$table} SET name_en = name_eng WHERE name_en IS NULL OR name_en = ''");
+                        $commit($ctx2);
+                    } catch (\Throwable $ee) {
+                        $rollback($ctx2);
+                        throw $ee;
+                    }
+                    // Попытка удалить старую колонку (SQLite >= 3.35)
+                    try {
+                        $pdo->exec("ALTER TABLE {$table} DROP COLUMN name_eng");
+                    } catch (\Throwable $ignored) {
+                    }
+                }
+            } elseif ($hasOld && $hasNew) {
+                // Оба столбца есть — синхронизируем и пробуем удалить старый
+                $ctx = $begin();
+                try {
+                    $pdo->exec("
+                    UPDATE {$table}
+                       SET name_en = CASE WHEN name_en IS NULL OR name_en = '' THEN name_eng ELSE name_en END
+                ");
+                    try {
+                        $pdo->exec("ALTER TABLE {$table} DROP COLUMN name_eng");
+                    } catch (\Throwable $ignored) {
+                    }
+                    $commit($ctx);
+                } catch (\Throwable $e) {
+                    $rollback($ctx);
+                    throw $e;
+                }
+            }
+            // если есть только name_en — ничего не делаем
+        };
+
+        $renameNameEngToEn('regions');
+        $renameNameEngToEn('cities');
+
+        $renameNameHyToAm = function (string $table) use ($pdo, $colNames, $tableExists, $begin, $commit, $rollback) {
+            if (!$tableExists($table)) return;
+
+            $cols = $colNames($table);
+            $hasOld = in_array('name_hy', $cols, true);
+            $hasNew = in_array('name_am', $cols, true);
+
+            if ($hasOld && !$hasNew) {
+                // Пытаемся нативно переименовать столбец (SQLite >= 3.25)
+                $ctx = $begin();
+                try {
+                    $pdo->exec("ALTER TABLE {$table} RENAME COLUMN name_hy TO name_am");
+                    $commit($ctx);
+                } catch (\Throwable $e) {
+                    $rollback($ctx);
+                    // Фолбэк: добавим name_en, скопируем данные, попробуем удалить name_eng
+                    $ctx2 = $begin();
+                    try {
+                        $pdo->exec("ALTER TABLE {$table} ADD COLUMN name_am TEXT");
+                        $pdo->exec("UPDATE {$table} SET name_am = name_hy WHERE name_am IS NULL OR name_am = ''");
+                        $commit($ctx2);
+                    } catch (\Throwable $ee) {
+                        $rollback($ctx2);
+                        throw $ee;
+                    }
+                    // Попытка удалить старую колонку (SQLite >= 3.35)
+                    try {
+                        $pdo->exec("ALTER TABLE {$table} DROP COLUMN name_hy");
+                    } catch (\Throwable $ignored) {
+                    }
+                }
+            } elseif ($hasOld && $hasNew) {
+                // Оба столбца есть — синхронизируем и пробуем удалить старый
+                $ctx = $begin();
+                try {
+                    $pdo->exec("
+                    UPDATE {$table}
+                       SET name_en = CASE WHEN name_am IS NULL OR name_am = '' THEN name_hy ELSE name_am END
+                ");
+                    try {
+                        $pdo->exec("ALTER TABLE {$table} DROP COLUMN name_hy");
+                    } catch (\Throwable $ignored) {
+                    }
+                    $commit($ctx);
+                } catch (\Throwable $e) {
+                    $rollback($ctx);
+                    throw $e;
+                }
+            }
+            // если есть только name_en — ничего не делаем
+        };
+
+        $renameNameHyToAm('regions');
+        $renameNameHyToAm('cities');
 
         // Вернём FK проверки
         $pdo->exec("PRAGMA foreign_keys = ON");

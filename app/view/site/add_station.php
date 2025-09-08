@@ -1,25 +1,25 @@
 <section class="content">
     <div class="container dashboard-container modern">
 
-        <div class="d-flex align-items-center gap-5 mb-4">
+        <div class="d-flex align-items-center gap-4 gap-md-5 mb-4">
             <a href="javascript:history.back()">
                 <img src="img/back-circle.svg" alt="Иконка назад" class="back-arrow">
             </a>
-            <h2 class="m-0">Добавление заправки</h2>
+            <h2 class="m-0"><?= $lang('Добавление заправки'); ?></h2>
         </div>
 
         <div class="d-flex gap-2 my-4 justify-content-around">
             <a class="btn rounded-pill p-3 col <?= $mode === 'driver' ? 'btn-primary blue-btn' : 'btn-light gray-btn' ?>"
-               href="/add-station?mode=driver">Я водитель</a>
+               href="/add-station?mode=driver"><?= $lang('Я водитель'); ?></a>
             <a class="btn rounded-pill p-3 col <?= $mode === 'owner' ? 'btn-primary blue-btn' : 'btn-light gray-btn' ?>"
-               href="/add-station?mode=owner">Я владелец заправки</a>
+               href="/add-station?mode=owner"><?= $lang('Я владелец заправки'); ?></a>
         </div>
 
         <?php if (!empty($ok)): ?>
             <div class="alert alert-success">
-                Заявка отправлена. Запись появится на сайте <b>после модерации</b>.
+                <?= $lang('Заявка отправлена. Запись появится на сайте'); ?> <b><?= $lang('после модерации'); ?></b>.
                 <?php if ($mode === 'owner'): ?>
-                    <br>Чтобы получить логин и пароль для личного кабинета владельца — напишите на <a
+                    <br><?= $lang('Чтобы получить логин и пароль для личного кабинета владельца — напишите на'); ?> <a
                             href="mailto:selmidis.com@gmail.com">selmidis.com@gmail.com</a>.
                 <?php endif; ?>
             </div>
@@ -35,14 +35,14 @@
             <!-- 1. Установка цен -->
             <div class="card-section" data-section="fuel-prices">
                 <h3 class="section-toggle blue-background" onclick="toggleSection('fuel-prices')">
-                    <span>1. Установка цен</span><img src="/img/arrow-down.svg" alt="">
+                    <span>1. <?= $lang('Установка цен'); ?></span><img src="/img/arrow-down.svg" alt="">
                 </h3>
                 <div class="section-content">
                     <div class="price-table">
                         <div class="price-header">
-                            <div>топливо</div>
-                            <div>ваша цена</div>
-                            <div>лучшая цена</div>
+                            <div><?= $lang('топливо'); ?></div>
+                            <div><?= $lang('ваша цена'); ?></div>
+                            <div><?= $lang('лучшая цена'); ?></div>
                             <div></div>
                         </div>
                         <div id="fuelPricesGroup" class="price-rows">
@@ -53,33 +53,33 @@
                                     <?php endforeach; ?>
                                 </select>
                                 <input type="number" class="form-control fuel-price" name="fuel_price[]"
-                                       placeholder="Цена в AMD" step="0.01" required>
-                                <div class="best-cell"><span class="best-price">—</span></div>
-                                <img src="/img/close-red.svg" class="remove-btn" alt="Удалить">
+                                       placeholder="<?= $lang('Цена в AMD'); ?>" step="0.01" required>
+                                <div class="best-cell"><span class="best-price"><?= $bestPrices[1]; ?></span></div>
+                                <img src="/img/close-red.svg" class="remove-btn" alt="<?= $lang('Удалить'); ?>">
                             </div>
                         </div>
                         <div class="mt-3 text-center">
-                            <button type="button" class="add-btn" id="addFuelRow">Добавить топливо</button>
+                            <button type="button" class="add-btn"
+                                    id="addFuelRow"><?= $lang('Добавить топливо'); ?></button>
                         </div>
                     </div>
                 </div>
             </div>
-
-            <!-- 2. Данные про компанию -->
-            <div class="card-section collapsed" data-section="company-core">
+            <div class="card-section" data-section="company-core">
                 <h3 class="section-toggle blue-background" onclick="toggleSection('company-core')">
-                    <span>2. Данные про компанию</span><img src="/img/arrow-down.svg" alt="">
+                    <span>2. <?= $lang('Данные про компанию'); ?></span><img src="/img/arrow-down.svg" alt="">
                 </h3>
                 <div class="section-content">
                     <div class="mb-3 form-group">
-                        <label class="form-label">Название компании</label>
-                        <input type="text" class="form-control" name="name" placeholder="Укажите название" required>
+                        <label class="form-label"><?= $lang('Название компании'); ?></label>
+                        <input type="text" class="form-control" name="name"
+                               placeholder="<?= $lang('Укажите название'); ?>" required>
                     </div>
 
                     <div class="mb-3 position-relative form-group">
-                        <label class="form-label">Локация на карте</label>
+                        <label class="form-label"><?= $lang('Локация на карте'); ?></label>
                         <input type="text" class="form-control" id="companyAddress" name="company_address"
-                               placeholder="Выберите на карте или начните ввод">
+                               placeholder="<?= $lang('Введите на карте или начните ввод'); ?>">
                         <div id="company-sugg-container" class="search-form-suggestions-container hide">
                             <div id="company-loading" class="loading-indicator" style="display:none;">
                                 <div class="spinner"></div>
@@ -97,55 +97,56 @@
             <!-- 3. Детальная информация -->
             <div class="card-section collapsed" data-section="point-details">
                 <h3 class="section-toggle blue-background" onclick="toggleSection('point-details')">
-                    <span>3. Детальная информация</span><img src="/img/arrow-down.svg" alt="">
+                    <span>3. <?= $lang('Детальная информация'); ?></span><img src="/img/arrow-down.svg" alt="">
                 </h3>
                 <div class="section-content">
                     <?php if ($mode === 'driver'): ?>
                         <div class="alert alert-info">
-                            Этот блок может редактировать только <b>владелец заправки</b>.
-                            Переключитесь на «Я владелец заправки», если вы действительно владелец.
+                            <?= $lang('Этот блок может редактировать только'); ?>
+                            <b><?= $lang('владелец заправки'); ?></b>.
+                            <?= $lang('Переключитесь на «Я владелец заправки», если вы действительно владелец'); ?>.
                         </div>
                     <?php else: ?>
                         <div class="form-group">
-                            <label>Телефоны</label>
+                            <label><?= $lang('Телефоны'); ?></label>
                             <div class="dynamic-group" id="phoneGroup">
                             </div>
                             <button type="button" class="add-btn"
-                                    onclick="addField('phoneGroup','phones[]','+374 00 000 000')">Добавить
+                                    onclick="addField('phoneGroup','phones[]','+374 00 000 000')"><?= $lang('Добавить'); ?>
                             </button>
                         </div>
 
                         <div class="form-group">
-                            <label>Email-ы</label>
+                            <label><?= $lang('Email-ы'); ?></label>
                             <div class="dynamic-group" id="emailGroup">
                                 <div class="input-group mb-1">
                                 </div>
                             </div>
                             <button type="button" class="add-btn"
-                                    onclick="addField('emailGroup','emails[]','info@company.com')">Добавить
+                                    onclick="addField('emailGroup','emails[]','info@company.com')"><?= $lang('Добавить'); ?>
                             </button>
                         </div>
 
                         <div class="form-group">
-                            <label>Социальные сети</label>
+                            <label><?= $lang('Социальные сети'); ?></label>
                             <div class="dynamic-group" id="socialGroup">
                                 <div class="input-group mb-1">
                                 </div>
                             </div>
                             <button type="button" class="add-btn"
                                     onclick="addField('socialGroup','socials[]','https://instagram.com/company')">
-                                Добавить
+                                <?= $lang('Добавить'); ?>
                             </button>
                         </div>
 
                         <div class="form-group">
-                            <label>График работы</label>
-                            <small class="form-text text-muted">Добавьте только нужные дни</small>
+                            <label><?= $lang('График работы'); ?></label>
+                            <small class="form-text text-muted"><?= $lang('Добавьте только нужные дни'); ?></small>
                             <div class="working-hours" id="workingHoursGroup">
                                 <?php foreach (['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'] as $d): ?>
                                     <div class="working-row">
                                         <select class="form-select" name="working_days[]">
-                                            <option value="<?= $d ?>"><?= $d ?></option>
+                                            <option value="<?= $d ?>"><?= $lang($d); ?></option>
                                         </select>
                                         <input type="text" class="form-control" name="working_times[]"
                                                placeholder="9:00-18:00">
@@ -157,7 +158,7 @@
                         </div>
 
                         <div class="form-group">
-                            <label>Сайт</label>
+                            <label><?= $lang('Сайт'); ?></label>
                             <input type="text" class="form-control" name="website" placeholder="https://…">
                         </div>
                     <?php endif; ?>
@@ -165,11 +166,11 @@
             </div>
 
             <div class="text-center mt-3">
-                <button type="submit" class="btn btn-primary btn-lg save-button">Отправить</button>
+                <button type="submit" class="btn btn-primary btn-lg save-button"><?= $lang('Отправить'); ?></button>
                 <div class="text-muted mt-2" style="font-size:13px">
-                    После отправки ваша заявка попадёт на модерацию. Публикация произойдёт после проверки.
+                    <?= $lang('После отправки ваша заявка попадёт на модерацию. Публикация произойдёт после проверки'); ?>.
                     <?php if ($mode === 'owner'): ?>
-                        <br>Хотите получить логин и пароль владельца? Пишите на <a href="mailto:selmidis.com@gmail.com">selmidis.com@gmail.com</a>.
+                        <br><?= $lang('Хотите получить логин и пароль владельца? Пишите на'); ?> <a href="mailto:selmidis.com@gmail.com">selmidis.com@gmail.com</a>.
                     <?php endif; ?>
                 </div>
             </div>
@@ -262,7 +263,7 @@
             inp.name = 'fuel_price[]';
             inp.step = '0.01';
             inp.required = true;
-            inp.placeholder = 'Цена в AMD';
+            inp.placeholder = "<?= $lang('Цена в AMD'); ?>";
             inp.className = 'form-control fuel-price';
             const best = document.createElement('div');
             best.className = 'best-cell';
@@ -270,7 +271,7 @@
             const del = document.createElement('img');
             del.className = 'remove-btn';
             del.src = '/img/close-red.svg';
-            del.alt = 'Удалить';
+            del.alt = "<?= $lang('Удалить'); ?>";
             row.append(sel, inp, best, del);
             rowsWrap.appendChild(row);
             sel.addEventListener('change', () => {
@@ -311,14 +312,14 @@
                 });
                 let regionId = null, cityId = null;
                 if (cityName) {
-                    const cc = CITIES.filter(x => x.name_ru.toLowerCase() === cityName.toLowerCase());
+                    const cc = CITIES.filter(x => x.city_name.toLowerCase() === cityName.toLowerCase());
                     if (cc.length) {
                         cityId = cc[0].id;
                         regionId = cc[0].region_id;
                     }
                 }
                 if (!regionId && regionName) {
-                    const r = REGIONS.find(x => x.name_ru.toLowerCase() === regionName.toLowerCase());
+                    const r = REGIONS.find(x => x.city_name.toLowerCase() === regionName.toLowerCase());
                     if (r) regionId = r.id;
                 }
                 document.getElementById('company_region_id').value = regionId || '';
