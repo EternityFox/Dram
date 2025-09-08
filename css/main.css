@@ -2301,6 +2301,7 @@ th {
     z-index: 1;
     position: sticky;
     left: 0;
+    top: 0;
     background: #ffffff;
 }
 
@@ -2348,7 +2349,8 @@ th {
     position: relative;
     max-width: 110px;
 }
-.fuel-comparison .company-name img{
+
+.fuel-comparison .company-name img {
     width: 16px;
     height: 16px;
     vertical-align: middle;
@@ -2465,9 +2467,10 @@ a[href="/loans"], a[href="/deposits"], a[href="/cards"], a[href="/news"], a[href
 }
 
 @media screen and (max-width: 768px) {
-    .fuel-content .row-link{
-        gap: 12px!important;
+    .fuel-content .row-link {
+        gap: 12px !important;
     }
+
     .content {
         margin-bottom: 40px;
         padding-bottom: 40px;
@@ -4925,7 +4928,7 @@ a[href="/loans"], a[href="/deposits"], a[href="/cards"], a[href="/news"], a[href
     display: flex;
     align-items: center;
     gap: 40px;
-    margin: 10px 0 18px;
+    margin: 20px 0;
     flex-wrap: wrap;
     justify-content: center;
 }
@@ -5024,40 +5027,163 @@ a[href="/loans"], a[href="/deposits"], a[href="/cards"], a[href="/news"], a[href
 
 .fuel-content .city-select {
     position: relative;
-    display: inline-flex;
+    display: grid;
+    grid-template-columns:auto 1fr auto;
     align-items: center;
-    justify-content: space-between;
     gap: 8px;
+    width: 100%;
+    max-width: 100%;
     padding: 10px 16px;
     border-radius: 32px;
-    background: #fff;
-    border: 1px solid #EBEBEB;
-    width: 100%
+    border: 1px solid #E5E7EB;
+    background: #ffffff;
+    transition: border-color .2s, box-shadow .2s, background .2s;
+    cursor: default;
+    height: 40px;
 }
 
-.fuel-content .city-select select {
-    border: 0;
-    background: transparent;
-    outline: none;
-    appearance: none;
-    -webkit-appearance: none;
+.fuel-content .city-select:focus-within {
+    border-color: #2563EB;
+    box-shadow: 0 0 0 4px color-mix(in srgb, #2563EB 18%, transparent);
+}
+
+.fuel-content .city-pin {
+    display: inline-flex;
+}
+
+.fuel-content .city-pin img {
+    width: 11px;
+}
+
+.fuel-content .city-caret {
+    width: 14px;
+    height: 14px;
+    opacity: .6;
+    transition: transform .2s ease;
+    filter: grayscale(1);
+}
+
+.fuel-content .city-select[aria-expanded="true"] .city-caret {
+    transform: rotate(180deg)
+}
+
+.fuel-content .city-trigger {
+    all: unset;
+    grid-column: 2/3;
     font-weight: 700;
-    color: #111827;
+    color: #111827;;
+    font-size: 14px;
+    line-height: 1.2;
     cursor: pointer;
-    font-size: 12px;
-    width: 100px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
-.fuel-content .city-caret {
-    -webkit-filter: grayscale(1);
-    filter: grayscale(1);
+.visually-hidden {
+    position: absolute !important;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
 }
 
-.fuel-content .city-pin {
-    display: inline-flex;
+.fuel-content .city-menu {
+    position: absolute;
+    inset: auto 0 auto 0;
+    top: calc(100% + 8px);
+    z-index: 50;
+    display: none;
+    max-height: 280px;
+    overflow: auto;
+    border-radius: 16px;
+    background: #fff;
+    border: 1px solid #E5E7EB;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, .08), 0 2px 8px rgba(0, 0, 0, .06);
+    padding: 6px;
+}
+
+.fuel-content .city-select[aria-expanded="true"] .city-menu {
+    display: block
+}
+
+.fuel-content .city-menu li {
+    list-style: none;
+    padding: 8px 12px;
+    margin: 4px 0;
+    border-radius: 10px;
+    font-size: 14px;
+    color: #111827;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: background .15s ease;
+}
+
+.fuel-content .city-menu li:hover,
+.fuel-content .city-menu li[aria-current="true"] {
+    background: #F3F4F6;
+}
+
+.fuel-content .city-menu li.is-selected {
+    font-weight: 700;
+}
+
+.fuel-content .city-menu li.is-selected::after {
+    content: "✓";
+    font-weight: 700;
+    opacity: .85;
+}
+
+/* Адаптив */
+@media (max-width: 768px) {
+    .dashboard-container .gray-btn, .dashboard-container .blue-btn{
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 16px 10px !important;
+    }
+    .fuel-content .add-data-banner {
+        padding: 30px 16px;
+        gap: 24px;
+    }
+    .fuel-content .add-data-close{
+        top: 10px;
+        right: 10px;
+    }
+
+    .fuel-content .add-data-actions {
+        flex-wrap: wrap;
+    }
+
+    .fuel-content .city-trigger {
+        font-size: 15px
+    }
+
+    .fuel-content .city-select {
+        padding: 12px 14px
+    }
+
+    .fuel-content .city-menu li {
+        padding: 12px 14px;
+        font-size: 15px
+    }
+}
+
+@media (max-width: 420px) {
+    .fuel-content .city-trigger {
+        font-size: 14px
+    }
+
+    .fuel-content .city-menu {
+        max-height: 60vh
+    }
 }
 
 @media (max-width: 768px) {
@@ -5198,16 +5324,19 @@ a[href="/loans"], a[href="/deposits"], a[href="/cards"], a[href="/news"], a[href
     padding-left: 16px;
 }
 
-.back-arrow{
+.back-arrow {
     width: 32px;
 }
 
-.blue-btn{
+.blue-btn {
     background: #4285F4;
     border: none;
+    border-radius: 32px!important
 }
-.gray-btn{
+
+.gray-btn {
     border: none;
     background: #E3E3E3;
     color: #000000;
+    border-radius: 32px!important
 }

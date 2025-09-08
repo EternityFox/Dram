@@ -15,23 +15,33 @@
                             <span class="banner-ads-text"><?= $lang('реклама'); ?></span>
                         </div>
                     <?php endif; ?>
-
-                    <!-- CTA -->
                     <div class="add-data-banner" id="addDataBanner">
                         <div class="d-flex gap-3">
                             <div class="add-data-icon" aria-hidden="true"><img src="img/fuel/fuel.svg" alt=""></div>
                             <div class="add-data-text">
-                                <div class="add-data-title">Знаете где дешевле?</div>
-                                <div class="add-data-sub">добавьте данные на сайт за 2 минуту</div>
+                                <div class="add-data-title"><?= $lang('Знаете где дешевле?'); ?></div>
+                                <div class="add-data-sub"><?= $lang('добавьте данные на сайт за 2 минуту'); ?></div>
                             </div>
                         </div>
                         <div class="add-data-actions">
-                            <a href="/add-station?mode=driver" class="btn-pill btn-driver">Я водитель</a>
-                            <a href="/add-station?mode=owner" class="btn-pill btn-owner">Я владелец заправки</a>
+                            <a href="/add-station?mode=driver"
+                               class="btn-pill btn-driver"><?= $lang('Я водитель'); ?></a>
+                            <a href="/add-station?mode=owner"
+                               class="btn-pill btn-owner"><?= $lang('Я владелец заправки'); ?></a>
                         </div>
                         <img src="img/gray_close.svg" alt="закрыть" class="add-data-close">
                     </div>
-
+                    <?php
+                    $currentCityName = $lang('Все города');
+                    if (!empty($selectedCitySlug)) {
+                        foreach ($cities as $c) {
+                            if ($c['slug'] === $selectedCitySlug) {
+                                $currentCityName = $c['city_name'];
+                                break;
+                            }
+                        }
+                    }
+                    ?>
                     <section class="fuel-comparison">
                         <div class="fuel-table" data-selected-city="<?= htmlspecialchars($selectedCitySlug) ?>">
                             <table>
@@ -40,23 +50,40 @@
                                     <th class="sticky">
                                         <div class="fuel-type-header-city">
                                             <div class="fuel-type-name">
-                                                <h2 class="fuel-title">Сравнение топлива</h2>
+                                                <h2 class="fuel-title"><?= $lang('Сравнение топлива'); ?></h2>
                                             </div>
-                                            <label class="city-select">
+                                            <label class="city-select" id="city-combobox" role="combobox"
+                                                   aria-haspopup="listbox" aria-expanded="false" aria-owns="city-menu">
                                                 <span class="city-pin" aria-hidden="true"><img src="img/pin.svg" alt=""></span>
-                                                <select id="city-select" aria-label="Выбрать город">
-                                                    <option value=""<?= empty($selectedCitySlug) ? ' selected' : '' ?>>
-                                                        Все города
-                                                    </option>
+                                                <button type="button" class="city-trigger" id="city-trigger" aria-controls="city-menu">
+                                                    <?= htmlspecialchars($currentCityName) ?>
+                                                </button>
+                                                <img src="img/arrow-down.svg" alt="" class="city-caret" aria-hidden="true">
+                                                <select id="city-select" name="city" aria-label="<?= $lang('Выбрать город'); ?>" class="visually-hidden" tabindex="-1">
+                                                    <option value="" <?= empty($selectedCitySlug) ? 'selected' : '' ?>><?= $lang('Все города'); ?></option>
                                                     <?php foreach ($cities as $city): ?>
                                                         <option value="<?= htmlspecialchars($city['slug']) ?>"
                                                             <?= (!empty($selectedCitySlug) && $selectedCitySlug === $city['slug']) ? 'selected' : '' ?>>
-                                                            <?= htmlspecialchars($city['name_ru']) ?>
+                                                            <?= htmlspecialchars($city['city_name']) ?>
                                                         </option>
                                                     <?php endforeach; ?>
                                                 </select>
-                                                <img src="img/arrow-down.svg" alt="" class="city-caret"
-                                                     aria-hidden="true">
+                                                <ul id="city-menu" class="city-menu" role="listbox" tabindex="-1" aria-labelledby="city-trigger">
+                                                    <li role="option" data-value=""
+                                                        class="<?= empty($selectedCitySlug) ? 'is-selected' : '' ?>"
+                                                        aria-selected="<?= empty($selectedCitySlug) ? 'true' : 'false' ?>">
+                                                        <?= $lang('Все города'); ?>
+                                                    </li>
+                                                    <?php foreach ($cities as $city): ?>
+                                                        <?php $sel = (!empty($selectedCitySlug) && $selectedCitySlug === $city['slug']); ?>
+                                                        <li role="option"
+                                                            data-value="<?= htmlspecialchars($city['slug']) ?>"
+                                                            class="<?= $sel ? 'is-selected' : '' ?>"
+                                                            aria-selected="<?= $sel ? 'true' : 'false' ?>">
+                                                            <?= htmlspecialchars($city['city_name']) ?>
+                                                        </li>
+                                                    <?php endforeach; ?>
+                                                </ul>
                                             </label>
                                         </div>
                                     </th>
@@ -76,15 +103,13 @@
                                     <?php endforeach; ?>
                                 </tr>
                                 </thead>
-
                                 <tbody>
-
-                                <!-- BEST (всегда первый) -->
                                 <tr class="best-row">
                                     <td class="sticky">
                                         <a href="#" class="row-link best-toggle">
-                                            <img src="img/blue-arrow-down.svg" alt="голубая стрелка вниз" class="caret">
-                                            <div class="region-head"><span class="title">Лучшие</span></div>
+                                            <img src="img/blue-arrow-down.svg" alt="<?= $lang('голубая стрелка вниз'); ?>" class="caret">
+                                            <div class="region-head"><span class="title"><?= $lang('Лучшие'); ?></span>
+                                            </div>
                                         </a>
                                     </td>
                                     <?php foreach ($fuelTypes as $type): ?>
@@ -111,8 +136,8 @@
                                                         <div class="company-name-text"><?= htmlspecialchars($bc['name']) ?></div>
                                                         <?php if (!empty($bc['verified'])): ?>
                                                             <img src="img/active.svg"
-                                                                 alt="иконка подверждение"
-                                                                 title="Данные заполнены представителем компании">
+                                                                 alt="<?= $lang('иконка подверждение'); ?>"
+                                                                 title="<?= $lang('Данные заполнены представителем компании'); ?>">
                                                         <?php endif; ?>
                                                     </div>
                                                     <div class="company-updated">
@@ -145,8 +170,6 @@
                                         <?php endforeach; ?>
                                     </tr>
                                 <?php endforeach; ?>
-
-                                <!-- РЕГИОНЫ / ГОРОДА / КОМПАНИИ -->
                                 <?php foreach ($regionsTree as $region): ?>
                                     <tr class="region-row" data-region-id="<?= (int)$region['id'] ?>">
                                         <td class="sticky">
@@ -204,15 +227,15 @@
                                                     <a href="/fuel-company/<?= (int)$c['id'] ?>" class="row-link">
                                                         <div class="company-item">
                                                             <img src="img/fuel/<?= htmlspecialchars($c['logo']) ?: 'empty.png' ?>"
-                                                                 alt="<?= htmlspecialchars($c['name']) ?>">
+                                                                 alt="<?= htmlspecialchars($c['city_name']) ?>">
                                                         </div>
                                                         <div class="company-text">
                                                             <div class="company-name d-flex align-items-center">
                                                                 <div class="company-name-text"><?= htmlspecialchars($c['name']) ?></div>
                                                                 <?php if (!empty($bc['verified'])): ?>
                                                                     <img src="img/active.svg"
-                                                                         alt="иконка подверждение"
-                                                                         title="Данные заполнены представителем компании">
+                                                                         alt="<?= $lang('иконка подверждение'); ?>"
+                                                                         title="<?= $lang('Данные заполнены представителем компании'); ?>">
                                                                 <?php endif; ?>
                                                             </div>
                                                             <div class="company-updated">
@@ -251,17 +274,6 @@
 
             <div class="col-lg-3">
                 <div class="right-block">
-                    <div class="clue-container">
-                        <div class="clue">
-                            <div class="clue-inner">
-                                <div class="clue-icon"><img src="img/clue-icon.png" alt=""></div>
-                                <div class="clue-text"><?= $lang('Калькулятор') ?></div>
-                            </div>
-                            <div class="clue-close"><img src="img/clue-close.png" alt=""></div>
-                            <a href="#" class="clue-link"><img src="img/clue-link.png" alt=""></a>
-                        </div>
-                    </div>
-
                     <div class="right-banner">
                         <div class="right-banner-item"><?= random_elem($settings['banner_side1'], $settings['banner_side1_2'], $settings['banner_side1_3']) ?></div>
                         <div class="right-banner-fixed">
@@ -273,7 +285,6 @@
             </div>
         </div>
 
-        <!-- Скрипты -->
         <script src="js/jquery-3.4.1.min.js"></script>
         <script src="js/fuel.js?<?= mt_rand() ?>"></script>
     </div>
