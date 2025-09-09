@@ -1,6 +1,7 @@
 <section class="content">
     <div class="container">
         <h1>Панель управления</h1>
+
         <style>
             :root {
                 --adm-card-bg: #ffffff;
@@ -150,11 +151,10 @@
         </style>
 
         <div class="admin-topbar">
-            <div class="d-flex justify-content-end">
+            <div class="d-flex justify-content-end align-items-center gap-3">
                 <div class="notif">
                     <button type="button" class="notif-btn" id="notifToggle" aria-expanded="false"
                             aria-controls="notifDropdown">
-                        <!-- bell icon -->
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                             <path d="M15 17H20L18.7 15.7C18.25 15.25 18 14.64 18 14V11C18 8.24 16.28 6.07 13.7 5.36C13.38 4.09 12.3 3.09 11 3.01C9.45 2.9 8.11 3.99 7.86 5.49C5.23 6.25 3.5 8.52 3.5 11.2V14C3.5 14.66 3.24 15.27 2.79 15.71L1.5 17H9M9 17V18C9 19.66 10.34 21 12 21C13.66 21 15 19.66 15 18V17H9Z"
                                   stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
@@ -164,6 +164,9 @@
                         <span class="badge"><?= (int)($alerts['sum'] ?? 0) ?></span>
                     </button>
                 </div>
+                <a class="btn btn-light btn-outline-dark rounded-pill px-4" href="/logout">
+                    <?= $lang("Выйти") ?>
+                </a>
             </div>
 
             <div class="notif-dropdown" id="notifDropdown" role="menu" aria-labelledby="notifToggle">
