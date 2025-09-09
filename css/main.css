@@ -2268,9 +2268,11 @@ th {
 }
 
 .fuel-comparison .fuel-table {
+    position: relative;
+    -webkit-overflow-scrolling: touch;
+    --sticky-offset: 16px;
     overflow-x: auto;
-    height: calc(100vh - 100px);
-    padding-bottom: 100px;
+    height: calc(100vh - 150px);
 }
 
 .fuel-comparison table {
@@ -2330,8 +2332,8 @@ th {
     padding: 10px;
     border: 1px solid #E3E3E3;
     border-radius: 8px;
-    height: 40px;
-    width: 40px;
+    height: 32px;
+    width: 32px;
 }
 
 .fuel-comparison .company-text {
@@ -2390,7 +2392,7 @@ th {
 .fuel-comparison .price-item-fuel {
     color: #454545;
     width: 100px;
-    height: 45px;
+    height: 36px;
     line-height: 45px;
     font-size: 14px;
     text-align: center;
@@ -2467,6 +2469,9 @@ a[href="/loans"], a[href="/deposits"], a[href="/cards"], a[href="/news"], a[href
 }
 
 @media screen and (max-width: 768px) {
+    .fuel-content .title{
+        font-size: 12px;
+    }
     .fuel-content .row-link {
         gap: 12px !important;
     }
@@ -4921,7 +4926,7 @@ a[href="/loans"], a[href="/deposits"], a[href="/cards"], a[href="/news"], a[href
 
 
 .fuel-content .add-data-banner {
-    background: #E8F5FF;
+    background: #E1F6FF;
     border-radius: 14px;
     padding: 32px 24px;
     position: relative;
@@ -5004,8 +5009,28 @@ a[href="/loans"], a[href="/deposits"], a[href="/cards"], a[href="/news"], a[href
 }
 
 .fuel-content .fuel-table thead th {
-    vertical-align: top;
-    padding: 0.5rem 0.25rem
+    position: sticky;
+    top: var(--sticky-offset);
+    z-index: 3;
+    background: #fff;
+}
+.fuel-comparison thead th.sticky{
+    left: 0;
+    z-index: 4;
+}
+.fuel-comparison tbody td.sticky{
+    position: sticky;
+    left: 0;
+    top: auto;
+    z-index: 1;
+    background: #fff;
+    background-clip: padding-box;
+}
+@supports (top: env(safe-area-inset-top)){
+    .fuel-content .fuel-table thead th,
+    .fuel-comparison thead th.sticky{
+        top: calc(var(--sticky-offset) + env(safe-area-inset-top));
+    }
 }
 
 .fuel-content .fuel-type-header {
@@ -5113,7 +5138,7 @@ a[href="/loans"], a[href="/deposits"], a[href="/cards"], a[href="/news"], a[href
 
 .fuel-content .city-menu li {
     list-style: none;
-    padding: 8px 12px;
+    padding: 12px;
     margin: 4px 0;
     border-radius: 10px;
     font-size: 14px;
@@ -5142,6 +5167,9 @@ a[href="/loans"], a[href="/deposits"], a[href="/cards"], a[href="/news"], a[href
 
 /* Адаптив */
 @media (max-width: 768px) {
+    .fuel-content .fuel-title {
+        font-size: 13px;
+    }
     .dashboard-container .gray-btn, .dashboard-container .blue-btn{
         font-size: 14px;
         display: flex;
@@ -5158,12 +5186,8 @@ a[href="/loans"], a[href="/deposits"], a[href="/cards"], a[href="/news"], a[href
         right: 10px;
     }
 
-    .fuel-content .add-data-actions {
-        flex-wrap: wrap;
-    }
-
-    .fuel-content .city-trigger {
-        font-size: 15px
+    .fuel-content .city-trigger{
+        font-size: 11px
     }
 
     .fuel-content .city-select {
@@ -5171,22 +5195,21 @@ a[href="/loans"], a[href="/deposits"], a[href="/cards"], a[href="/news"], a[href
     }
 
     .fuel-content .city-menu li {
-        padding: 12px 14px;
-        font-size: 15px
+        padding: 10px;
+        font-size: 11px
     }
 }
 
 @media (max-width: 420px) {
-    .fuel-content .city-trigger {
-        font-size: 14px
-    }
-
     .fuel-content .city-menu {
         max-height: 60vh
     }
 }
 
 @media (max-width: 768px) {
+    .fuel-content .add-data-actions{
+        padding: 0 14px;
+    }
     .fuel-content .add-data-title {
         font-size: 16px;
     }
@@ -5196,7 +5219,13 @@ a[href="/loans"], a[href="/deposits"], a[href="/cards"], a[href="/news"], a[href
     }
 
     .fuel-content .btn-pill {
-        font-size: 14px;
+        font-size: 12px;
+        max-width: 160px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: block;
+        text-align: center;
     }
 
     .fuel-content .sticky-tools {

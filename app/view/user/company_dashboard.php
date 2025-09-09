@@ -3,7 +3,12 @@
 
         <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
             <h2 class="dashboard-title m-0">Личный кабинет компании</h2>
-            <button class="btn btn-primary rounded-pill px-3" id="openCreateModal">+ Добавить адрес</button>
+            <div class="d-flex gap-2">
+                <button class="btn btn-primary rounded-pill px-3" id="openCreateModal">+ Добавить адрес</button>
+                <a class="btn btn-light btn-outline-dark rounded-pill px-4" href="/logout">
+                    <?= $lang("Выйти") ?>
+                </a>
+            </div>
         </div>
 
         <?php if (!empty($_GET['saved'])): ?>

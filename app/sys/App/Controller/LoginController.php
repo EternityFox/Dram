@@ -9,19 +9,16 @@ use PDO;
 
 class LoginController extends Controller
 {
-    /** Унификация: логин сравниваем в нижнем регистре */
     private static function normLogin(string $s): string
     {
         return strtolower(trim($s));
     }
 
-    /** Токен пользователя строим ОДИНАКОВО: login(lower) + password_hash */
     private static function makeUserToken(string $loginOriginal, string $passwordHash): string
     {
         return self::hash(self::normLogin($loginOriginal) . $passwordHash);
     }
 
-    /** Токен админа (из settings): логин сравниваем без регистра, пароль — как есть (как у вас было) */
     private static function makeAdminToken(string $adminLogin, string $adminPlainPassword): string
     {
         return self::hash(self::normLogin($adminLogin) . $adminPlainPassword);
@@ -29,11 +26,10 @@ class LoginController extends Controller
 
     private static function setAuthCookie(string $token): void
     {
-        // Общий путь + безопасные флаги
         $params = [
-            'expires'  => time() + 60 * 60 * 24 * 30,
-            'path'     => '/',
-            'secure'   => (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'),
+            'expires' => time() + 60 * 60 * 24 * 30,
+            'path' => '/',
+            'secure' => (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'),
             'httponly' => true,
             'samesite' => 'Lax',
         ];
@@ -43,9 +39,9 @@ class LoginController extends Controller
     private static function clearAuthCookie(): void
     {
         $params = [
-            'expires'  => time() - 3600,
-            'path'     => '/',
-            'secure'   => (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'),
+            'expires' => time() - 3600,
+            'path' => '/',
+            'secure' => (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'),
             'httponly' => true,
             'samesite' => 'Lax',
         ];
@@ -71,23 +67,18 @@ class LoginController extends Controller
         exit;
     }
 
-    /** Пытаемся авторизовать по cookie-токену */
     private static function authFromCookie(?array $adminCred): ?array
     {
         if (empty($_COOKIE['app_token'])) {
             return null;
         }
         $token = $_COOKIE['app_token'];
-
-        // 1) Проверка на админа (settings)
         if ($adminCred) {
             $adminToken = self::makeAdminToken((string)$adminCred['login'], (string)$adminCred['password']);
             if (hash_equals($adminToken, $token)) {
                 return ['id' => 0, 'login' => $adminCred['login'], 'role' => 'admin'];
             }
         }
-
-        // 2) Обычный пользователь
         $st = App::db()->prepare("SELECT id, login, password, role, app_token FROM users WHERE app_token = ? LIMIT 1");
         $st->execute([$token]);
         $user = $st->fetch(PDO::FETCH_ASSOC);
@@ -103,7 +94,6 @@ class LoginController extends Controller
 
     protected function actionLogout()
     {
-        // Если знаем токен — почистим и в БД
         if (!empty($_COOKIE['app_token'])) {
             $token = $_COOKIE['app_token'];
             $st = App::db()->prepare("UPDATE users SET app_token = NULL WHERE app_token = ?");
@@ -116,30 +106,25 @@ class LoginController extends Controller
 
     protected function actionLogin()
     {
-        // Настройки и меню (как было)
         $q = App::db()->query("SELECT login, password FROM settings");
         $adminCred = $q->fetch();
         $q = App::db()->query("SELECT * FROM settings");
         $settings = $q->fetch();
-        $settings['menu']['top']  = file_get_contents(__DIR__ . '/../../../storage/menu/top.php');
+        $settings['menu']['top'] = file_get_contents(__DIR__ . '/../../../storage/menu/top.php');
         $settings['menu']['left'] = file_get_contents(__DIR__ . '/../../../storage/menu/left.php');
 
-        // Если уже авторизованы по cookie — сразу уводим по роли
         if ($auth = self::authFromCookie($adminCred)) {
             self::redirectByRole($auth['role']);
         }
 
-        // Рендер формы
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             return ['auth/login', ['settings' => $settings]];
         }
 
-        // 登录 / Login
         $loginRaw = (string)($_POST['login'] ?? '');
         $password = (string)($_POST['password'] ?? '');
-        $login    = self::normLogin($loginRaw);
+        $login = self::normLogin($loginRaw);
 
-        // Сначала проверка на админа (регистронезависимый логин)
         $adminLoginNorm = self::normLogin((string)$adminCred['login'] ?? '');
         if ($adminLoginNorm !== '' && $login === $adminLoginNorm && $password === (string)$adminCred['password']) {
             $token = self::makeAdminToken($adminCred['login'], $adminCred['password']);
@@ -147,17 +132,13 @@ class LoginController extends Controller
             self::redirectByRole('admin');
         }
 
-        // Обычный пользователь: регистронезависимая выборка
         $st = App::db()->prepare("SELECT id, login, password, role FROM users WHERE lower(login) = lower(?) LIMIT 1");
         $st->execute([$loginRaw]);
         $user = $st->fetch(PDO::FETCH_ASSOC);
 
-        // Проверка пароля
         if ($user && hash_equals(self::hash($password), $user['password'])) {
-            // Единая формула токена: login(lower) + password_hash
             $token = self::makeUserToken($user['login'], $user['password']);
 
-            // Обновляем app_token в БД (ключевой фикс!)
             $upd = App::db()->prepare("UPDATE users SET app_token = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?");
             $upd->execute([$token, $user['id']]);
 
@@ -172,18 +153,17 @@ class LoginController extends Controller
     {
         $q = App::db()->query("SELECT * FROM settings");
         $settings = $q->fetch();
-        $settings['menu']['top']  = file_get_contents(__DIR__ . '/../../../storage/menu/top.php');
+        $settings['menu']['top'] = file_get_contents(__DIR__ . '/../../../storage/menu/top.php');
         $settings['menu']['left'] = file_get_contents(__DIR__ . '/../../../storage/menu/left.php');
 
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             return ['auth/register', ['settings' => $settings]];
         }
 
-        $loginRaw        = trim((string)($_POST['login'] ?? ''));
-        $loginNorm       = self::normLogin($loginRaw);
-        $password        = (string)($_POST['password'] ?? '');
+        $loginRaw = trim((string)($_POST['login'] ?? ''));
+        $password = (string)($_POST['password'] ?? '');
         $passwordConfirm = (string)($_POST['password_confirm'] ?? '');
-        $role            = 'user';
+        $role = 'user';
 
         $errors = [];
         if ($loginRaw === '' || mb_strlen($loginRaw) < 3) {
@@ -199,7 +179,6 @@ class LoginController extends Controller
             $errors[] = 'Пароли не совпадают.';
         }
 
-        // Уникальность логина — БЕЗ учёта регистра
         $st = App::db()->prepare("SELECT id FROM users WHERE lower(login) = lower(?) LIMIT 1");
         $st->execute([$loginRaw]);
         if ($st->fetchColumn()) {
@@ -209,14 +188,13 @@ class LoginController extends Controller
         if ($errors) {
             return ['auth/register', [
                 'settings' => $settings,
-                'error'    => implode('<br>', array_map('htmlspecialchars', $errors)),
-                'old'      => ['login' => $loginRaw],
+                'error' => implode('<br>', array_map('htmlspecialchars', $errors)),
+                'old' => ['login' => $loginRaw],
             ]];
         }
 
         $passwordHash = self::hash($password);
 
-        // Сохраняем (логин в БД можно хранить как ввёл пользователь — вход всё равно регистронезависимый)
         $ins = App::db()->prepare("
             INSERT INTO users (login, password, role, created_at, updated_at)
             VALUES (?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
@@ -225,12 +203,11 @@ class LoginController extends Controller
         if (!$ok) {
             return ['auth/register', [
                 'settings' => $settings,
-                'error'    => 'Не удалось создать пользователя. Повторите попытку позже.',
-                'old'      => ['login' => $loginRaw],
+                'error' => 'Не удалось создать пользователя. Повторите попытку позже.',
+                'old' => ['login' => $loginRaw],
             ]];
         }
 
-        // Сразу выставляем правильный токен и сохраняем его в app_token
         $uid = (int)App::db()->lastInsertId();
         $token = self::makeUserToken($loginRaw, $passwordHash);
         $upd = App::db()->prepare("UPDATE users SET app_token = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?");
