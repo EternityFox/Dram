@@ -48,7 +48,7 @@ class AdminController extends Controller
             return false;
         }
 
-        $this->addedTables();
+//        $this->addedTables();
         $this->migrateFuelSchemaToCompanyPoints();
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             if (isset($_FILES['logo-image']['name']) && !empty($_FILES['logo-image']['name'])) {
