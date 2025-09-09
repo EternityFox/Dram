@@ -370,7 +370,7 @@
             <a href="/login" class="tab-item d-flex flex-column align-items-center text-decoration-none text-dark"
                data-page="login">
                 <img src="img/user.svg" alt="Ввойти" width="20" height="20">
-                <small class="tab-label">Аккаунт</small>
+                <small class="tab-label"><?= $lang('Аккаунт') ?></small>
             </a>
         </div>
     </div>
