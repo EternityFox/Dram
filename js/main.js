@@ -430,26 +430,71 @@ $(document).ready(function () {
                     'en': 'Error: The fields ‘2 digits’ and ‘3 digits’ are required!',
                 },
                 'number_busy': {
-                    'ru': 'Запрошенный номер(а) занят(ы).',
-                    'am': 'The requested number(s) is/are taken.',
-                    'en': 'Պահանջված համար(ները) զբաղված է(են)։',
+                    'ru': 'Запрошенный(е) номер(а) занят(ы).',
+                    'am': 'Փնտրվող համարանիշ(եր)ը զբաղված է։',
+                    'en': 'The requested number(s) is/are taken.',
+                },
+                'invalid_format': {
+                    'ru': 'Неверный формат, заполните поля полностью или используйте пробел вместо букв для полного списка.',
+                    'am': 'Սխալ ձևաչափ․ լրացրեք ամբողջությամբ կամ տառերի փոխարեն օգտագործեք բացատ՝ ամբողջական ցանկի համար։',
+                    'en': 'Invalid format: fill all parts or use a space instead of letters for the full list.',
                 },
                 'number_000': {
                     'ru': 'В поиск не попадают номера с особым требованием о регистрации транспортного средства, то есть номера с нулями',
-                    'am': 'Numbers with special vehicle registration requirements, such as those with zeros, are not included in the search.',
-                    'en': 'Որոնման մեջ չեն ներառվում համարանիշերը, որոնք ունեն տրանսպորտային միջոցի գրանցման հատուկ պահանջներ, օրինակ՝ զրոներով համարանիշերը։',
+                    'am': 'Տրանսպորտային միջոցի գրանցման հատուկ պահանջներով (օր.՝ զրոներով) համարանիշերը որոնման մեջ չեն ներառվում։',
+                    'en': 'Numbers with special vehicle registration requirements, such as those with zeros, are not included in the search.',
                 },
                 'request_error': {
                     'ru': 'Ошибка при обработке запроса',
-                    'am': 'Error processing request',
-                    'en': 'Սխալ հարցման մշակման ընթացքում',
+                    'am': 'Հարցման մշակման սխալ',
+                    'en': 'Error processing request',
                 },
                 'server_error': {
                     'ru': 'Ошибка соединения с сервером',
-                    'am': 'Server connection error',
-                    'en': 'Սխալ՝ սերվերի միացման ընթացքում',
+                    'am': 'Սխալ՝ սերվերի միացման ընթացքում',
+                    'en': 'Server connection error',
                 }
             };
+            const RP_RAW = {
+                NUMBER_BUSY_AM: 'Փնտրվող համարանիշ(եր)ը զբաղված է։',
+                INVALID_FORMAT_RU: 'Неверный формат, заполните полностью или вместо букв эту комбинацию для получения полного списка'
+            };
+
+            function extractRpError(data) {
+                if (!data || typeof data !== 'object') return null;
+
+                if (data.errors && data.errors.number) return String(data.errors.number).trim();
+                if (typeof data.number === 'string') return data.number.trim();
+                if (typeof data.message === 'string' && data.status && data.status !== 'OK') {
+                    return data.message.trim();
+                }
+                return null;
+            }
+
+            function translateRpError(rawMsg, lang) {
+                if (!rawMsg) return null;
+                const msg = rawMsg.trim();
+
+                if (msg === RP_RAW.NUMBER_BUSY_AM) {
+                    return searchNumberAuto['number_busy'][lang] || searchNumberAuto['number_busy']['ru'];
+                }
+                if (msg === RP_RAW.INVALID_FORMAT_RU) {
+                    return searchNumberAuto['invalid_format'][lang] || searchNumberAuto['invalid_format']['ru'];
+                }
+
+                if (/[ա-ֆ]/i.test(msg)) {
+                    if (msg.includes('գործ') || msg.includes('զբաղված') || msg.includes('համարանիշ')) {
+                        return searchNumberAuto['number_busy'][lang];
+                    }
+                }
+
+                if (/Неверный\s+формат/i.test(msg)) {
+                    return searchNumberAuto['invalid_format'][lang];
+                }
+
+                return msg;
+            }
+
             errorMessage.innerHTML = '';
             if (!pre || !post) {
                 errorMessage.innerHTML = `<p>${searchNumberAuto['fields_required'][currentLang]}</p>`;
@@ -466,38 +511,62 @@ $(document).ready(function () {
             // Запрос к серверу
             $.post("/ajax/plate-search", {plate_number: formattedPlate}, function (data) {
                 document.querySelector(".loader").style.display = "none";
-                resultTable.innerHTML = "";
+                let newHtml = '';
+                const resultTable = document.querySelector(".table-result-append");
+                const errorBox = document.querySelector(".error-message");
+
+                // сохранить номер в URL
                 const newUrl = `/plate-number-search?number=${encodeURIComponent(formattedPlate)}`;
                 window.history.pushState({path: newUrl}, "", newUrl);
-                if (data.status === "OK") {
-                    let results = Array.isArray(data.data) ? data.data : [data.data];
+
+                // ✅ УСПЕХ
+                if (data && data.status === "OK") {
+                    const results = Array.isArray(data.data) ? data.data : [data.data];
                     if (results.length > 0) {
-                        results.forEach((item, index) => {
-                            let row = document.createElement("tr");
-                            row.innerHTML = `
-                        <td>${index + 1}</td>
-                        <td>${item.plate}</td>
-                        <td>${formatPrice(item.price)} <sub> ֏</sub></td>
-                    `;
-                            resultTable.appendChild(row);
+                        results.forEach((item, idx) => {
+                            newHtml += `
+                            <tr>
+                                <td>${idx + 1}</td>
+                                <td>${item.plate}</td>
+                                <td>${formatPrice(item.price)} <sub> ֏</sub></td>
+                            </tr>`;
                         });
                     } else {
-                        resultTable.innerHTML = `<tr><td colspan="3">Нет доступных номеров</td></tr>`;
+                        newHtml = `<tr><td colspan="3">Нет доступных номеров</td></tr>`;
                     }
-                } else if (data.message && data.message === "Сервер вернул HTML-код") {
-                    errorMessage.innerHTML = `<p>${searchNumberAuto['number_busy'][currentLang]}</p>`;
-                    resultTable.innerHTML = `<tr><td colspan="3">${searchNumberAuto['number_busy'][currentLang]}</td></tr>`;
-                } else if (data.message && data.message === "В поиск не попадают номера с нулями") {
-                    errorMessage.innerHTML = `<p>${searchNumberAuto['number_000'][currentLang]}</p>`;
-                    resultTable.innerHTML = `<tr><td colspan="3">${searchNumberAuto['number_000'][currentLang]}</td></tr>`;
-                } else {
-                    errorMessage.innerHTML = `<p class="error-message">${data.message || searchNumberAuto['request_error'][currentLang]}</p>`;
-                    resultTable.innerHTML = `<tr><td colspan="3">${searchNumberAuto['request_error'][currentLang]}</td></tr>`;
+                    resultTable.innerHTML = newHtml;
+                    errorBox.innerHTML = '';
+                    return;
                 }
+
+                // ❗ НЕ УСПЕХ — пробуем вытащить и перевести конкретную причину
+                const rawMsg = extractRpError(data);
+                const translated = translateRpError(rawMsg, currentLang);
+
+                // Если смогли сопоставить — показываем переведённый текст
+                if (translated) {
+                    errorBox.innerHTML = `<p>${translated}</p>`;
+                    resultTable.innerHTML = `<tr><td colspan="3">${translated}</td></tr>`;
+                    return;
+                }
+
+                // Специальные наши тексты (например, сервер вернул HTML вместо JSON)
+                if (data && data.message === "В поиск не попадают номера с нулями") {
+                    const t = searchNumberAuto['number_000'][currentLang];
+                    errorBox.innerHTML = `<p>${t}</p>`;
+                    resultTable.innerHTML = `<tr><td colspan="3">${t}</td></tr>`;
+                    return;
+                }
+
+                // Общий фолбэк
+                const fallback = (data && data.message) ? data.message : searchNumberAuto['request_error'][currentLang];
+                errorBox.innerHTML = `<p>${fallback}</p>`;
+                resultTable.innerHTML = `<tr><td colspan="3">${fallback}</td></tr>`;
             }, "json").fail(function () {
                 document.querySelector(".loader").style.display = "none";
-                errorMessage.innerHTML = `<p class="error-message">${searchNumberAuto['server_error'][currentLang]}</p>`;
-                resultTable.innerHTML = `<tr><td colspan="3">${searchNumberAuto['server_error'][currentLang]}</td></tr>`;
+                const t = searchNumberAuto['server_error'][currentLang];
+                document.querySelector(".error-message").innerHTML = `<p class="error-message">${t}</p>`;
+                document.querySelector(".table-result-append").innerHTML = `<tr><td colspan="3">${t}</td></tr>`;
             });
         }
 

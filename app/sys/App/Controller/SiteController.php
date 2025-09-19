@@ -488,7 +488,6 @@ class SiteController extends Controller
 
     public function actionPlateSearch()
     {
-        // Отдаём JSON всегда
         header('Content-Type: application/json; charset=UTF-8');
 
         // --- Конфиг ---
@@ -502,13 +501,16 @@ class SiteController extends Controller
         $DELAY_MS_MIN        = 200;
         $DELAY_MS_MAX        = 800;
         $MAX_ATTEMPTS        = 2;
-        $DEBUG               = false; // <-- выключено в проде
+        $DEBUG               = false; // прод: выключено
+
+        // язык интерфейса (приходит с фронта)
+        $lang = strtolower(trim($_POST['lang'] ?? 'ru'));
+        if (!in_array($lang, ['ru','am','en'], true)) $lang = 'ru';
 
         // tmp для кэша/локов
         $tmpDir = '/var/www/dram/tmp';
         if (!is_dir($tmpDir)) { @mkdir($tmpDir, 0775, true); }
 
-        // лёгкий дебаг-замыкание (ничего не пишет при DEBUG=false)
         $DEBUG_LOG = $tmpDir . '/rp_debug.log';
         $dbg = function (string $msg) use ($DEBUG, $DEBUG_LOG) {
             if ($DEBUG) @file_put_contents($DEBUG_LOG, '[' . date('Y-m-d H:i:s') . "] $msg\n", FILE_APPEND);
@@ -561,6 +563,72 @@ class SiteController extends Controller
             return;
         }
 
+        // вспомогательное: i18n ошибок
+        $translateError = function(array $json, string $lang) {
+            // Шаблон ответа
+            $out = [
+                "status" => "error",
+                "code"   => "unknown",
+                "message" => null,            // исходный текст от roadpolice, если есть
+                "message_i18n" => [           // переводы для фронта
+                    "ru" => null,
+                    "am" => null,
+                    "en" => null,
+                ],
+            ];
+
+            // Вариант #1: {"number":"Փնտրվող ... զբաղված է։"} — номер(а) занят(ы)
+            if (isset($json['number']) && is_string($json['number'])) {
+                $out['code']    = 'number_busy';
+                $out['message'] = $json['number']; // исходный (часто на арм)
+
+                // Переводы
+                $out['message_i18n']['ru'] = 'Запрошенный(е) номер(а) занят(ы).';
+                $out['message_i18n']['am'] = 'Փնտրվող համարանիշ(եր)ը զբաղված է։';
+                $out['message_i18n']['en'] = 'The requested number(s) is/are taken.';
+                return $out;
+            }
+
+            // Вариант #2: INVALID_DATA по полю number
+            if (
+                isset($json['status']) && $json['status'] === 'INVALID_DATA' &&
+                isset($json['errors']) && is_array($json['errors']) &&
+                isset($json['errors']['number']) && is_string($json['errors']['number'])
+            ) {
+                $msg = $json['errors']['number'];
+                $out['code']    = 'invalid_format';
+                $out['message'] = $msg;
+
+                // Переводы (RU — точно задан, AM/EN — можно адаптировать при необходимости)
+                $out['message_i18n']['ru'] = 'Неверный формат, заполните полностью или вместо букв эту комбинацию для получения полного списка';
+                $out['message_i18n']['am'] = 'Սխալ ձևաչափ. Լրացրեք ամբողջությամբ, կամ տառերի փոխարեն օգտագործեք այս համադրությունը՝ լիարժեք ցանկի համար։';
+                $out['message_i18n']['en'] = 'Invalid format: fill in completely, or use this combination instead of letters to get the full list.';
+                return $out;
+            }
+
+            // Fallback: передадим первый попавшийся текст, если он есть
+            foreach (['message','error','detail'] as $k) {
+                if (isset($json[$k]) && is_string($json[$k])) {
+                    $out['message'] = $json[$k];
+                    break;
+                }
+            }
+            // Общая фраза, если ничего не распознали
+            if (!$out['message']) {
+                $out['message'] = [
+                    'ru' => 'Ошибка при обработке запроса',
+                    'am' => 'Սխալ հարցման մշակման ընթացքում',
+                    'en' => 'Error processing request',
+                ][$lang] ?? 'Error';
+            }
+            // Переводы по умолчанию = тот же текст
+            $out['message_i18n']['ru'] = $out['message_i18n']['ru'] ?? $out['message'];
+            $out['message_i18n']['am'] = $out['message_i18n']['am'] ?? $out['message'];
+            $out['message_i18n']['en'] = $out['message_i18n']['en'] ?? $out['message'];
+
+            return $out;
+        };
+
         try {
             $dbg("NEW plate={$plate}");
 
@@ -574,20 +642,19 @@ class SiteController extends Controller
                 @unlink($backoffF);
             }
 
-            // Кэш ответа (пробрасываем как есть — там уже готовый JSON)
+            // Кэш (если ранее уже был валидный JSON — отдаём как есть)
             if (is_file($cacheF) && (time() - filemtime($cacheF) < $CACHE_TTL)) {
                 readfile($cacheF);
                 return;
             }
 
-            // Локальный rate-limit
+            // Rate limit
             if (is_file($rateF) && (time() - filemtime($rateF) < $RATE_LIMIT_SECONDS)) {
                 echo json_encode(["status" => "error", "message" => "Слишком часто. Попробуйте чуть позже."], JSON_UNESCAPED_UNICODE);
                 return;
             }
             @touch($rateF);
 
-            // Чуть-чуть «человечности»
             usleep(mt_rand($DELAY_MS_MIN, $DELAY_MS_MAX) * 1000);
 
             $attempt   = 0;
@@ -595,23 +662,22 @@ class SiteController extends Controller
 
             while ($attempt < $MAX_ATTEMPTS) {
                 $attempt++;
-                $dbg("Attempt #$attempt");
 
-                // ---------- 1) GET: берём Set-Cookie и meta csrf ----------
+                // ---------- 1) GET ----------
                 $ch = curl_init();
                 curl_setopt_array($ch, [
                     CURLOPT_URL            => $PAGE_URL,
                     CURLOPT_RETURNTRANSFER => true,
-                    CURLOPT_HEADER         => true,   // заголовки в теле
+                    CURLOPT_HEADER         => true,
                     CURLOPT_FOLLOWLOCATION => true,
                     CURLOPT_SSL_VERIFYPEER => true,
                     CURLOPT_SSL_VERIFYHOST => 2,
                     CURLOPT_USERAGENT      => $UA,
-                    CURLOPT_ENCODING       => '',     // gzip/deflate/br
+                    CURLOPT_ENCODING       => '',
                     CURLOPT_TIMEOUT        => 25,
                     CURLOPT_INTERFACE      => $OUT_IP,
                     CURLOPT_IPRESOLVE      => CURL_IPRESOLVE_V4,
-                    CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_2TLS, // GET можно по h2
+                    CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_2TLS,
                     CURLOPT_HTTPHEADER     => [
                         'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
                         'Accept-Language: ru,en;q=0.8',
@@ -629,13 +695,13 @@ class SiteController extends Controller
                     return;
                 }
 
-                // Разделить заголовки/тело
+                // Заголовки/тело
                 $headerEnd = strpos($resp, "\r\n\r\n");
                 if ($headerEnd === false) $headerEnd = strpos($resp, "\n\n");
                 $rawHeaders = ($headerEnd !== false) ? substr($resp, 0, $headerEnd) : '';
                 $html       = ($headerEnd !== false) ? substr($resp, $headerEnd + 4) : $resp;
 
-                // Куки из Set-Cookie
+                // Cookies
                 $xsrf = null; $rd = null; $lng = null;
                 foreach (preg_split("/\r?\n/", $rawHeaders) as $hline) {
                     if (stripos($hline, 'Set-Cookie:') === 0) {
@@ -645,7 +711,7 @@ class SiteController extends Controller
                     }
                 }
 
-                // meta csrf (основной токен)
+                // meta csrf
                 $metaToken = null;
                 if (preg_match('/<meta\s+name=["\']csrf-token["\']\s+content=["\']([^"\']+)["\']/i', $html, $m)) {
                     $metaToken = $m[1];
@@ -657,14 +723,12 @@ class SiteController extends Controller
                     break;
                 }
 
-                // Соберём Cookie как в удачном curl
                 $cookieHeader = "XSRF-TOKEN={$xsrf}; rd_session={$rd}";
                 if ($lng) $cookieHeader .= "; lng={$lng}";
 
-                // Пауза перед POST
                 usleep(mt_rand($DELAY_MS_MIN, $DELAY_MS_MAX) * 1000);
 
-                // ---------- 2) POST: HTTP/1.1 + явный Cookie + meta _token ----------
+                // ---------- 2) POST ----------
                 $postFields = ['number' => $plate];
                 if ($metaToken) $postFields['_token'] = $metaToken;
                 $postBody = http_build_query($postFields);
@@ -684,7 +748,7 @@ class SiteController extends Controller
                     CURLOPT_TIMEOUT        => 25,
                     CURLOPT_INTERFACE      => $OUT_IP,
                     CURLOPT_IPRESOLVE      => CURL_IPRESOLVE_V4,
-                    CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1, // критично
+                    CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1,
                     CURLOPT_HTTPHEADER     => array_filter([
                         'Accept: application/json, text/plain, */*',
                         'Content-Type: application/x-www-form-urlencoded',
@@ -693,7 +757,7 @@ class SiteController extends Controller
                         'X-Requested-With: XMLHttpRequest',
                         $metaToken ? ('X-CSRF-TOKEN: ' . $metaToken) : null,
                         'Cookie: ' . $cookieHeader,
-                        'Expect:', // убрать 100-continue
+                        'Expect:',
                     ]),
                 ]);
                 $resp = curl_exec($ch);
@@ -708,18 +772,23 @@ class SiteController extends Controller
                     return;
                 }
 
-                // Пытаемся распарсить JSON (даже если content-type не JSON)
+                // Пробуем JSON
                 $json = json_decode($resp, true);
                 if (json_last_error() === JSON_ERROR_NONE && is_array($json)) {
-                    // Если roadpolice вернул INVALID_DATA — пробрасываем как есть,
-                    // чтобы фронт увидел точный текст ошибки (number => "...").
-                    // То же для остальных статусов.
-                    @file_put_contents($cacheF, $resp, LOCK_EX);
-                    echo json_encode($json, JSON_UNESCAPED_UNICODE);
+                    // Успех roadpolice
+                    if (isset($json['status']) && $json['status'] === 'OK') {
+                        @file_put_contents($cacheF, json_encode($json, JSON_UNESCAPED_UNICODE), LOCK_EX);
+                        echo json_encode($json, JSON_UNESCAPED_UNICODE);
+                        return;
+                    }
+
+                    // Не-успех: возвращаем структурированную ошибку с переводами
+                    $errPayload = $translateError($json, $lang);
+                    echo json_encode($errPayload, JSON_UNESCAPED_UNICODE);
                     return;
                 }
 
-                // Если пришёл HTML (WAF/форма) — делаем ещё один ретрай
+                // Если пришёл HTML — ретрай один раз
                 if ($attempt < $MAX_ATTEMPTS) {
                     usleep(mt_rand(300, 600) * 1000);
                     continue;
@@ -729,9 +798,7 @@ class SiteController extends Controller
                 break;
             }
 
-            // Чёткий финальный текст для пользователя
-            if (!$lastError) { $lastError = "Неизвестная ошибка"; }
-            echo json_encode(["status" => "error", "message" => $lastError], JSON_UNESCAPED_UNICODE);
+            echo json_encode(["status" => "error", "message" => $lastError ?: "Неизвестная ошибка"], JSON_UNESCAPED_UNICODE);
             return;
 
         } finally {
@@ -741,6 +808,7 @@ class SiteController extends Controller
             }
         }
     }
+
 
 
     protected function actionConverterAjax(string $type, string $fromCurrency, string $toCurrency)
