@@ -493,20 +493,20 @@ class SiteController extends Controller
         $BASE_URL            = 'https://roadpolice.am';
         $PAGE_URL            = $BASE_URL . '/ru/plate-number-search';
         $UA                  = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
-        $CACHE_TTL           = 6 * 3600;          // кэш результата на 6 часов
-        $RATE_LIMIT_SECONDS  = 8;                 // локальный rate-limit на номер
-        $BACKOFF_403_SECONDS = 25 * 60;           // бэкофф после 403
-        $DELAY_MS_MIN        = 200;               // «человеческая» задержка между шагами
+        $CACHE_TTL           = 6 * 3600;
+        $RATE_LIMIT_SECONDS  = 8;
+        $BACKOFF_403_SECONDS = 25 * 60;
+        $DELAY_MS_MIN        = 200;
         $DELAY_MS_MAX        = 800;
-        $MAX_ATTEMPTS        = 2;                 // 1 основная + 1 ретрай
+        $MAX_ATTEMPTS        = 2;
 
-        // Видимый tmp-каталог (нужны права на запись для php-fpm пользователя)
+        // Видимый tmp-каталог
         $tmpDir = '/var/www/dram/tmp';
         if (!is_dir($tmpDir)) { @mkdir($tmpDir, 0775, true); }
 
         $DEBUG_LOG = $tmpDir . '/rp_debug.log';
-        $dbg = function (string $msg) use ($DEBUG_LOG) {
-            @file_put_contents($DEBUG_LOG, '[' . date('Y-m-d H:i:s') . "] $msg\n", FILE_APPEND);
+        $dbg = function(string $msg) use ($DEBUG_LOG) {
+            @file_put_contents($DEBUG_LOG, '['.date('Y-m-d H:i:s')."] $msg\n", FILE_APPEND);
         };
 
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -521,10 +521,10 @@ class SiteController extends Controller
             return;
         }
 
-        // Ваш фильтр «нули»
+        // фильтр «нули»
         if (
-            preg_match('/^\d{3}/', $plate) && (preg_match('/^000/', $plate) || preg_match('/00$/', $plate)) ||
-            preg_match('/\d{3}$/', $plate) && (preg_match('/^00/', $plate) || preg_match('/000$/', $plate))
+            (preg_match('/^\d{3}/', $plate) && (preg_match('/^000/', $plate) || preg_match('/00$/', $plate))) ||
+            (preg_match('/\d{3}$/', $plate) && (preg_match('/^00/', $plate) || preg_match('/000$/', $plate)))
         ) {
             echo json_encode(["status" => "error", "message" => "В поиск не попадают номера с нулями"]);
             return;
@@ -536,7 +536,7 @@ class SiteController extends Controller
         $rateF    = $tmpDir . "/rp_rate_$h.touch";
         $backoffF = $tmpDir . "/rp_backoff.flag";
 
-        // ---- Мьютекс: ЛОК ТОЛЬКО НА КОНКРЕТНЫЙ НОМЕР + ожидание до 2 сек ----
+        // Мьютекс: по конкретному номеру + ожидание до 2с
         $lockF = $tmpDir . '/rp_mutex_' . md5($plate) . '.lock';
         $lockH = @fopen($lockF, 'c');
         if (!$lockH) {
@@ -545,7 +545,7 @@ class SiteController extends Controller
             return;
         }
         $gotLock = false;
-        for ($i = 0; $i < 20; $i++) { // 20 x 100мс = 2сек ожидание
+        for ($i = 0; $i < 20; $i++) {
             if (@flock($lockH, LOCK_EX | LOCK_NB)) { $gotLock = true; break; }
             usleep(100 * 1000);
         }
@@ -559,7 +559,6 @@ class SiteController extends Controller
         try {
             $dbg("---- NEW REQUEST plate={$plate} ----");
 
-            // Бэкофф (после 403)
             if (is_file($backoffF)) {
                 $until = (int)trim(@file_get_contents($backoffF));
                 if ($until > time()) {
@@ -570,14 +569,12 @@ class SiteController extends Controller
                 @unlink($backoffF);
             }
 
-            // Кэш
             if (is_file($cacheF) && (time() - filemtime($cacheF) < $CACHE_TTL)) {
                 $dbg("Cache hit: $cacheF");
                 readfile($cacheF);
                 return;
             }
 
-            // Rate limit (на конкретный номер)
             if (is_file($rateF) && (time() - filemtime($rateF) < $RATE_LIMIT_SECONDS)) {
                 $dbg("Rate limit hit: $rateF");
                 echo json_encode(["status" => "error", "message" => "Слишком часто. Попробуйте чуть позже."]);
@@ -585,7 +582,6 @@ class SiteController extends Controller
             }
             @touch($rateF);
 
-            // «Человеческая» задержка
             usleep(mt_rand($DELAY_MS_MIN, $DELAY_MS_MAX) * 1000);
 
             $attempt   = 0;
@@ -598,8 +594,8 @@ class SiteController extends Controller
                 $cookieFile = tempnam($tmpDir, 'rp_');
                 $dbg("Cookie file: $cookieFile");
 
-                // файлик для вербоза cURL
-                $curlStderr = fopen($tmpDir . '/rp_curl_' . $attempt . '.log', 'w');
+                // verbose curl log
+                $curlStderr = fopen($tmpDir . '/rp_curl_'.$attempt.'.log', 'w');
 
                 $common = [
                     CURLOPT_RETURNTRANSFER => true,
@@ -612,20 +608,20 @@ class SiteController extends Controller
                     CURLOPT_COOKIEJAR      => $cookieFile,
                     CURLOPT_COOKIEFILE     => $cookieFile,
                     CURLOPT_TIMEOUT        => 25,
-                    CURLOPT_INTERFACE      => $OUT_IP,              // исходящий IP
-                    CURLOPT_IPRESOLVE      => CURL_IPRESOLVE_V4,    // IPv4
+                    CURLOPT_INTERFACE      => $OUT_IP,
+                    CURLOPT_IPRESOLVE      => CURL_IPRESOLVE_V4,
                     CURLOPT_VERBOSE        => true,
                     CURLOPT_STDERR         => $curlStderr,
                 ];
 
-                // Сбор заголовков ответа для отладки
+                // соберём заголовки ответа
                 $respHeaders = [];
-                $headerFn = function ($ch, $header) use (&$respHeaders) {
+                $headerFn = function($ch, $header) use (&$respHeaders) {
                     $respHeaders[] = $header;
                     return strlen($header);
                 };
 
-                // 1) GET страницы (сессия, куки, meta csrf)
+                // 1) GET страницы
                 $ch = curl_init($PAGE_URL);
                 curl_setopt_array($ch, $common + [
                         CURLOPT_HTTPGET        => true,
@@ -644,8 +640,8 @@ class SiteController extends Controller
                 curl_close($ch);
                 fclose($curlStderr);
 
-                $dbg("GET code={$info['http_code']} ct=" . ($info['content_type'] ?? '') . " err={$err}");
-                $dbg("GET headers:\n" . implode('', $respHeaders));
+                $dbg("GET code={$info['http_code']} ct=".($info['content_type'] ?? '')." err={$err}");
+                $dbg("GET headers:\n".implode('', $respHeaders));
 
                 if ($html === false) {
                     $lastError = 'Сетевая ошибка (GET): ' . $err;
@@ -659,11 +655,10 @@ class SiteController extends Controller
                     return;
                 }
 
-                // Проверим cookie-файл
-                $dbg("Cookie file size after GET: " . (int)@filesize($cookieFile));
-                $dbg("Cookie file content after GET:\n" . @file_get_contents($cookieFile));
+                // куки
+                $dbg("Cookie file size after GET: ".(int)@filesize($cookieFile));
+                $dbg("Cookie file content after GET:\n".@file_get_contents($cookieFile));
 
-                // Куки XSRF/rd_session
                 $xsrf = null; $rd = null;
                 foreach (@file($cookieFile) ?: [] as $line) {
                     if ($line === '' || $line[0] === '#') continue;
@@ -673,7 +668,6 @@ class SiteController extends Controller
                         if ($p[5] === 'rd_session')  $rd   = trim($p[6]);
                     }
                 }
-                // Fallback из Set-Cookie
                 if (!$xsrf || !$rd) {
                     foreach ($respHeaders as $hline) {
                         if (stripos($hline, 'Set-Cookie:') === 0) {
@@ -681,20 +675,20 @@ class SiteController extends Controller
                             if (!$rd   && preg_match('/rd_session=([^;]+)/', $hline, $m)) $rd   = $m[1];
                         }
                     }
-                    $dbg("Fallback from headers: xsrf=" . (bool)$xsrf . " rd=" . (bool)$rd);
+                    $dbg("Fallback from headers: xsrf=".(bool)$xsrf." rd=".(bool)$rd);
                 }
 
-                // CSRF из <meta name="csrf-token" content="...">
+                // meta csrf
                 $metaToken = null;
                 if (is_string($html) && preg_match('/<meta\s+name=["\']csrf-token["\']\s+content=["\']([^"\']+)["\']/i', $html, $m)) {
                     $metaToken = $m[1];
-                    $dbg("META csrf found: " . substr($metaToken, 0, 16) . '...');
+                    $dbg("META csrf found: ".substr($metaToken, 0, 16).'...');
                 } else {
                     $dbg("META csrf not found in HTML");
                 }
 
                 if (!$xsrf || !$rd) {
-                    $dbg("FAIL: no xsrf/rd after GET. xsrfPresent=" . (int)(bool)$xsrf . " rdPresent=" . (int)(bool)$rd);
+                    $dbg("FAIL: no xsrf/rd after GET. xsrfPresent=".(int)(bool)$xsrf." rdPresent=".(int)(bool)$rd);
                     $lastError = "Не удалось получить XSRF/сессию";
                     @unlink($cookieFile);
                     if ($attempt < $MAX_ATTEMPTS) {
@@ -704,33 +698,33 @@ class SiteController extends Controller
                     break;
                 }
 
-                $dbg("OK: got xsrf (" . strlen($xsrf) . " bytes) and rd");
+                $dbg("OK: got xsrf (".strlen($xsrf)." bytes) and rd");
 
-                // Небольшая пауза
                 usleep(mt_rand($DELAY_MS_MIN, $DELAY_MS_MAX) * 1000);
 
-                // 2) POST — используем meta csrf как основной (_token + X-CSRF-TOKEN)
+                // 2) POST — строго meta _token + X-CSRF-TOKEN
                 $csrfForHeader = $metaToken ?: $xsrf;
                 $postFields = ['number' => $plate];
                 if ($metaToken) {
-                    $postFields['_token'] = $metaToken; // важно для VerifyCsrfToken
+                    $postFields['_token'] = $metaToken;
                 }
                 $post = http_build_query($postFields);
 
                 $respHeaders = [];
-                $curlStderr = fopen($tmpDir . '/rp_curl_post_' . $attempt . '.log', 'w');
+                $curlStderr = fopen($tmpDir . '/rp_curl_post_'.$attempt.'.log', 'w');
                 $ch = curl_init($PAGE_URL);
                 curl_setopt_array($ch, $common + [
                         CURLOPT_POST           => true,
                         CURLOPT_POSTFIELDS     => $post,
                         CURLOPT_HTTPHEADER     => [
-                            'Accept: application/json, text/plain, */*',
+                            // важный Accept для AJAX
+                            'Accept: application/json, text/javascript, */*; q=0.01',
                             'Content-Type: application/x-www-form-urlencoded',
                             'Origin: ' . $BASE_URL,
                             'Referer: ' . $PAGE_URL,
                             'X-Requested-With: XMLHttpRequest',
-                            'X-CSRF-TOKEN: ' . $csrfForHeader,  // главный
-                            'X-XSRF-TOKEN: ' . $xsrf,           // дополнительно
+                            // только один токен в заголовке
+                            'X-CSRF-TOKEN: ' . $csrfForHeader,
                             'Accept-Language: ru,en;q=0.8',
                         ],
                         CURLOPT_REFERER        => $PAGE_URL,
@@ -742,19 +736,19 @@ class SiteController extends Controller
                 curl_close($ch);
                 fclose($curlStderr);
 
-                // Удалим временный cookies файл
+                // подчистим куки-файл
                 @unlink($cookieFile);
 
-                $dbg("POST code={$pinfo['http_code']} ct=" . ($pinfo['content_type'] ?? '') . " err={$perr}");
-                $dbg("POST headers:\n" . implode('', $respHeaders));
+                $code  = (int)($pinfo['http_code'] ?? 0);
+                $ctype = strtolower($pinfo['content_type'] ?? '');
+                $dbg("POST code={$code} ct=".$ctype." err={$perr}");
+                $dbg("POST headers:\n".implode('', $respHeaders));
+                $dbg("POST body preview:\n".substr((string)$resp, 0, 300));
 
                 if ($resp === false) {
                     $lastError = 'Сетевая ошибка (POST): ' . $perr;
                     break;
                 }
-
-                $code  = (int)($pinfo['http_code'] ?? 0);
-                $ctype = strtolower($pinfo['content_type'] ?? '');
 
                 if ($code === 403) {
                     @file_put_contents($backoffF, (string)(time() + $BACKOFF_403_SECONDS));
@@ -762,26 +756,38 @@ class SiteController extends Controller
                     return;
                 }
 
-                $isJson = (strpos($ctype, 'application/json') !== false);
-                if ($code === 200 && $isJson) {
+                // ✅ Пытаемся распарсить JSON даже при text/html
+                $json = null;
+                if (is_string($resp)) {
+                    $json = json_decode($resp, true);
+                }
+                $isJsonHeader = (strpos($ctype, 'application/json') !== false);
+
+                if ($json !== null && json_last_error() === JSON_ERROR_NONE) {
                     @file_put_contents($cacheF, $resp, LOCK_EX);
                     echo $resp;
                     return;
                 }
 
-                // Поводы для одноразового ретрая
-                $needRetry = ($code === 419) || !$isJson;
+                if ($code === 200 && $isJsonHeader) {
+                    @file_put_contents($cacheF, $resp, LOCK_EX);
+                    echo $resp;
+                    return;
+                }
+
+                // причины для ретрая
+                $needRetry = ($code === 419) || (!$isJsonHeader && $json === null);
                 if ($needRetry && $attempt < $MAX_ATTEMPTS) {
-                    $dbg("Retry reason: code=$code isJson=" . ($isJson ? '1' : '0'));
+                    $dbg("Retry reason: code=$code isJsonHeader=".($isJsonHeader?'1':'0')." jsonParsed=".($json!==null?'1':'0'));
                     usleep(mt_rand(300, 600) * 1000);
                     continue;
                 }
 
-                $lastError = "HTTP $code" . (!$isJson ? " (не JSON)" : "");
+                $lastError = "HTTP $code".(($json===null && !$isJsonHeader) ? " (не JSON)" : "");
                 break;
             }
 
-            $dbg("FINAL ERROR: " . ($lastError ?? 'unknown'));
+            $dbg("FINAL ERROR: ".($lastError ?? 'unknown'));
             echo json_encode(["status" => "error", "message" => $lastError ?? "Неизвестная ошибка"]);
             return;
 
@@ -792,6 +798,7 @@ class SiteController extends Controller
             }
         }
     }
+
 
 
 
