@@ -493,14 +493,17 @@ class SiteController extends Controller
         $BASE_URL            = 'https://roadpolice.am';
         $PAGE_URL            = $BASE_URL . '/ru/plate-number-search';
         $UA                  = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
-        $CACHE_TTL           = 6 * 3600;
-        $RATE_LIMIT_SECONDS  = 8;
-        $BACKOFF_403_SECONDS = 25 * 60;
-        $DELAY_MS_MIN        = 200;
+        $CACHE_TTL           = 6 * 3600;          // кэш 6 часов
+        $RATE_LIMIT_SECONDS  = 8;                 // не чаще 1 запроса/plate
+        $BACKOFF_403_SECONDS = 25 * 60;           // пауза после 403
+        $DELAY_MS_MIN        = 200;               // «человеческая» задержка
         $DELAY_MS_MAX        = 800;
-        $MAX_ATTEMPTS        = 2;
-        $DEBUG_LOG           = sys_get_temp_dir() . '/rp_debug.log';
+        $MAX_ATTEMPTS        = 2;                 // 1 попытка + 1 ретрай
 
+        // ВИДИМЫЙ tmp-каталог (а не systemd-private /tmp)
+        $tmpDir = '/var/www/dram/tmp';
+        if (!is_dir($tmpDir)) { @mkdir($tmpDir, 0775, true); }
+        $DEBUG_LOG = $tmpDir . '/rp_debug.log';
         $dbg = function(string $msg) use ($DEBUG_LOG) {
             @file_put_contents($DEBUG_LOG, '['.date('Y-m-d H:i:s')."] $msg\n", FILE_APPEND);
         };
@@ -528,7 +531,6 @@ class SiteController extends Controller
 
         // --- Кэш/лимиты ---
         $h        = sha1($plate);
-        $tmpDir   = sys_get_temp_dir();
         $cacheF   = $tmpDir . "/rp_cache_$h.json";
         $rateF    = $tmpDir . "/rp_rate_$h.touch";
         $backoffF = $tmpDir . "/rp_backoff.flag";
@@ -589,7 +591,7 @@ class SiteController extends Controller
                     CURLOPT_SSL_VERIFYPEER => true,
                     CURLOPT_SSL_VERIFYHOST => 2,
                     CURLOPT_USERAGENT      => $UA,
-                    CURLOPT_ENCODING       => '',
+                    CURLOPT_ENCODING       => '', // gzip/deflate/br
                     CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_2TLS,
                     CURLOPT_COOKIEJAR      => $cookieFile,
                     CURLOPT_COOKIEFILE     => $cookieFile,
@@ -607,11 +609,11 @@ class SiteController extends Controller
                     return strlen($header);
                 };
 
-                // 1) GET страницы
+                // 1) GET страницы (получаем сессию/куки + HTML для meta csrf)
                 $ch = curl_init($PAGE_URL);
                 curl_setopt_array($ch, $common + [
-                        CURLOPT_HTTPGET    => true,
-                        CURLOPT_HTTPHEADER => [
+                        CURLOPT_HTTPGET        => true,
+                        CURLOPT_HTTPHEADER     => [
                             'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
                             'Accept-Language: ru,en;q=0.8',
                             'Sec-Fetch-Site: same-origin',
@@ -641,12 +643,11 @@ class SiteController extends Controller
                     return;
                 }
 
-                // ПРОВЕРИМ, что cookie-файл не пуст
-                $cookieSize = @filesize($cookieFile);
-                $dbg("Cookie file size after GET: ".(int)$cookieSize);
+                // Проверим cookie-файл
+                $dbg("Cookie file size after GET: ".(int)@filesize($cookieFile));
                 $dbg("Cookie file content after GET:\n".@file_get_contents($cookieFile));
 
-                // Вытащим XSRF и rd из cookie-файла
+                // Куки
                 $xsrf = null; $rd = null;
                 foreach (@file($cookieFile) ?: [] as $line) {
                     if ($line === '' || $line[0] === '#') continue;
@@ -656,8 +657,6 @@ class SiteController extends Controller
                         if ($p[5] === 'rd_session')  $rd   = trim($p[6]);
                     }
                 }
-
-                // Fallback: если cookie-файл пуст — попробуем вытащить из заголовков Set-Cookie
                 if (!$xsrf || !$rd) {
                     foreach ($respHeaders as $hline) {
                         if (stripos($hline, 'Set-Cookie:') === 0) {
@@ -668,40 +667,17 @@ class SiteController extends Controller
                     $dbg("Fallback from headers: xsrf=".(bool)$xsrf." rd=".(bool)$rd);
                 }
 
-                // Sanctum fallback
-                if (!$xsrf || !$rd) {
-                    $curlStderr = fopen($tmpDir . '/rp_curl_sanctum_'.$attempt.'.log', 'w');
-                    $ch = curl_init($BASE_URL . '/sanctum/csrf-cookie');
-                    curl_setopt_array($ch, $common + [
-                            CURLOPT_HTTPGET    => true,
-                            CURLOPT_HTTPHEADER => [
-                                'Accept: */*',
-                                'Referer: ' . $PAGE_URL,
-                                'Sec-Fetch-Site: same-origin',
-                                'Sec-Fetch-Mode: no-cors',
-                                'Sec-Fetch-Dest: empty',
-                            ],
-                        ]);
-                    curl_exec($ch);
-                    $i2 = curl_getinfo($ch);
-                    $e2 = curl_error($ch);
-                    curl_close($ch);
-                    fclose($curlStderr);
-                    $dbg("SANCTUM code={$i2['http_code']} err={$e2}");
-                    $dbg("Cookie file content after SANCTUM:\n".@file_get_contents($cookieFile));
-
-                    foreach (@file($cookieFile) ?: [] as $line) {
-                        if ($line === '' || $line[0] === '#') continue;
-                        $p = explode("\t", $line);
-                        if (count($p) >= 7) {
-                            if ($p[5] === 'XSRF-TOKEN') $xsrf = urldecode(trim($p[6]));
-                            if ($p[5] === 'rd_session')  $rd   = trim($p[6]);
-                        }
-                    }
+                // 1.1) CSRF из <meta name="csrf-token" content="...">
+                $metaToken = null;
+                if (is_string($html) && preg_match('/<meta\s+name=["\']csrf-token["\']\s+content=["\']([^"\']+)["\']/i', $html, $m)) {
+                    $metaToken = $m[1];
+                    $dbg("META csrf found: ".substr($metaToken, 0, 16).'...');
+                } else {
+                    $dbg("META csrf not found in HTML");
                 }
 
                 if (!$xsrf || !$rd) {
-                    $dbg("FAIL: no xsrf/rd after all. xsrfPresent=".(int)(bool)$xsrf." rdPresent=".(int)(bool)$rd);
+                    $dbg("FAIL: no xsrf/rd after GET. xsrfPresent=".(int)(bool)$xsrf." rdPresent=".(int)(bool)$rd);
                     $lastError = "Не удалось получить XSRF/сессию";
                     @unlink($cookieFile);
                     if ($attempt < $MAX_ATTEMPTS) {
@@ -715,28 +691,34 @@ class SiteController extends Controller
 
                 usleep(mt_rand($DELAY_MS_MIN, $DELAY_MS_MAX) * 1000);
 
-                // 2) POST
-                $post = http_build_query(['number' => $plate]);
-                $respHeaders = []; // заново
+                // 2) POST — используем meta csrf как основной (_token + X-CSRF-TOKEN).
+                $csrfForHeader = $metaToken ?: $xsrf;
+                $postFields = ['number' => $plate];
+                if ($metaToken) {
+                    $postFields['_token'] = $metaToken; // критично для VerifyCsrfToken
+                }
+                $post = http_build_query($postFields);
+
+                $respHeaders = [];
                 $curlStderr = fopen($tmpDir . '/rp_curl_post_'.$attempt.'.log', 'w');
                 $ch = curl_init($PAGE_URL);
                 curl_setopt_array($ch, $common + [
-                        CURLOPT_POST       => true,
-                        CURLOPT_POSTFIELDS => $post,
-                        CURLOPT_HTTPHEADER => [
+                        CURLOPT_POST           => true,
+                        CURLOPT_POSTFIELDS     => $post,
+                        CURLOPT_HTTPHEADER     => [
                             'Accept: application/json, text/plain, */*',
                             'Content-Type: application/x-www-form-urlencoded',
                             'Origin: ' . $BASE_URL,
                             'Referer: ' . $PAGE_URL,
                             'X-Requested-With: XMLHttpRequest',
-                            'X-XSRF-TOKEN: ' . $xsrf,
-                            'Sec-Fetch-Site: same-origin',
-                            'Sec-Fetch-Mode: cors',
-                            'Sec-Fetch-Dest: empty',
+                            'X-CSRF-TOKEN: ' . $csrfForHeader, // главный
+                            'X-XSRF-TOKEN: ' . $xsrf,          // «на всякий»
+                            'Accept-Language: ru,en;q=0.8',
                         ],
+                        CURLOPT_REFERER        => $PAGE_URL,
                         CURLOPT_HEADERFUNCTION => $headerFn,
                     ]);
-                $resp = curl_exec($ch);
+                $resp  = curl_exec($ch);
                 $pinfo = curl_getinfo($ch);
                 $perr  = curl_error($ch);
                 curl_close($ch);
@@ -787,7 +769,6 @@ class SiteController extends Controller
             }
         }
     }
-
 
 
     protected function actionConverterAjax(string $type, string $fromCurrency, string $toCurrency)

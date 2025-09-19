@@ -8,3 +8,4 @@ app/storage/cron.log
 app/storage/cron_courses.log
 /fonts/*
 .idea/
+/tmp
