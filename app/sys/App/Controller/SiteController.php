@@ -489,16 +489,21 @@ class SiteController extends Controller
     public function actionPlateSearch()
     {
         // --- Конфиг ---
-        $OUT_IP              = '45.150.8.84';              // ваш новый исходящий IP
+        $OUT_IP              = '45.150.8.84';
         $BASE_URL            = 'https://roadpolice.am';
         $PAGE_URL            = $BASE_URL . '/ru/plate-number-search';
         $UA                  = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
-        $CACHE_TTL           = 6 * 3600;                   // кэш 6 часов
-        $RATE_LIMIT_SECONDS  = 8;                          // не чаще 1 запроса/plate
-        $BACKOFF_403_SECONDS = 25 * 60;                    // пауза после 403
-        $DELAY_MS_MIN        = 200;                        // задержка между шагами
+        $CACHE_TTL           = 6 * 3600;
+        $RATE_LIMIT_SECONDS  = 8;
+        $BACKOFF_403_SECONDS = 25 * 60;
+        $DELAY_MS_MIN        = 200;
         $DELAY_MS_MAX        = 800;
-        $MAX_ATTEMPTS        = 2;                          // 1 основная попытка + 1 ретрай
+        $MAX_ATTEMPTS        = 2;
+        $DEBUG_LOG           = sys_get_temp_dir() . '/rp_debug.log';
+
+        $dbg = function(string $msg) use ($DEBUG_LOG) {
+            @file_put_contents($DEBUG_LOG, '['.date('Y-m-d H:i:s')."] $msg\n", FILE_APPEND);
+        };
 
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             http_response_code(405);
@@ -512,7 +517,7 @@ class SiteController extends Controller
             return;
         }
 
-        // ваш фильтр "нули"
+        // фильтр "нули"
         if (
             preg_match('/^\d{3}/', $plate) && (preg_match('/^000/', $plate) || preg_match('/00$/', $plate)) ||
             preg_match('/\d{3}$/', $plate) && (preg_match('/^00/', $plate) || preg_match('/000$/', $plate))
@@ -521,14 +526,14 @@ class SiteController extends Controller
             return;
         }
 
-        // --- Файлы для кэша/лимитов/бэкоффа ---
+        // --- Кэш/лимиты ---
         $h        = sha1($plate);
         $tmpDir   = sys_get_temp_dir();
         $cacheF   = $tmpDir . "/rp_cache_$h.json";
         $rateF    = $tmpDir . "/rp_rate_$h.touch";
         $backoffF = $tmpDir . "/rp_backoff.flag";
 
-        // --- Глобальный анти-параллелизм (mutex) ---
+        // mutex
         $lockF = $tmpDir . '/rp_mutex.lock';
         $lockH = fopen($lockF, 'c');
         if (!$lockH || !flock($lockH, LOCK_EX | LOCK_NB)) {
@@ -538,57 +543,71 @@ class SiteController extends Controller
         }
 
         try {
-            // Бэкофф после 403
+            $dbg("---- NEW REQUEST plate={$plate} ----");
+
             if (is_file($backoffF)) {
                 $until = (int)trim(@file_get_contents($backoffF));
                 if ($until > time()) {
+                    $dbg("Backoff active, until=$until");
                     echo json_encode(["status" => "error", "message" => "Сервис временно недоступен, повторите позже"]);
                     return;
                 }
                 @unlink($backoffF);
             }
 
-            // Кэш
             if (is_file($cacheF) && (time() - filemtime($cacheF) < $CACHE_TTL)) {
+                $dbg("Cache hit: $cacheF");
                 readfile($cacheF);
                 return;
             }
 
-            // Rate-limit (по plate; при желании добавьте привязку к юзеру/IP)
             if (is_file($rateF) && (time() - filemtime($rateF) < $RATE_LIMIT_SECONDS)) {
+                $dbg("Rate limit hit: $rateF");
                 echo json_encode(["status" => "error", "message" => "Слишком часто. Попробуйте чуть позже."]);
                 return;
             }
             @touch($rateF);
 
-            // «Человеческая» задержка
             usleep(mt_rand($DELAY_MS_MIN, $DELAY_MS_MAX) * 1000);
 
-            // Попытаемся 1 раз + 1 ретрай при шуме
             $attempt   = 0;
             $lastError = null;
+
             while ($attempt < $MAX_ATTEMPTS) {
                 $attempt++;
+                $dbg("Attempt #$attempt");
 
                 $cookieFile = tempnam($tmpDir, 'rp_');
+                $dbg("Cookie file: $cookieFile");
 
-                // Общие опции cURL
+                // файлик для вербоза cURL
+                $curlStderr = fopen($tmpDir . '/rp_curl_'.$attempt.'.log', 'w');
+
                 $common = [
                     CURLOPT_RETURNTRANSFER => true,
                     CURLOPT_FOLLOWLOCATION => true,
                     CURLOPT_SSL_VERIFYPEER => true,
                     CURLOPT_SSL_VERIFYHOST => 2,
                     CURLOPT_USERAGENT      => $UA,
-                    CURLOPT_ENCODING       => '', // gzip/deflate/br
+                    CURLOPT_ENCODING       => '',
                     CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_2TLS,
                     CURLOPT_COOKIEJAR      => $cookieFile,
                     CURLOPT_COOKIEFILE     => $cookieFile,
                     CURLOPT_TIMEOUT        => 25,
-                    CURLOPT_INTERFACE      => $OUT_IP,           // исходящий IP
-                    CURLOPT_IPRESOLVE      => CURL_IPRESOLVE_V4, // форсим IPv4
+                    CURLOPT_INTERFACE      => $OUT_IP,
+                    CURLOPT_IPRESOLVE      => CURL_IPRESOLVE_V4,
+                    CURLOPT_VERBOSE        => true,
+                    CURLOPT_STDERR         => $curlStderr,
                 ];
 
-                // 1) GET страницы (получаем сессию/куки)
+                // Сбор заголовков ответа
+                $respHeaders = [];
+                $headerFn = function($ch, $header) use (&$respHeaders) {
+                    $respHeaders[] = $header;
+                    return strlen($header);
+                };
+
+                // 1) GET страницы
                 $ch = curl_init($PAGE_URL);
                 curl_setopt_array($ch, $common + [
                         CURLOPT_HTTPGET    => true,
@@ -599,16 +618,21 @@ class SiteController extends Controller
                             'Sec-Fetch-Mode: navigate',
                             'Sec-Fetch-Dest: document',
                         ],
+                        CURLOPT_HEADERFUNCTION => $headerFn,
                     ]);
                 $html = curl_exec($ch);
                 $info = curl_getinfo($ch);
                 $err  = curl_error($ch);
                 curl_close($ch);
+                fclose($curlStderr);
+
+                $dbg("GET code={$info['http_code']} ct=".($info['content_type'] ?? '')." err={$err}");
+                $dbg("GET headers:\n".implode('', $respHeaders));
 
                 if ($html === false) {
                     $lastError = 'Сетевая ошибка (GET): ' . $err;
                     @unlink($cookieFile);
-                    break; // смысла ретраить при сетевой ошибке мало — выходим
+                    break;
                 }
                 if ((int)$info['http_code'] === 403) {
                     @file_put_contents($backoffF, (string)(time() + $BACKOFF_403_SECONDS));
@@ -617,7 +641,12 @@ class SiteController extends Controller
                     return;
                 }
 
-                // Достаём XSRF/rd_session из cookie-банки
+                // ПРОВЕРИМ, что cookie-файл не пуст
+                $cookieSize = @filesize($cookieFile);
+                $dbg("Cookie file size after GET: ".(int)$cookieSize);
+                $dbg("Cookie file content after GET:\n".@file_get_contents($cookieFile));
+
+                // Вытащим XSRF и rd из cookie-файла
                 $xsrf = null; $rd = null;
                 foreach (@file($cookieFile) ?: [] as $line) {
                     if ($line === '' || $line[0] === '#') continue;
@@ -628,8 +657,20 @@ class SiteController extends Controller
                     }
                 }
 
-                // 1.1) Fallback: Sanctum csrf-cookie
+                // Fallback: если cookie-файл пуст — попробуем вытащить из заголовков Set-Cookie
                 if (!$xsrf || !$rd) {
+                    foreach ($respHeaders as $hline) {
+                        if (stripos($hline, 'Set-Cookie:') === 0) {
+                            if (!$xsrf && preg_match('/XSRF-TOKEN=([^;]+)/', $hline, $m)) $xsrf = urldecode($m[1]);
+                            if (!$rd   && preg_match('/rd_session=([^;]+)/', $hline, $m)) $rd   = $m[1];
+                        }
+                    }
+                    $dbg("Fallback from headers: xsrf=".(bool)$xsrf." rd=".(bool)$rd);
+                }
+
+                // Sanctum fallback
+                if (!$xsrf || !$rd) {
+                    $curlStderr = fopen($tmpDir . '/rp_curl_sanctum_'.$attempt.'.log', 'w');
                     $ch = curl_init($BASE_URL . '/sanctum/csrf-cookie');
                     curl_setopt_array($ch, $common + [
                             CURLOPT_HTTPGET    => true,
@@ -642,7 +683,12 @@ class SiteController extends Controller
                             ],
                         ]);
                     curl_exec($ch);
+                    $i2 = curl_getinfo($ch);
+                    $e2 = curl_error($ch);
                     curl_close($ch);
+                    fclose($curlStderr);
+                    $dbg("SANCTUM code={$i2['http_code']} err={$e2}");
+                    $dbg("Cookie file content after SANCTUM:\n".@file_get_contents($cookieFile));
 
                     foreach (@file($cookieFile) ?: [] as $line) {
                         if ($line === '' || $line[0] === '#') continue;
@@ -655,9 +701,9 @@ class SiteController extends Controller
                 }
 
                 if (!$xsrf || !$rd) {
+                    $dbg("FAIL: no xsrf/rd after all. xsrfPresent=".(int)(bool)$xsrf." rdPresent=".(int)(bool)$rd);
                     $lastError = "Не удалось получить XSRF/сессию";
                     @unlink($cookieFile);
-                    // Это разумно ретраить 1 раз
                     if ($attempt < $MAX_ATTEMPTS) {
                         usleep(mt_rand(300, 600) * 1000);
                         continue;
@@ -665,13 +711,15 @@ class SiteController extends Controller
                     break;
                 }
 
-                // Мини-пауза
+                $dbg("OK: got xsrf (".strlen($xsrf)." bytes) and rd");
+
                 usleep(mt_rand($DELAY_MS_MIN, $DELAY_MS_MAX) * 1000);
 
-                // 2) POST проверки номера
+                // 2) POST
                 $post = http_build_query(['number' => $plate]);
-
-                $ch = curl_init($PAGE_URL); // если узнаете точный AJAX-endpoint — подставьте его
+                $respHeaders = []; // заново
+                $curlStderr = fopen($tmpDir . '/rp_curl_post_'.$attempt.'.log', 'w');
+                $ch = curl_init($PAGE_URL);
                 curl_setopt_array($ch, $common + [
                         CURLOPT_POST       => true,
                         CURLOPT_POSTFIELDS => $post,
@@ -686,21 +734,24 @@ class SiteController extends Controller
                             'Sec-Fetch-Mode: cors',
                             'Sec-Fetch-Dest: empty',
                         ],
+                        CURLOPT_HEADERFUNCTION => $headerFn,
                     ]);
                 $resp = curl_exec($ch);
                 $pinfo = curl_getinfo($ch);
                 $perr  = curl_error($ch);
                 curl_close($ch);
-                @unlink($cookieFile);
+                fclose($curlStderr);
+
+                $dbg("POST code={$pinfo['http_code']} ct=".($pinfo['content_type'] ?? '')." err={$perr}");
+                $dbg("POST headers:\n".implode('', $respHeaders));
 
                 if ($resp === false) {
                     $lastError = 'Сетевая ошибка (POST): ' . $perr;
-                    break; // сетевую ошибку не ретраим агрессивно
+                    break;
                 }
 
                 $code  = (int)($pinfo['http_code'] ?? 0);
                 $ctype = strtolower($pinfo['content_type'] ?? '');
-
                 if ($code === 403) {
                     @file_put_contents($backoffF, (string)(time() + $BACKOFF_403_SECONDS));
                     echo json_encode(["status" => "error", "message" => "Доступ временно ограничен (403). Попробуйте позже."]);
@@ -709,28 +760,23 @@ class SiteController extends Controller
 
                 $isJson = (strpos($ctype, 'application/json') !== false);
                 if ($code === 200 && $isJson) {
-                    // Успех — положим в кэш и отдадим
                     @file_put_contents($cacheF, $resp, LOCK_EX);
                     echo $resp;
                     return;
                 }
 
-                // Поводы для одноразового ретрая: 419 (expired/CSRF), 302 на HTML, 200 но не JSON и т.п.
                 $needRetry = ($code === 419) || !$isJson;
                 if ($needRetry && $attempt < $MAX_ATTEMPTS) {
+                    $dbg("Retry reason: code=$code isJson=".($isJson?'1':'0'));
                     usleep(mt_rand(300, 600) * 1000);
                     continue;
                 }
 
-                // Неуспех без ретрая
-                $lastError = "HTTP $code";
-                if (!$isJson) {
-                    $lastError .= " (не JSON)";
-                }
+                $lastError = "HTTP $code".(!$isJson ? " (не JSON)" : "");
                 break;
             }
 
-            // Если дошли сюда — все попытки исчерпаны
+            $dbg("FINAL ERROR: ".($lastError ?? 'unknown'));
             echo json_encode(["status" => "error", "message" => $lastError ?? "Неизвестная ошибка"]);
             return;
 
@@ -741,6 +787,7 @@ class SiteController extends Controller
             }
         }
     }
+
 
 
     protected function actionConverterAjax(string $type, string $fromCurrency, string $toCurrency)
