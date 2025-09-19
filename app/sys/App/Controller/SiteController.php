@@ -591,105 +591,68 @@ class SiteController extends Controller
                 $attempt++;
                 $dbg("Attempt #$attempt");
 
-                $cookieFile = tempnam($tmpDir, 'rp_');
-                $dbg("Cookie file: $cookieFile");
-
-                $curlStderr = fopen($tmpDir . '/rp_curl_' . $attempt . '.log', 'w');
-
-                $common = [
+                // ---------- 1) GET страницы: забираем Set-Cookie и meta csrf ----------
+                $ch = curl_init();
+                curl_setopt_array($ch, [
+                    CURLOPT_URL            => $PAGE_URL,
                     CURLOPT_RETURNTRANSFER => true,
+                    CURLOPT_HEADER         => true,   // важно: заголовки в теле ответа
                     CURLOPT_FOLLOWLOCATION => true,
                     CURLOPT_SSL_VERIFYPEER => true,
                     CURLOPT_SSL_VERIFYHOST => 2,
                     CURLOPT_USERAGENT      => $UA,
-                    CURLOPT_ENCODING       => '', // gzip/deflate/br
-                    CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_2TLS,
-                    CURLOPT_COOKIEJAR      => $cookieFile,
-                    CURLOPT_COOKIEFILE     => $cookieFile,
+                    CURLOPT_ENCODING       => '',     // gzip/deflate/br
                     CURLOPT_TIMEOUT        => 25,
                     CURLOPT_INTERFACE      => $OUT_IP,
                     CURLOPT_IPRESOLVE      => CURL_IPRESOLVE_V4,
-                    CURLOPT_VERBOSE        => true,
-                    CURLOPT_STDERR         => $curlStderr,
-                ];
-
-                // Заголовки ответа
-                $respHeaders = [];
-                $headerFn = function ($ch, $header) use (&$respHeaders) {
-                    $respHeaders[] = $header;
-                    return strlen($header);
-                };
-
-                // 1) GET
-                $ch = curl_init($PAGE_URL);
-                curl_setopt_array($ch, $common + [
-                        CURLOPT_HTTPGET        => true,
-                        CURLOPT_HTTPHEADER     => [
-                            'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-                            'Accept-Language: ru,en;q=0.8',
-                            'Sec-Fetch-Site: same-origin',
-                            'Sec-Fetch-Mode: navigate',
-                            'Sec-Fetch-Dest: document',
-                        ],
-                        CURLOPT_HEADERFUNCTION => $headerFn,
-                    ]);
-                $html = curl_exec($ch);
-                $info = curl_getinfo($ch);
+                    CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_2TLS,
+                    CURLOPT_HTTPHEADER     => [
+                        'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                        'Accept-Language: ru,en;q=0.8',
+                        // никаких Sec-Fetch-* — они только мешают вне браузера
+                    ],
+                ]);
+                $resp = curl_exec($ch);
                 $err  = curl_error($ch);
+                $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
                 curl_close($ch);
-                fclose($curlStderr);
 
-                $dbg("GET code={$info['http_code']} ct=" . ($info['content_type'] ?? '') . " err={$err}");
-                $dbg("GET headers:\n" . implode('', $respHeaders));
-
-                if ($html === false) {
+                if ($resp === false) {
                     $lastError = 'Сетевая ошибка (GET): ' . $err;
-                    @unlink($cookieFile);
                     break;
                 }
-                if ((int)$info['http_code'] === 403) {
+                if ($code === 403) {
                     @file_put_contents($backoffF, (string)(time() + $BACKOFF_403_SECONDS));
-                    @unlink($cookieFile);
                     echo json_encode(["status" => "error", "message" => "Доступ временно ограничен (403). Попробуйте позже."]);
                     return;
                 }
 
-                // Куки
-                $dbg("Cookie file size after GET: " . (int)@filesize($cookieFile));
-                $dbg("Cookie file content after GET:\n" . @file_get_contents($cookieFile));
+                // Парсим заголовки/тело
+                $headerEnd = strpos($resp, "\r\n\r\n");
+                if ($headerEnd === false) $headerEnd = strpos($resp, "\n\n");
+                $rawHeaders = ($headerEnd !== false) ? substr($resp, 0, $headerEnd) : '';
+                $html       = ($headerEnd !== false) ? substr($resp, $headerEnd + 4) : $resp;
 
-                $xsrf = null; $rd = null;
-                foreach (@file($cookieFile) ?: [] as $line) {
-                    if ($line === '' || $line[0] === '#') continue;
-                    $p = explode("\t", $line);
-                    if (count($p) >= 7) {
-                        if ($p[5] === 'XSRF-TOKEN') $xsrf = urldecode(trim($p[6]));
-                        if ($p[5] === 'rd_session')  $rd   = trim($p[6]);
+                // Куки из Set-Cookie:
+                $xsrf = null; $rd = null; $lng = null;
+                foreach (preg_split("/\r?\n/", $rawHeaders) as $hline) {
+                    if (stripos($hline, 'Set-Cookie:') === 0) {
+                        if (!$xsrf && preg_match('/XSRF-TOKEN=([^;]+)/i', $hline, $m)) $xsrf = urldecode($m[1]);
+                        if (!$rd   && preg_match('/rd_session=([^;]+)/i', $hline, $m)) $rd   = $m[1];
+                        if (!$lng  && preg_match('/\blng=([^;]+)/i', $hline, $m))      $lng  = $m[1];
                     }
-                }
-                if (!$xsrf || !$rd) {
-                    foreach ($respHeaders as $hline) {
-                        if (stripos($hline, 'Set-Cookie:') === 0) {
-                            if (!$xsrf && preg_match('/XSRF-TOKEN=([^;]+)/', $hline, $m)) $xsrf = urldecode($m[1]);
-                            if (!$rd   && preg_match('/rd_session=([^;]+)/', $hline, $m)) $rd   = $m[1];
-                        }
-                    }
-                    $dbg("Fallback from headers: xsrf=" . (bool)$xsrf . " rd=" . (bool)$rd);
                 }
 
                 // meta csrf
                 $metaToken = null;
-                if (is_string($html) && preg_match('/<meta\s+name=["\']csrf-token["\']\s+content=["\']([^"\']+)["\']/i', $html, $m)) {
+                if (preg_match('/<meta\s+name=["\']csrf-token["\']\s+content=["\']([^"\']+)["\']/i', $html, $m)) {
                     $metaToken = $m[1];
-                    $dbg("META csrf found: " . substr($metaToken, 0, 16) . '...');
-                } else {
-                    $dbg("META csrf not found in HTML");
                 }
 
                 if (!$xsrf || !$rd) {
-                    $dbg("FAIL: no xsrf/rd after GET. xsrfPresent=" . (int)(bool)$xsrf . " rdPresent=" . (int)(bool)$rd);
+                    $dbg("FAIL: no xsrf/rd after GET. headers:\n".$rawHeaders);
                     $lastError = "Не удалось получить XSRF/сессию";
-                    @unlink($cookieFile);
+                    // возможно одноразовый ретрай
                     if ($attempt < $MAX_ATTEMPTS) {
                         usleep(mt_rand(300, 600) * 1000);
                         continue;
@@ -697,102 +660,89 @@ class SiteController extends Controller
                     break;
                 }
 
-                $dbg("OK: got xsrf (" . strlen($xsrf) . " bytes) and rd");
+                // Сборка Cookie: — ровно как в рабочем curl
+                $cookieHeader = "XSRF-TOKEN={$xsrf}; rd_session={$rd}";
+                if ($lng) $cookieHeader .= "; lng={$lng}";
 
+                // Пауза перед POST
                 usleep(mt_rand($DELAY_MS_MIN, $DELAY_MS_MAX) * 1000);
 
-                // 2) POST — используем оба токена + fetch-заголовки
-                $csrfForHeader = $metaToken ?: $xsrf;
-
-                $postFields = [
-                    'number' => $plate,
-                ];
+                // ---------- 2) POST: как в удачном curl ----------
+                $postFields = ['number' => $plate];
                 if ($metaToken) {
-                    $postFields['_token'] = $metaToken; // важно для VerifyCsrfToken
+                    // важно: и поле формы, и заголовок
+                    $postFields['_token'] = $metaToken;
                 }
-                $post = http_build_query($postFields);
+                $postBody = http_build_query($postFields);
 
-                $respHeaders = [];
-                $curlStderr = fopen($tmpDir . '/rp_curl_post_' . $attempt . '.log', 'w');
-                $ch = curl_init($PAGE_URL);
-                curl_setopt_array($ch, $common + [
-                        CURLOPT_POST           => true,
-                        CURLOPT_POSTFIELDS     => $post,
-                        CURLOPT_HTTPHEADER     => [
-                            // максимально «браузерный» AJAX
-                            'Accept: application/json, text/plain, */*',
-                            'Content-Type: application/x-www-form-urlencoded',
-                            'Origin: ' . $BASE_URL,
-                            'Referer: ' . $PAGE_URL,
-                            'X-Requested-With: XMLHttpRequest',
-                            'X-CSRF-TOKEN: ' . $csrfForHeader, // meta
-                            'X-XSRF-TOKEN: ' . $xsrf,          // cookie (decoded)
-                            'Accept-Language: ru,en;q=0.8',
-                            'Sec-Fetch-Site: same-origin',
-                            'Sec-Fetch-Mode: cors',
-                            'Sec-Fetch-Dest: empty',
-                        ],
-                        CURLOPT_REFERER        => $PAGE_URL,
-                        CURLOPT_HEADERFUNCTION => $headerFn,
-                    ]);
-                $resp  = curl_exec($ch);
-                $pinfo = curl_getinfo($ch);
-                $perr  = curl_error($ch);
+                $ch = curl_init();
+                curl_setopt_array($ch, [
+                    CURLOPT_URL            => $PAGE_URL,
+                    CURLOPT_POST           => true,
+                    CURLOPT_POSTFIELDS     => $postBody,
+                    CURLOPT_RETURNTRANSFER => true,
+                    CURLOPT_HEADER         => false,
+                    CURLOPT_FOLLOWLOCATION => false,
+                    CURLOPT_SSL_VERIFYPEER => true,
+                    CURLOPT_SSL_VERIFYHOST => 2,
+                    CURLOPT_USERAGENT      => $UA,
+                    CURLOPT_ENCODING       => '', // gzip/deflate/br
+                    CURLOPT_TIMEOUT        => 25,
+                    CURLOPT_INTERFACE      => $OUT_IP,
+                    CURLOPT_IPRESOLVE      => CURL_IPRESOLVE_V4,
+                    // КЛЮЧЕВОЕ: HTTP/1.1 на POST — часто снимает триггер WAF
+                    CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1,
+                    CURLOPT_HTTPHEADER     => array_filter([
+                        'Accept: application/json, text/plain, */*',
+                        'Content-Type: application/x-www-form-urlencoded',
+                        'Origin: ' . $BASE_URL,
+                        'Referer: ' . $PAGE_URL,
+                        'X-Requested-With: XMLHttpRequest',
+                        $metaToken ? ('X-CSRF-TOKEN: ' . $metaToken) : null,
+                        // вручную передаём куки как в вашем рабочем curl
+                        'Cookie: ' . $cookieHeader,
+                        // выключаем 100-continue
+                        'Expect:',
+                        // никаких Sec-Fetch-*, sec-ch-ua и т.п.
+                    ]),
+                ]);
+                $resp = curl_exec($ch);
+                $err  = curl_error($ch);
+                $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                $ctype= (string)curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
                 curl_close($ch);
-                fclose($curlStderr);
-
-                // подчистим куки-файл
-                @unlink($cookieFile);
-
-                $code  = (int)($pinfo['http_code'] ?? 0);
-                $ctype = strtolower($pinfo['content_type'] ?? '');
-                $dbg("POST code={$code} ct=".$ctype." err={$perr}");
-                $dbg("POST headers:\n".implode('', $respHeaders));
-
-                // Сохраним тело для диагностики
-                if (is_string($resp)) {
-                    @file_put_contents($tmpDir . '/rp_post_body_' . $attempt . '.html', $resp);
-                    $dbg("POST body saved to rp_post_body_{$attempt}.html, first 200:\n" . substr($resp, 0, 200));
-                }
 
                 if ($resp === false) {
-                    $lastError = 'Сетевая ошибка (POST): ' . $perr;
+                    $lastError = 'Сетевая ошибка (POST): ' . $err;
                     break;
                 }
-
                 if ($code === 403) {
                     @file_put_contents($backoffF, (string)(time() + $BACKOFF_403_SECONDS));
                     echo json_encode(["status" => "error", "message" => "Доступ временно ограничен (403). Попробуйте позже."]);
                     return;
                 }
 
-                // Попробуем распарсить JSON вне зависимости от content-type
-                $json = null;
-                if (is_string($resp)) {
-                    $json = json_decode($resp, true);
-                }
-                $isJsonHeader = (strpos($ctype, 'application/json') !== false);
+                // Пробуем JSON независимо от content-type
+                $json = json_decode($resp, true);
+                $isJson = (json_last_error() === JSON_ERROR_NONE);
 
-                if ($json !== null && json_last_error() === JSON_ERROR_NONE) {
-                    @file_put_contents($cacheF, $resp, LOCK_EX);
-                    echo $resp;
-                    return;
-                }
-                if ($code === 200 && $isJsonHeader) {
+                if ($isJson) {
                     @file_put_contents($cacheF, $resp, LOCK_EX);
                     echo $resp;
                     return;
                 }
 
-                // Если прилетела HTML-страница (WAF/страница ошибки) — один ретрай
-                $needRetry = ($code === 419) || (!$isJsonHeader && $json === null);
-                if ($needRetry && $attempt < $MAX_ATTEMPTS) {
-                    $dbg("Retry reason: code=$code isJsonHeader=".($isJsonHeader?'1':'0')." jsonParsed=".($json!==null?'1':'0'));
+                // Диагностика: сохраним HTML чтобы увидеть WAF-страницу
+                @file_put_contents($tmpDir . '/rp_post_body_' . $attempt . '.html', $resp);
+
+                // Если пришёл HTML (WAF/форма), пробуем ещё раз
+                if ($attempt < $MAX_ATTEMPTS) {
+                    $dbg("Retry: HTTP $code, ctype=$ctype, json=0");
                     usleep(mt_rand(300, 600) * 1000);
                     continue;
                 }
 
-                $lastError = "HTTP $code" . (($json===null && !$isJsonHeader) ? " (не JSON)" : "");
+                $lastError = "HTTP $code (не JSON)";
                 break;
             }
 
@@ -807,9 +757,6 @@ class SiteController extends Controller
             }
         }
     }
-
-
-
 
 
     protected function actionConverterAjax(string $type, string $fromCurrency, string $toCurrency)
