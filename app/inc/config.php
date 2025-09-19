@@ -19,6 +19,7 @@ return [
         '(?<lang>ru|en|am)' => 'site/index',
         'web' => 'site/index',
         'mob' => 'site/index',
+        'credit' => 'site/credit',
         'converter' => 'site/converter',
         'charts' => 'site/charts',
         'about' => 'site/about',

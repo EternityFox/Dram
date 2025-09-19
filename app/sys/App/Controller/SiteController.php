@@ -491,25 +491,27 @@ class SiteController extends Controller
         header('Content-Type: application/json; charset=UTF-8');
 
         // --- Конфиг ---
-        $OUT_IP              = '45.150.8.84';
-        $BASE_URL            = 'https://roadpolice.am';
-        $PAGE_URL            = $BASE_URL . '/ru/plate-number-search';
-        $UA                  = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
-        $CACHE_TTL           = 6 * 3600;
-        $RATE_LIMIT_SECONDS  = 8;
+        $OUT_IP = '45.150.8.84';
+        $BASE_URL = 'https://roadpolice.am';
+        $PAGE_URL = $BASE_URL . '/ru/plate-number-search';
+        $UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+        $CACHE_TTL = 6 * 3600;
+        $RATE_LIMIT_SECONDS = 8;
         $BACKOFF_403_SECONDS = 25 * 60;
-        $DELAY_MS_MIN        = 200;
-        $DELAY_MS_MAX        = 800;
-        $MAX_ATTEMPTS        = 2;
-        $DEBUG               = false; // прод: выключено
+        $DELAY_MS_MIN = 200;
+        $DELAY_MS_MAX = 800;
+        $MAX_ATTEMPTS = 2;
+        $DEBUG = false; // прод: выключено
 
         // язык интерфейса (приходит с фронта)
         $lang = strtolower(trim($_POST['lang'] ?? 'ru'));
-        if (!in_array($lang, ['ru','am','en'], true)) $lang = 'ru';
+        if (!in_array($lang, ['ru', 'am', 'en'], true)) $lang = 'ru';
 
         // tmp для кэша/локов
         $tmpDir = '/var/www/dram/tmp';
-        if (!is_dir($tmpDir)) { @mkdir($tmpDir, 0775, true); }
+        if (!is_dir($tmpDir)) {
+            @mkdir($tmpDir, 0775, true);
+        }
 
         $DEBUG_LOG = $tmpDir . '/rp_debug.log';
         $dbg = function (string $msg) use ($DEBUG, $DEBUG_LOG) {
@@ -540,9 +542,9 @@ class SiteController extends Controller
         }
 
         // --- Кэш/лимиты/бэкофф ---
-        $h        = sha1($plate);
-        $cacheF   = $tmpDir . "/rp_cache_$h.json";
-        $rateF    = $tmpDir . "/rp_rate_$h.touch";
+        $h = sha1($plate);
+        $cacheF = $tmpDir . "/rp_cache_$h.json";
+        $rateF = $tmpDir . "/rp_rate_$h.touch";
         $backoffF = $tmpDir . "/rp_backoff.flag";
 
         // Мьютекс по номеру (ждём до 2с)
@@ -554,7 +556,10 @@ class SiteController extends Controller
         }
         $gotLock = false;
         for ($i = 0; $i < 20; $i++) {
-            if (@flock($lockH, LOCK_EX | LOCK_NB)) { $gotLock = true; break; }
+            if (@flock($lockH, LOCK_EX | LOCK_NB)) {
+                $gotLock = true;
+                break;
+            }
             usleep(100 * 1000);
         }
         if (!$gotLock) {
@@ -564,11 +569,11 @@ class SiteController extends Controller
         }
 
         // вспомогательное: i18n ошибок
-        $translateError = function(array $json, string $lang) {
+        $translateError = function (array $json, string $lang) {
             // Шаблон ответа
             $out = [
                 "status" => "error",
-                "code"   => "unknown",
+                "code" => "unknown",
                 "message" => null,            // исходный текст от roadpolice, если есть
                 "message_i18n" => [           // переводы для фронта
                     "ru" => null,
@@ -579,7 +584,7 @@ class SiteController extends Controller
 
             // Вариант #1: {"number":"Փնտրվող ... զբաղված է։"} — номер(а) занят(ы)
             if (isset($json['number']) && is_string($json['number'])) {
-                $out['code']    = 'number_busy';
+                $out['code'] = 'number_busy';
                 $out['message'] = $json['number']; // исходный (часто на арм)
 
                 // Переводы
@@ -596,7 +601,7 @@ class SiteController extends Controller
                 isset($json['errors']['number']) && is_string($json['errors']['number'])
             ) {
                 $msg = $json['errors']['number'];
-                $out['code']    = 'invalid_format';
+                $out['code'] = 'invalid_format';
                 $out['message'] = $msg;
 
                 // Переводы (RU — точно задан, AM/EN — можно адаптировать при необходимости)
@@ -607,7 +612,7 @@ class SiteController extends Controller
             }
 
             // Fallback: передадим первый попавшийся текст, если он есть
-            foreach (['message','error','detail'] as $k) {
+            foreach (['message', 'error', 'detail'] as $k) {
                 if (isset($json[$k]) && is_string($json[$k])) {
                     $out['message'] = $json[$k];
                     break;
@@ -657,7 +662,7 @@ class SiteController extends Controller
 
             usleep(mt_rand($DELAY_MS_MIN, $DELAY_MS_MAX) * 1000);
 
-            $attempt   = 0;
+            $attempt = 0;
             $lastError = null;
 
             while ($attempt < $MAX_ATTEMPTS) {
@@ -666,29 +671,32 @@ class SiteController extends Controller
                 // ---------- 1) GET ----------
                 $ch = curl_init();
                 curl_setopt_array($ch, [
-                    CURLOPT_URL            => $PAGE_URL,
+                    CURLOPT_URL => $PAGE_URL,
                     CURLOPT_RETURNTRANSFER => true,
-                    CURLOPT_HEADER         => true,
+                    CURLOPT_HEADER => true,
                     CURLOPT_FOLLOWLOCATION => true,
                     CURLOPT_SSL_VERIFYPEER => true,
                     CURLOPT_SSL_VERIFYHOST => 2,
-                    CURLOPT_USERAGENT      => $UA,
-                    CURLOPT_ENCODING       => '',
-                    CURLOPT_TIMEOUT        => 25,
-                    CURLOPT_INTERFACE      => $OUT_IP,
-                    CURLOPT_IPRESOLVE      => CURL_IPRESOLVE_V4,
-                    CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_2TLS,
-                    CURLOPT_HTTPHEADER     => [
+                    CURLOPT_USERAGENT => $UA,
+                    CURLOPT_ENCODING => '',
+                    CURLOPT_TIMEOUT => 25,
+                    CURLOPT_INTERFACE => $OUT_IP,
+                    CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4,
+                    CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_2TLS,
+                    CURLOPT_HTTPHEADER => [
                         'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
                         'Accept-Language: ru,en;q=0.8',
                     ],
                 ]);
                 $resp = curl_exec($ch);
-                $err  = curl_error($ch);
+                $err = curl_error($ch);
                 $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
                 curl_close($ch);
 
-                if ($resp === false) { $lastError = 'Сетевая ошибка (GET): ' . $err; break; }
+                if ($resp === false) {
+                    $lastError = 'Сетевая ошибка (GET): ' . $err;
+                    break;
+                }
                 if ($code === 403) {
                     @file_put_contents($backoffF, (string)(time() + $BACKOFF_403_SECONDS));
                     echo json_encode(["status" => "error", "message" => "Доступ временно ограничен (403). Попробуйте позже."], JSON_UNESCAPED_UNICODE);
@@ -699,15 +707,17 @@ class SiteController extends Controller
                 $headerEnd = strpos($resp, "\r\n\r\n");
                 if ($headerEnd === false) $headerEnd = strpos($resp, "\n\n");
                 $rawHeaders = ($headerEnd !== false) ? substr($resp, 0, $headerEnd) : '';
-                $html       = ($headerEnd !== false) ? substr($resp, $headerEnd + 4) : $resp;
+                $html = ($headerEnd !== false) ? substr($resp, $headerEnd + 4) : $resp;
 
                 // Cookies
-                $xsrf = null; $rd = null; $lng = null;
+                $xsrf = null;
+                $rd = null;
+                $lng = null;
                 foreach (preg_split("/\r?\n/", $rawHeaders) as $hline) {
                     if (stripos($hline, 'Set-Cookie:') === 0) {
                         if (!$xsrf && preg_match('/XSRF-TOKEN=([^;]+)/i', $hline, $m)) $xsrf = urldecode($m[1]);
-                        if (!$rd   && preg_match('/rd_session=([^;]+)/i', $hline, $m)) $rd   = $m[1];
-                        if (!$lng  && preg_match('/\blng=([^;]+)/i',      $hline, $m)) $lng  = $m[1];
+                        if (!$rd && preg_match('/rd_session=([^;]+)/i', $hline, $m)) $rd = $m[1];
+                        if (!$lng && preg_match('/\blng=([^;]+)/i', $hline, $m)) $lng = $m[1];
                     }
                 }
 
@@ -719,7 +729,10 @@ class SiteController extends Controller
 
                 if (!$xsrf || !$rd) {
                     $lastError = "Не удалось получить XSRF/сессию";
-                    if ($attempt < $MAX_ATTEMPTS) { usleep(mt_rand(300, 600) * 1000); continue; }
+                    if ($attempt < $MAX_ATTEMPTS) {
+                        usleep(mt_rand(300, 600) * 1000);
+                        continue;
+                    }
                     break;
                 }
 
@@ -735,21 +748,21 @@ class SiteController extends Controller
 
                 $ch = curl_init();
                 curl_setopt_array($ch, [
-                    CURLOPT_URL            => $PAGE_URL,
-                    CURLOPT_POST           => true,
-                    CURLOPT_POSTFIELDS     => $postBody,
+                    CURLOPT_URL => $PAGE_URL,
+                    CURLOPT_POST => true,
+                    CURLOPT_POSTFIELDS => $postBody,
                     CURLOPT_RETURNTRANSFER => true,
-                    CURLOPT_HEADER         => false,
+                    CURLOPT_HEADER => false,
                     CURLOPT_FOLLOWLOCATION => false,
                     CURLOPT_SSL_VERIFYPEER => true,
                     CURLOPT_SSL_VERIFYHOST => 2,
-                    CURLOPT_USERAGENT      => $UA,
-                    CURLOPT_ENCODING       => '',
-                    CURLOPT_TIMEOUT        => 25,
-                    CURLOPT_INTERFACE      => $OUT_IP,
-                    CURLOPT_IPRESOLVE      => CURL_IPRESOLVE_V4,
-                    CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1,
-                    CURLOPT_HTTPHEADER     => array_filter([
+                    CURLOPT_USERAGENT => $UA,
+                    CURLOPT_ENCODING => '',
+                    CURLOPT_TIMEOUT => 25,
+                    CURLOPT_INTERFACE => $OUT_IP,
+                    CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4,
+                    CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+                    CURLOPT_HTTPHEADER => array_filter([
                         'Accept: application/json, text/plain, */*',
                         'Content-Type: application/x-www-form-urlencoded',
                         'Origin: ' . $BASE_URL,
@@ -761,11 +774,14 @@ class SiteController extends Controller
                     ]),
                 ]);
                 $resp = curl_exec($ch);
-                $err  = curl_error($ch);
+                $err = curl_error($ch);
                 $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
                 curl_close($ch);
 
-                if ($resp === false) { $lastError = 'Сетевая ошибка (POST): ' . $err; break; }
+                if ($resp === false) {
+                    $lastError = 'Сетевая ошибка (POST): ' . $err;
+                    break;
+                }
                 if ($code === 403) {
                     @file_put_contents($backoffF, (string)(time() + $BACKOFF_403_SECONDS));
                     echo json_encode(["status" => "error", "message" => "Доступ временно ограничен (403). Попробуйте позже."], JSON_UNESCAPED_UNICODE);
@@ -808,7 +824,6 @@ class SiteController extends Controller
             }
         }
     }
-
 
 
     protected function actionConverterAjax(string $type, string $fromCurrency, string $toCurrency)
@@ -1447,6 +1462,27 @@ HTML;
         echo "<pre>";
         print_r($newExchangers);
         echo "</pre>";
+    }
+
+    protected function actionCredit()
+    {
+        $query = App::db()->query("SELECT * FROM settings");
+        $settings = $query->fetch();
+        $navigations = App::db()->query("SELECT * FROM navigation")->fetchAll();
+        $menu['top'] = include_once(__DIR__ . '/../../../storage/menu/top.php');
+        $menuLeft = include_once(__DIR__ . '/../../../storage/menu/left.php');
+        $menu['left']['hidden'] = $menuLeft['hidden'];
+        unset($menuLeft['hidden']);
+        $menu['left']['basic'] = $menuLeft;
+
+        return [
+            'site/credit',
+            [
+                'settings' => $settings,
+                'menu' => $menu,
+                'navigations' => $navigations,
+            ]
+        ];
     }
 
     protected function actionNumberSearch()
