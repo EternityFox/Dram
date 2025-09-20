@@ -491,20 +491,17 @@ class SiteController extends Controller
         header('Content-Type: application/json; charset=UTF-8');
 
         // --- Конфиг ---
-        //$OUT_IP = '45.150.8.84'; // Комментируем, чтобы использовать IP сервера по умолчанию
-        $BASE_URL = 'https://plate.roadpolice.am';
-        $PAGE_URL = $BASE_URL . '/?lang=ru';
-        $UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36'; // Обновили UA до актуального
+        $OUT_IP = '45.150.8.84';
+        $BASE_URL = 'https://roadpolice.am';
+        $PAGE_URL = $BASE_URL . '/ru/plate-number-search';
+        $UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
         $CACHE_TTL = 6 * 3600;
         $RATE_LIMIT_SECONDS = 8;
         $BACKOFF_403_SECONDS = 25 * 60;
         $DELAY_MS_MIN = 200;
         $DELAY_MS_MAX = 800;
         $MAX_ATTEMPTS = 2;
-        $DEBUG = true; // Оставляем для отладки
-        $CAPTCHA_API_KEY = 'f3196495c2a30a5ac9a6afb863c15c1d';
-        $CAPTCHA_SITE_KEY = '6LfmyLEaAAAAAMQoEZLL4adCRBSIJGDbE7ZJ56hR';
-        $CAPTCHA_TIMEOUT_SEC = 120;
+        $DEBUG = false; // прод: выключено
 
         // язык интерфейса (приходит с фронта)
         $lang = strtolower(trim($_POST['lang'] ?? 'ru'));
@@ -637,84 +634,6 @@ class SiteController extends Controller
             return $out;
         };
 
-        // Функция для решения капчи через ruCaptcha
-        $solveCaptcha = function (string $apiKey, string $siteKey, string $pageUrl) use ($dbg, $CAPTCHA_TIMEOUT_SEC): ?string {
-            $dbg("Captcha: starting solve for sitekey=$siteKey url=$pageUrl");
-            // Шаг 1: Отправка запроса на решение
-            $postData = [
-                'key' => $apiKey,
-                'method' => 'userrecaptcha',
-                'googlekey' => $siteKey,
-                'pageurl' => $pageUrl,
-                'json' => 1,
-            ];
-            $ch = curl_init('http://rucaptcha.com/in.php');
-            curl_setopt($ch, CURLOPT_POST, true);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($postData));
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-            $resp = curl_exec($ch);
-            $err = curl_error($ch);
-            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            curl_close($ch);
-
-            if ($err) {
-                $dbg("Captcha in.php curl error: $err (code=$httpCode)");
-                return null;
-            }
-            if ($httpCode !== 200) {
-                $dbg("Captcha in.php bad http: $httpCode resp=$resp");
-                return null;
-            }
-
-            $json = json_decode($resp, true);
-            if (!isset($json['status']) || $json['status'] !== 1) {
-                $dbg("Captcha in.php bad response: $resp");
-                return null;
-            }
-            $captchaId = $json['request'];
-            $dbg("Captcha submitted, id=$captchaId");
-
-            // Шаг 2: Polling для результата (с уменьшенным таймаутом)
-            sleep(5); // начальная пауза 5 сек
-            $start = time();
-            while (time() - $start < $CAPTCHA_TIMEOUT_SEC) {
-                $ch = curl_init("http://rucaptcha.com/res.php?key=$apiKey&action=get&id=$captchaId&json=1");
-                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-                curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-                $resp = curl_exec($ch);
-                $err = curl_error($ch);
-                $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-                curl_close($ch);
-
-                if ($err) {
-                    $dbg("Captcha res.php curl error: $err (code=$httpCode)");
-                    sleep(5);
-                    continue;
-                }
-                if ($httpCode !== 200) {
-                    $dbg("Captcha res.php bad http: $httpCode resp=$resp");
-                    sleep(5);
-                    continue;
-                }
-
-                $json = json_decode($resp, true);
-                if (isset($json['status']) && $json['status'] === 1) {
-                    $token = $json['request'];
-                    $dbg("Captcha solved: $token");
-                    return $token;
-                }
-                if (isset($json['request']) && $json['request'] !== 'CAPCHA_NOT_READY') {
-                    $dbg("Captcha error: " . $json['request']);
-                    return null;
-                }
-                $dbg("Captcha not ready, waiting...");
-                sleep(5); // уменьшили интервал до 5 сек
-            }
-            $dbg("Captcha timeout after $CAPTCHA_TIMEOUT_SEC sec");
-            return null;
-        };
-
         try {
             $dbg("NEW plate={$plate}");
 
@@ -722,28 +641,23 @@ class SiteController extends Controller
             if (is_file($backoffF)) {
                 $until = (int)trim(@file_get_contents($backoffF));
                 if ($until > time()) {
-                    $dbg("Backoff active until " . date('Y-m-d H:i:s', $until));
                     echo json_encode(["status" => "error", "message" => "Сервис временно недоступен, повторите позже"], JSON_UNESCAPED_UNICODE);
                     return;
                 }
-                $dbg("Backoff expired, removing");
                 @unlink($backoffF);
             }
 
             // Кэш (если ранее уже был валидный JSON — отдаём как есть)
             if (is_file($cacheF) && (time() - filemtime($cacheF) < $CACHE_TTL)) {
-                $dbg("Serving from cache");
                 readfile($cacheF);
                 return;
             }
 
             // Rate limit
             if (is_file($rateF) && (time() - filemtime($rateF) < $RATE_LIMIT_SECONDS)) {
-                $dbg("Rate limit hit");
                 echo json_encode(["status" => "error", "message" => "Слишком часто. Попробуйте чуть позже."], JSON_UNESCAPED_UNICODE);
                 return;
             }
-            $dbg("Touching rate file");
             @touch($rateF);
 
             usleep(mt_rand($DELAY_MS_MIN, $DELAY_MS_MAX) * 1000);
@@ -753,10 +667,8 @@ class SiteController extends Controller
 
             while ($attempt < $MAX_ATTEMPTS) {
                 $attempt++;
-                $dbg("Attempt #$attempt");
 
-                // ---------- 1) GET для сессии ----------
-                $dbg("GET $PAGE_URL");
+                // ---------- 1) GET ----------
                 $ch = curl_init();
                 curl_setopt_array($ch, [
                     CURLOPT_URL => $PAGE_URL,
@@ -768,15 +680,12 @@ class SiteController extends Controller
                     CURLOPT_USERAGENT => $UA,
                     CURLOPT_ENCODING => '',
                     CURLOPT_TIMEOUT => 25,
-                    //CURLOPT_INTERFACE => $OUT_IP, // Комментируем
+                    CURLOPT_INTERFACE => $OUT_IP,
                     CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4,
                     CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_2TLS,
                     CURLOPT_HTTPHEADER => [
                         'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
                         'Accept-Language: ru,en;q=0.8',
-                        'Sec-Ch-Ua: "Chromium";v="140", "Not=A?Brand";v="24", "Google Chrome";v="140"',
-                        'Sec-Ch-Ua-Mobile: ?0',
-                        'Sec-Ch-Ua-Platform: "Windows"',
                     ],
                 ]);
                 $resp = curl_exec($ch);
@@ -786,97 +695,60 @@ class SiteController extends Controller
 
                 if ($resp === false) {
                     $lastError = 'Сетевая ошибка (GET): ' . $err;
-                    $dbg($lastError . " code=$code");
                     break;
                 }
                 if ($code === 403) {
-                    $dbg("GET 403, setting backoff");
                     @file_put_contents($backoffF, (string)(time() + $BACKOFF_403_SECONDS));
                     echo json_encode(["status" => "error", "message" => "Доступ временно ограничен (403). Попробуйте позже."], JSON_UNESCAPED_UNICODE);
                     return;
-                }
-                if ($code !== 200) {
-                    $dbg("GET bad code $code");
                 }
 
                 // Заголовки/тело
                 $headerEnd = strpos($resp, "\r\n\r\n");
                 if ($headerEnd === false) $headerEnd = strpos($resp, "\n\n");
                 $rawHeaders = ($headerEnd !== false) ? substr($resp, 0, $headerEnd) : '';
+                $html = ($headerEnd !== false) ? substr($resp, $headerEnd + 4) : $resp;
 
-                // Cookies: PHPSESSID
-                $phpsessid = null;
+                // Cookies
+                $xsrf = null;
+                $rd = null;
+                $lng = null;
                 foreach (preg_split("/\r?\n/", $rawHeaders) as $hline) {
                     if (stripos($hline, 'Set-Cookie:') === 0) {
-                        if (preg_match('/PHPSESSID=([^;]+)/i', $hline, $m)) $phpsessid = $m[1];
+                        if (!$xsrf && preg_match('/XSRF-TOKEN=([^;]+)/i', $hline, $m)) $xsrf = urldecode($m[1]);
+                        if (!$rd && preg_match('/rd_session=([^;]+)/i', $hline, $m)) $rd = $m[1];
+                        if (!$lng && preg_match('/\blng=([^;]+)/i', $hline, $m)) $lng = $m[1];
                     }
                 }
 
-                if (!$phpsessid) {
-                    $lastError = "Не удалось получить PHPSESSID";
-                    $dbg($lastError);
+                // meta csrf
+                $metaToken = null;
+                if (preg_match('/<meta\s+name=["\']csrf-token["\']\s+content=["\']([^"\']+)["\']/i', $html, $m)) {
+                    $metaToken = $m[1];
+                }
+
+                if (!$xsrf || !$rd) {
+                    $lastError = "Не удалось получить XSRF/сессию";
                     if ($attempt < $MAX_ATTEMPTS) {
                         usleep(mt_rand(300, 600) * 1000);
                         continue;
                     }
                     break;
                 }
-                $dbg("Got PHPSESSID=$phpsessid");
 
-                $cookieHeader = "PHPSESSID={$phpsessid}";
+                $cookieHeader = "XSRF-TOKEN={$xsrf}; rd_session={$rd}";
+                if ($lng) $cookieHeader .= "; lng={$lng}";
 
                 usleep(mt_rand($DELAY_MS_MIN, $DELAY_MS_MAX) * 1000);
 
-                // ---------- Решение капчи ----------
-                $captchaToken = $solveCaptcha($CAPTCHA_API_KEY, $CAPTCHA_SITE_KEY, $PAGE_URL);
-                if (!$captchaToken) {
-                    $lastError = "Ошибка решения капчи";
-                    $dbg($lastError);
-                    if ($attempt < $MAX_ATTEMPTS) {
-                        usleep(mt_rand(300, 600) * 1000);
-                        continue;
-                    }
-                    break;
-                }
-
-                // Парсинг plate на pre/code/post
-                $plate = preg_replace('/\s+/', ' ', trim($plate));
-                $parts = explode(' ', $plate);
-                if (count($parts) !== 3) {
-                    $lastError = "Неверный формат plate";
-                    $dbg($lastError . " plate=$plate");
-                    break;
-                }
-                $pre = $parts[0];
-                $codeRaw = $parts[1];
-                $post = $parts[2];
-
-                $code = trim($codeRaw);
-                if ($code === '' || strlen($code) < 2) {
-                    $code = '*'; // wildcard для полного списка
-                } else {
-                    $code = strtoupper($code);
-                }
-                $dbg("Parsed: pre=$pre code=$code post=$post");
-
                 // ---------- 2) POST ----------
-                $postFields = [
-                    'pre' => $pre,
-                    'post' => $post,
-                    'code' => $code,
-                    'g-recaptcha-response' => $captchaToken,
-                ];
+                $postFields = ['number' => $plate];
+                if ($metaToken) $postFields['_token'] = $metaToken;
                 $postBody = http_build_query($postFields);
-                $dbg("POST fields: " . print_r($postFields, true));
-
-                // Callback для JSONP
-                $callback = 'jQuery191' . mt_rand(100000000000000000, 999999999999999999) . '_' . time();
-                $postUrl = $BASE_URL . '/gold-backend.php?callback=' . $callback;
-                $dbg("POST to $postUrl");
 
                 $ch = curl_init();
                 curl_setopt_array($ch, [
-                    CURLOPT_URL => $postUrl,
+                    CURLOPT_URL => $PAGE_URL,
                     CURLOPT_POST => true,
                     CURLOPT_POSTFIELDS => $postBody,
                     CURLOPT_RETURNTRANSFER => true,
@@ -887,22 +759,19 @@ class SiteController extends Controller
                     CURLOPT_USERAGENT => $UA,
                     CURLOPT_ENCODING => '',
                     CURLOPT_TIMEOUT => 25,
-                    //CURLOPT_INTERFACE => $OUT_IP, // Комментируем
+                    CURLOPT_INTERFACE => $OUT_IP,
                     CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4,
                     CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-                    CURLOPT_HTTPHEADER => [
-                        'Accept: text/javascript, application/javascript, application/ecmascript, application/x-ecmascript, */*; q=0.01',
-                        'Content-Type: application/x-www-form-urlencoded; charset=UTF-8',
+                    CURLOPT_HTTPHEADER => array_filter([
+                        'Accept: application/json, text/plain, */*',
+                        'Content-Type: application/x-www-form-urlencoded',
                         'Origin: ' . $BASE_URL,
                         'Referer: ' . $PAGE_URL,
                         'X-Requested-With: XMLHttpRequest',
+                        $metaToken ? ('X-CSRF-TOKEN: ' . $metaToken) : null,
                         'Cookie: ' . $cookieHeader,
                         'Expect:',
-                        'Sec-Ch-Ua: "Chromium";v="140", "Not=A?Brand";v="24", "Google Chrome";v="140"',
-                        'Sec-Ch-Ua-Mobile: ?0',
-                        'Sec-Ch-Ua-Platform: "Windows"',
-                        'Priority: u=1, i',
-                    ],
+                    ]),
                 ]);
                 $resp = curl_exec($ch);
                 $err = curl_error($ch);
@@ -911,71 +780,41 @@ class SiteController extends Controller
 
                 if ($resp === false) {
                     $lastError = 'Сетевая ошибка (POST): ' . $err;
-                    $dbg($lastError . " code=$code");
                     break;
                 }
                 if ($code === 403) {
-                    $dbg("POST 403, setting backoff");
                     @file_put_contents($backoffF, (string)(time() + $BACKOFF_403_SECONDS));
                     echo json_encode(["status" => "error", "message" => "Доступ временно ограничен (403). Попробуйте позже."], JSON_UNESCAPED_UNICODE);
                     return;
                 }
-                $dbg("POST response code=$code len=" . strlen($resp));
 
-                // Парсинг JSONP ответа
-                if (strpos($resp, $callback . '(') === 0) {
-                    $jsonStr = substr($resp, strlen($callback) + 1, -2); // убираем () и возможный ;
-                    if (substr($jsonStr, -1) === ';') $jsonStr = substr($jsonStr, 0, -1);
-                    $dbg("Extracted JSON str len=" . strlen($jsonStr));
-                    $json = json_decode($jsonStr, true);
-                    if (json_last_error() === JSON_ERROR_NONE && is_array($json)) {
-                        $dbg("JSON decoded: " . print_r($json, true));
-                        // Успех
-                        if (isset($json['status']) && $json['status'] === true) {
-                            $count = intval($json['count'] ?? 0);
-                            if ($count > 0) {
-                                $out = ['status' => 'OK', 'data' => $json['data']];
-                                @file_put_contents($cacheF, json_encode($out, JSON_UNESCAPED_UNICODE), LOCK_EX);
-                                echo json_encode($out, JSON_UNESCAPED_UNICODE);
-                                $dbg("Success, cached and returned");
-                                return;
-                            } else {
-                                // Нет доступных — считаем как "занят"
-                                $errJson = ['number' => 'Փնտրվող համարանիշ(եր)ը զբաղված է։'];
-                                $errPayload = $translateError($errJson, $lang);
-                                echo json_encode($errPayload, JSON_UNESCAPED_UNICODE);
-                                $dbg("No available, returned busy error");
-                                return;
-                            }
-                        } else {
-                            // Ошибка от API
-                            $dbg("API status false, treating as invalid format");
-                            $errJson = ['status' => 'INVALID_DATA', 'errors' => ['number' => 'Неверный формат, заполните полностью или вместо букв эту комбинацию для получения полного списка']];
-                            $errPayload = $translateError($errJson, $lang);
-                            echo json_encode($errPayload, JSON_UNESCAPED_UNICODE);
-                            return;
-                        }
-                    } else {
-                        $dbg("JSON decode error: " . json_last_error_msg());
+                // Пробуем JSON
+                $json = json_decode($resp, true);
+                if (json_last_error() === JSON_ERROR_NONE && is_array($json)) {
+                    // Успех roadpolice
+                    if (isset($json['status']) && $json['status'] === 'OK') {
+                        @file_put_contents($cacheF, json_encode($json, JSON_UNESCAPED_UNICODE), LOCK_EX);
+                        echo json_encode($json, JSON_UNESCAPED_UNICODE);
+                        return;
                     }
-                } else {
-                    $dbg("Not JSONP: resp starts with " . substr($resp, 0, 50));
+
+                    // Не-успех: возвращаем структурированную ошибку с переводами
+                    $errPayload = $translateError($json, $lang);
+                    echo json_encode($errPayload, JSON_UNESCAPED_UNICODE);
+                    return;
                 }
 
-                // Если не JSONP — ретрай
+                // Если пришёл HTML — ретрай один раз
                 if ($attempt < $MAX_ATTEMPTS) {
-                    $dbg("Retry after delay");
                     usleep(mt_rand(300, 600) * 1000);
                     continue;
                 }
 
                 $lastError = "HTTP $code (не JSON)";
-                $dbg($lastError);
                 break;
             }
 
             echo json_encode(["status" => "error", "message" => $lastError ?: "Неизвестная ошибка"], JSON_UNESCAPED_UNICODE);
-            $dbg("Final error: " . ($lastError ?: "unknown"));
             return;
 
         } finally {
@@ -983,30 +822,9 @@ class SiteController extends Controller
                 @flock($lockH, LOCK_UN);
                 @fclose($lockH);
             }
-            $dbg("Finally, lock released");
         }
     }
 
-    protected function actionNumberSearch()
-    {
-        $query = App::db()->query("SELECT * FROM settings");
-        $settings = $query->fetch();
-        $navigations = App::db()->query("SELECT * FROM navigation")->fetchAll();
-        $menu['top'] = include_once(__DIR__ . '/../../../storage/menu/top.php');
-        $menuLeft = include_once(__DIR__ . '/../../../storage/menu/left.php');
-        $menu['left']['hidden'] = $menuLeft['hidden'];
-        unset($menuLeft['hidden']);
-        $menu['left']['basic'] = $menuLeft;
-
-        return [
-            'site/number_search',
-            [
-                'settings' => $settings,
-                'menu' => $menu,
-                'navigations' => $navigations,
-            ]
-        ];
-    }
 
     protected function actionConverterAjax(string $type, string $fromCurrency, string $toCurrency)
     {
@@ -1659,6 +1477,27 @@ HTML;
 
         return [
             'site/credit',
+            [
+                'settings' => $settings,
+                'menu' => $menu,
+                'navigations' => $navigations,
+            ]
+        ];
+    }
+
+    protected function actionNumberSearch()
+    {
+        $query = App::db()->query("SELECT * FROM settings");
+        $settings = $query->fetch();
+        $navigations = App::db()->query("SELECT * FROM navigation")->fetchAll();
+        $menu['top'] = include_once(__DIR__ . '/../../../storage/menu/top.php');
+        $menuLeft = include_once(__DIR__ . '/../../../storage/menu/left.php');
+        $menu['left']['hidden'] = $menuLeft['hidden'];
+        unset($menuLeft['hidden']);
+        $menu['left']['basic'] = $menuLeft;
+
+        return [
+            'site/number_search',
             [
                 'settings' => $settings,
                 'menu' => $menu,
