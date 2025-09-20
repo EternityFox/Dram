@@ -491,20 +491,20 @@ class SiteController extends Controller
         header('Content-Type: application/json; charset=UTF-8');
 
         // --- Конфиг ---
-        $OUT_IP = '45.150.8.84';
+        //$OUT_IP = '45.150.8.84'; // Комментируем, чтобы использовать IP сервера по умолчанию
         $BASE_URL = 'https://plate.roadpolice.am';
         $PAGE_URL = $BASE_URL . '/?lang=ru';
-        $UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+        $UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36'; // Обновили UA до актуального
         $CACHE_TTL = 6 * 3600;
         $RATE_LIMIT_SECONDS = 8;
         $BACKOFF_403_SECONDS = 25 * 60;
         $DELAY_MS_MIN = 200;
         $DELAY_MS_MAX = 800;
         $MAX_ATTEMPTS = 2;
-        $DEBUG = true; // Включили для отладки
+        $DEBUG = true; // Оставляем для отладки
         $CAPTCHA_API_KEY = 'f3196495c2a30a5ac9a6afb863c15c1d';
         $CAPTCHA_SITE_KEY = '6LfmyLEaAAAAAMQoEZLL4adCRBSIJGDbE7ZJ56hR';
-        $CAPTCHA_TIMEOUT_SEC = 120; // Уменьшили таймаут на решение капчи до 2 мин, чтобы избежать 504
+        $CAPTCHA_TIMEOUT_SEC = 120;
 
         // язык интерфейса (приходит с фронта)
         $lang = strtolower(trim($_POST['lang'] ?? 'ru'));
@@ -768,12 +768,15 @@ class SiteController extends Controller
                     CURLOPT_USERAGENT => $UA,
                     CURLOPT_ENCODING => '',
                     CURLOPT_TIMEOUT => 25,
-                    CURLOPT_INTERFACE => $OUT_IP,
+                    //CURLOPT_INTERFACE => $OUT_IP, // Комментируем
                     CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4,
                     CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_2TLS,
                     CURLOPT_HTTPHEADER => [
                         'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
                         'Accept-Language: ru,en;q=0.8',
+                        'Sec-Ch-Ua: "Chromium";v="140", "Not=A?Brand";v="24", "Google Chrome";v="140"',
+                        'Sec-Ch-Ua-Mobile: ?0',
+                        'Sec-Ch-Ua-Platform: "Windows"',
                     ],
                 ]);
                 $resp = curl_exec($ch);
@@ -884,7 +887,7 @@ class SiteController extends Controller
                     CURLOPT_USERAGENT => $UA,
                     CURLOPT_ENCODING => '',
                     CURLOPT_TIMEOUT => 25,
-                    CURLOPT_INTERFACE => $OUT_IP,
+                    //CURLOPT_INTERFACE => $OUT_IP, // Комментируем
                     CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4,
                     CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
                     CURLOPT_HTTPHEADER => [
@@ -895,6 +898,10 @@ class SiteController extends Controller
                         'X-Requested-With: XMLHttpRequest',
                         'Cookie: ' . $cookieHeader,
                         'Expect:',
+                        'Sec-Ch-Ua: "Chromium";v="140", "Not=A?Brand";v="24", "Google Chrome";v="140"',
+                        'Sec-Ch-Ua-Mobile: ?0',
+                        'Sec-Ch-Ua-Platform: "Windows"',
+                        'Priority: u=1, i',
                     ],
                 ]);
                 $resp = curl_exec($ch);
@@ -980,6 +987,26 @@ class SiteController extends Controller
         }
     }
 
+    protected function actionNumberSearch()
+    {
+        $query = App::db()->query("SELECT * FROM settings");
+        $settings = $query->fetch();
+        $navigations = App::db()->query("SELECT * FROM navigation")->fetchAll();
+        $menu['top'] = include_once(__DIR__ . '/../../../storage/menu/top.php');
+        $menuLeft = include_once(__DIR__ . '/../../../storage/menu/left.php');
+        $menu['left']['hidden'] = $menuLeft['hidden'];
+        unset($menuLeft['hidden']);
+        $menu['left']['basic'] = $menuLeft;
+
+        return [
+            'site/number_search',
+            [
+                'settings' => $settings,
+                'menu' => $menu,
+                'navigations' => $navigations,
+            ]
+        ];
+    }
 
     protected function actionConverterAjax(string $type, string $fromCurrency, string $toCurrency)
     {
@@ -1632,27 +1659,6 @@ HTML;
 
         return [
             'site/credit',
-            [
-                'settings' => $settings,
-                'menu' => $menu,
-                'navigations' => $navigations,
-            ]
-        ];
-    }
-
-    protected function actionNumberSearch()
-    {
-        $query = App::db()->query("SELECT * FROM settings");
-        $settings = $query->fetch();
-        $navigations = App::db()->query("SELECT * FROM navigation")->fetchAll();
-        $menu['top'] = include_once(__DIR__ . '/../../../storage/menu/top.php');
-        $menuLeft = include_once(__DIR__ . '/../../../storage/menu/left.php');
-        $menu['left']['hidden'] = $menuLeft['hidden'];
-        unset($menuLeft['hidden']);
-        $menu['left']['basic'] = $menuLeft;
-
-        return [
-            'site/number_search',
             [
                 'settings' => $settings,
                 'menu' => $menu,
