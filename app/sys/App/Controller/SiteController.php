@@ -492,8 +492,8 @@ class SiteController extends Controller
 
         // --- Конфиг ---
         $OUT_IP = '45.150.8.84';
-        $BASE_URL = 'https://roadpolice.am';
-        $PAGE_URL = $BASE_URL . '/ru/plate-number-search';
+        $BASE_URL = 'https://plate.roadpolice.am';
+        $PAGE_URL = $BASE_URL . '/?lang=ru';
         $UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
         $CACHE_TTL = 6 * 3600;
         $RATE_LIMIT_SECONDS = 8;
@@ -502,6 +502,8 @@ class SiteController extends Controller
         $DELAY_MS_MAX = 800;
         $MAX_ATTEMPTS = 2;
         $DEBUG = false; // прод: выключено
+        $CAPTCHA_API_KEY = 'f3196495c2a30a5ac9a6afb863c15c1d';
+        $CAPTCHA_SITE_KEY = '6LfmyLEaAAAAAMQoEZLL4adCRBSIJGDbE7ZJ56hR';
 
         // язык интерфейса (приходит с фронта)
         $lang = strtolower(trim($_POST['lang'] ?? 'ru'));
@@ -634,6 +636,66 @@ class SiteController extends Controller
             return $out;
         };
 
+        // Функция для решения капчи через ruCaptcha
+        $solveCaptcha = function (string $apiKey, string $siteKey, string $pageUrl) use ($dbg): ?string {
+            // Шаг 1: Отправка запроса на решение
+            $postData = [
+                'key' => $apiKey,
+                'method' => 'userrecaptcha',
+                'googlekey' => $siteKey,
+                'pageurl' => $pageUrl,
+                'json' => 1,
+            ];
+            $ch = curl_init('http://rucaptcha.com/in.php');
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($postData));
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+            $resp = curl_exec($ch);
+            $err = curl_error($ch);
+            curl_close($ch);
+
+            if ($err) {
+                $dbg("Captcha in.php error: $err");
+                return null;
+            }
+
+            $json = json_decode($resp, true);
+            if (!isset($json['status']) || $json['status'] !== 1) {
+                $dbg("Captcha in.php bad response: $resp");
+                return null;
+            }
+            $captchaId = $json['request'];
+
+            // Шаг 2: Polling для результата (до 5 мин, проверка каждые 10 сек)
+            $start = time();
+            while (time() - $start < 300) {
+                sleep(10);
+                $ch = curl_init("http://rucaptcha.com/res.php?key=$apiKey&action=get&id=$captchaId&json=1");
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+                $resp = curl_exec($ch);
+                $err = curl_error($ch);
+                curl_close($ch);
+
+                if ($err) {
+                    $dbg("Captcha res.php error: $err");
+                    continue;
+                }
+
+                $json = json_decode($resp, true);
+                if (isset($json['status']) && $json['status'] === 1) {
+                    return $json['request'];
+                }
+                if (isset($json['request']) && $json['request'] !== 'CAPCHA_NOT_READY') {
+                    $dbg("Captcha error: " . $json['request']);
+                    return null;
+                }
+            }
+            $dbg("Captcha timeout");
+            return null;
+        };
+
         try {
             $dbg("NEW plate={$plate}");
 
@@ -668,7 +730,7 @@ class SiteController extends Controller
             while ($attempt < $MAX_ATTEMPTS) {
                 $attempt++;
 
-                // ---------- 1) GET ----------
+                // ---------- 1) GET для сессии ----------
                 $ch = curl_init();
                 curl_setopt_array($ch, [
                     CURLOPT_URL => $PAGE_URL,
@@ -707,28 +769,17 @@ class SiteController extends Controller
                 $headerEnd = strpos($resp, "\r\n\r\n");
                 if ($headerEnd === false) $headerEnd = strpos($resp, "\n\n");
                 $rawHeaders = ($headerEnd !== false) ? substr($resp, 0, $headerEnd) : '';
-                $html = ($headerEnd !== false) ? substr($resp, $headerEnd + 4) : $resp;
 
-                // Cookies
-                $xsrf = null;
-                $rd = null;
-                $lng = null;
+                // Cookies: PHPSESSID
+                $phpsessid = null;
                 foreach (preg_split("/\r?\n/", $rawHeaders) as $hline) {
                     if (stripos($hline, 'Set-Cookie:') === 0) {
-                        if (!$xsrf && preg_match('/XSRF-TOKEN=([^;]+)/i', $hline, $m)) $xsrf = urldecode($m[1]);
-                        if (!$rd && preg_match('/rd_session=([^;]+)/i', $hline, $m)) $rd = $m[1];
-                        if (!$lng && preg_match('/\blng=([^;]+)/i', $hline, $m)) $lng = $m[1];
+                        if (preg_match('/PHPSESSID=([^;]+)/i', $hline, $m)) $phpsessid = $m[1];
                     }
                 }
 
-                // meta csrf
-                $metaToken = null;
-                if (preg_match('/<meta\s+name=["\']csrf-token["\']\s+content=["\']([^"\']+)["\']/i', $html, $m)) {
-                    $metaToken = $m[1];
-                }
-
-                if (!$xsrf || !$rd) {
-                    $lastError = "Не удалось получить XSRF/сессию";
+                if (!$phpsessid) {
+                    $lastError = "Не удалось получить PHPSESSID";
                     if ($attempt < $MAX_ATTEMPTS) {
                         usleep(mt_rand(300, 600) * 1000);
                         continue;
@@ -736,19 +787,55 @@ class SiteController extends Controller
                     break;
                 }
 
-                $cookieHeader = "XSRF-TOKEN={$xsrf}; rd_session={$rd}";
-                if ($lng) $cookieHeader .= "; lng={$lng}";
+                $cookieHeader = "PHPSESSID={$phpsessid}";
 
                 usleep(mt_rand($DELAY_MS_MIN, $DELAY_MS_MAX) * 1000);
 
+                // ---------- Решение капчи ----------
+                $captchaToken = $solveCaptcha($CAPTCHA_API_KEY, $CAPTCHA_SITE_KEY, $PAGE_URL);
+                if (!$captchaToken) {
+                    $lastError = "Ошибка решения капчи";
+                    if ($attempt < $MAX_ATTEMPTS) {
+                        usleep(mt_rand(300, 600) * 1000);
+                        continue;
+                    }
+                    break;
+                }
+
+                // Парсинг plate на pre/code/post
+                $plate = preg_replace('/\s+/', ' ', trim($plate));
+                $parts = explode(' ', $plate);
+                if (count($parts) !== 3) {
+                    $lastError = "Неверный формат plate";
+                    break;
+                }
+                $pre = $parts[0];
+                $codeRaw = $parts[1];
+                $post = $parts[2];
+
+                $code = trim($codeRaw);
+                if ($code === '' || strlen($code) < 2) {
+                    $code = '*'; // wildcard для полного списка
+                } else {
+                    $code = strtoupper($code);
+                }
+
                 // ---------- 2) POST ----------
-                $postFields = ['number' => $plate];
-                if ($metaToken) $postFields['_token'] = $metaToken;
+                $postFields = [
+                    'pre' => $pre,
+                    'post' => $post,
+                    'code' => $code,
+                    'g-recaptcha-response' => $captchaToken,
+                ];
                 $postBody = http_build_query($postFields);
+
+                // Callback для JSONP
+                $callback = 'jQuery191' . mt_rand(100000000000000000, 999999999999999999) . '_' . time();
+                $postUrl = $BASE_URL . '/gold-backend.php?callback=' . $callback;
 
                 $ch = curl_init();
                 curl_setopt_array($ch, [
-                    CURLOPT_URL => $PAGE_URL,
+                    CURLOPT_URL => $postUrl,
                     CURLOPT_POST => true,
                     CURLOPT_POSTFIELDS => $postBody,
                     CURLOPT_RETURNTRANSFER => true,
@@ -762,16 +849,15 @@ class SiteController extends Controller
                     CURLOPT_INTERFACE => $OUT_IP,
                     CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4,
                     CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-                    CURLOPT_HTTPHEADER => array_filter([
-                        'Accept: application/json, text/plain, */*',
-                        'Content-Type: application/x-www-form-urlencoded',
+                    CURLOPT_HTTPHEADER => [
+                        'Accept: text/javascript, application/javascript, application/ecmascript, application/x-ecmascript, */*; q=0.01',
+                        'Content-Type: application/x-www-form-urlencoded; charset=UTF-8',
                         'Origin: ' . $BASE_URL,
                         'Referer: ' . $PAGE_URL,
                         'X-Requested-With: XMLHttpRequest',
-                        $metaToken ? ('X-CSRF-TOKEN: ' . $metaToken) : null,
                         'Cookie: ' . $cookieHeader,
                         'Expect:',
-                    ]),
+                    ],
                 ]);
                 $resp = curl_exec($ch);
                 $err = curl_error($ch);
@@ -788,23 +874,37 @@ class SiteController extends Controller
                     return;
                 }
 
-                // Пробуем JSON
-                $json = json_decode($resp, true);
-                if (json_last_error() === JSON_ERROR_NONE && is_array($json)) {
-                    // Успех roadpolice
-                    if (isset($json['status']) && $json['status'] === 'OK') {
-                        @file_put_contents($cacheF, json_encode($json, JSON_UNESCAPED_UNICODE), LOCK_EX);
-                        echo json_encode($json, JSON_UNESCAPED_UNICODE);
-                        return;
+                // Парсинг JSONP ответа
+                if (strpos($resp, $callback) === 0) {
+                    $jsonStr = substr($resp, strlen($callback) + 1, -2); // убрать () и ;
+                    $json = json_decode($jsonStr, true);
+                    if (json_last_error() === JSON_ERROR_NONE && is_array($json)) {
+                        // Успех
+                        if (isset($json['status']) && $json['status'] === true) {
+                            $count = intval($json['count'] ?? 0);
+                            if ($count > 0) {
+                                $out = ['status' => 'OK', 'data' => $json['data']];
+                                @file_put_contents($cacheF, json_encode($out, JSON_UNESCAPED_UNICODE), LOCK_EX);
+                                echo json_encode($out, JSON_UNESCAPED_UNICODE);
+                                return;
+                            } else {
+                                // Нет доступных — считаем как "занят"
+                                $errJson = ['number' => 'Փնտրվող համարանիշ(եր)ը զբաղված է։'];
+                                $errPayload = $translateError($errJson, $lang);
+                                echo json_encode($errPayload, JSON_UNESCAPED_UNICODE);
+                                return;
+                            }
+                        } else {
+                            // Ошибка от API
+                            $errJson = ['status' => 'INVALID_DATA', 'errors' => ['number' => 'Неверный формат, заполните полностью или вместо букв эту комбинацию для получения полного списка']];
+                            $errPayload = $translateError($errJson, $lang);
+                            echo json_encode($errPayload, JSON_UNESCAPED_UNICODE);
+                            return;
+                        }
                     }
-
-                    // Не-успех: возвращаем структурированную ошибку с переводами
-                    $errPayload = $translateError($json, $lang);
-                    echo json_encode($errPayload, JSON_UNESCAPED_UNICODE);
-                    return;
                 }
 
-                // Если пришёл HTML — ретрай один раз
+                // Если не JSONP — ретрай
                 if ($attempt < $MAX_ATTEMPTS) {
                     usleep(mt_rand(300, 600) * 1000);
                     continue;
